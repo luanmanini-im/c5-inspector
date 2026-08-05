@@ -67,21 +67,20 @@
                        class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
             </div>
             
-            <!-- Botão com indicador de carregamento -->
             <button id="btnEntrar" onclick="fazerLogin()" class="w-full imendes-btn py-3 rounded-lg transition-all shadow-md cursor-pointer text-sm flex items-center justify-center gap-2">
                 <span id="textoBtnEntrar">Entrar na Plataforma</span>
                 <div id="spinnerLogin" class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-slate-950"></div>
             </button>
         </div>
         <div class="mt-6 text-center text-[10px] text-slate-500 font-mono">
-            FRONT: v3.2.0 • BACK: v2.8
+            FRONT: v3.3.0 • BACK: v2.9
         </div>
     </div>
 
     <!-- PAINEL PRINCIPAL -->
     <div id="painelPrincipal" class="hidden w-full max-w-7xl mx-auto imendes-card p-6 md:p-8">
         
-        <!-- Cabeçalho com Versões FRONT (v3.2.0) e BACK (v2.8) Exibidas -->
+        <!-- Cabeçalho -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 border-b border-slate-800 pb-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
@@ -94,9 +93,9 @@
                 <div class="text-xs font-mono bg-slate-900 px-3.5 py-1.5 rounded-lg border border-slate-800 text-slate-300 shadow-xs flex items-center gap-2">
                     <span id="labelUsuarioLogado" class="text-amber-400 font-bold">Usuário</span>
                     <span class="text-slate-600">|</span>
-                    <span class="text-emerald-400">FRONT: v3.2.0</span>
+                    <span class="text-emerald-400">FRONT: v3.3.0</span>
                     <span class="text-slate-600">•</span>
-                    <span class="text-cyan-400">BACK: v2.8</span>
+                    <span class="text-cyan-400">BACK: v2.9</span>
                 </div>
                 <button onclick="fazerLogout()" class="bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
                     Sair
@@ -104,16 +103,23 @@
             </div>
         </div>
         
-        <!-- Área de Pesquisa e Seleção de Cliente -->
+        <!-- Área de Pesquisa, Seleção de Cliente e Tipo de Busca -->
         <div class="flex flex-col md:flex-row gap-4 mb-8">
-            <select id="selectCliente" class="w-full md:w-72 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input cursor-pointer">
+            <select id="selectCliente" class="w-full md:w-64 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input cursor-pointer">
                 <option value="">Carregando empresas...</option>
             </select>
-            <input type="text" id="inputSku" placeholder="Digite o SKU (ex: 128453)" 
+            
+            <select id="selectTipoBusca" onchange="atualizarPlaceholderBusca()" class="w-full md:w-40 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input cursor-pointer">
+                <option value="sku">SKU (ID Produto)</option>
+                <option value="ean">EAN (Código)</option>
+            </select>
+
+            <input type="text" id="inputTermoBusca" placeholder="Digite o SKU (ex: 128453)" 
                    class="flex-1 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input">
+            
             <button onclick="buscarDados()" 
                     class="imendes-btn px-8 py-3.5 rounded-lg transition-all shadow-md cursor-pointer">
-                Analisar SKU
+                Analisar
             </button>
         </div>
 
@@ -274,7 +280,6 @@
     <div id="modalTributacao" class="fixed inset-0 bg-slate-950 bg-opacity-80 hidden z-50 flex items-center justify-center p-4 backdrop-blur-xs">
         <div class="bg-slate-900 rounded-xl shadow-2xl w-full max-w-[98vw] max-h-[94vh] flex flex-col border border-slate-700 overflow-hidden text-slate-200">
             
-            <!-- Barra Superior Estilo C5 -->
             <div class="bg-slate-950 p-3 border-b border-slate-800 flex flex-wrap gap-4 items-center justify-between">
                 <div class="flex items-center gap-3 flex-wrap">
                     <div class="bg-slate-900 px-3 py-1.5 rounded border border-slate-700 shadow-xs flex items-center gap-2">
@@ -285,11 +290,9 @@
                         <span class="text-xs font-bold text-slate-400 uppercase">Descrição:</span>
                         <span id="modalDescTrib" class="font-bold text-amber-400 text-sm">-</span>
                     </div>
-                    <!-- FILTRO DE REGIME DE TRIBUTAÇÃO ESPECIAL -->
                     <div class="bg-slate-900 px-3 py-1.5 rounded border border-slate-700 shadow-xs flex items-center gap-2">
                         <span class="text-xs font-bold text-slate-400 uppercase">Regime:</span>
                         <select id="selectRegime" onchange="renderizarTabelaC5()" class="font-bold text-amber-400 text-sm bg-transparent border-none focus:outline-none cursor-pointer">
-                            <!-- Preenchido dinamicamente via JS -->
                         </select>
                     </div>
                     <div class="bg-slate-900 px-3 py-1.5 rounded border border-slate-700 shadow-xs flex items-center gap-2">
@@ -300,12 +303,9 @@
                 <button onclick="fecharModal()" class="text-slate-400 hover:text-red-400 text-3xl font-bold leading-none px-2 cursor-pointer">&times;</button>
             </div>
             
-            <!-- ABAS DE TIPOS DE OPERAÇÃO -->
             <div id="containerAbas" class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1.5 bg-slate-950 p-2.5 border-b border-slate-800">
-                <!-- Gerado dinamicamente via JS -->
             </div>
 
-            <!-- Corpo da Tabela com Altura Fixa -->
             <div class="p-4 flex-1 bg-slate-900 flex flex-col overflow-hidden">
                 <div id="loadingModal" class="flex flex-col items-center justify-center py-20 hidden">
                     <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-amber-400 mb-4"></div>
@@ -317,7 +317,6 @@
                         <span id="totalLinhasC5" class="bg-slate-950 px-3 py-1 rounded border border-slate-800 text-slate-300">Total de registros: 0</span>
                     </div>
 
-                    <!-- Container com Altura Limitada -->
                     <div class="border border-slate-800 rounded shadow-xs overflow-auto bg-slate-950 flex-1 max-h-[62vh]">
                         <table class="w-max text-left border-collapse text-xs font-mono whitespace-nowrap relative">
                             <thead class="bg-slate-900 text-slate-300 uppercase font-bold text-[11px] sticky top-0 z-30 shadow-xs">
@@ -354,7 +353,6 @@
                                 </tr>
                             </thead>
                             <tbody id="tbodyTributacaoC5" class="divide-y divide-slate-800 text-slate-300">
-                                <!-- Linhas injetadas via JS -->
                             </tbody>
                         </table>
                     </div>
@@ -363,7 +361,7 @@
         </div>
     </div>
 
-    <!-- MODAL PARA VISUALIZAR O OBJETO JSON RESPONSE DA LINHA -->
+    <!-- MODAL JSON LINHA -->
     <div id="modalJsonLinha" class="fixed inset-0 bg-slate-950 bg-opacity-85 hidden flex items-center justify-center p-4" style="z-index: 9999;">
         <div class="bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] flex flex-col border border-slate-700 overflow-hidden">
             <div class="p-4 bg-slate-950 border-b border-slate-800 flex justify-between items-center text-white">
@@ -386,6 +384,7 @@
     </div>
 
     <script>
+        // ATUALIZE COM A SUA URL DE DEPLOY DO APPS SCRIPT TERMINADA EM /exec
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwDYogXieSm6ibSSvh0mU5UFH1nDJJtopG_2HGd5fcSSSkYcBsouqVIzoeq4wlH7ZRHxQ/exec";
         
         let idTributacaoAtual = null;
@@ -424,6 +423,16 @@
             }
         };
 
+        function atualizarPlaceholderBusca() {
+            const tipo = document.getElementById('selectTipoBusca').value;
+            const input = document.getElementById('inputTermoBusca');
+            if (tipo === 'sku') {
+                input.placeholder = "Digite o SKU (ex: 128453)";
+            } else {
+                input.placeholder = "Digite o EAN (ex: 7891000100103)";
+            }
+        }
+
         async function carregarClientes() {
             try {
                 const response = await fetch(`${WEB_APP_URL}?action=listar_clientes`);
@@ -460,7 +469,6 @@
                 return;
             }
 
-            // Ativa o estado de carregamento
             btnEntrar.disabled = true;
             textoBtn.innerText = "Autenticando...";
             spinner.classList.remove('hidden');
@@ -486,7 +494,6 @@
                 divErro.innerText = "Erro de conexão com o servidor de autenticação.";
                 divErro.classList.remove('hidden');
             } finally {
-                // Restaura o botão ao estado normal
                 btnEntrar.disabled = false;
                 textoBtn.innerText = "Entrar na Plataforma";
                 spinner.classList.add('hidden');
@@ -503,14 +510,15 @@
 
         async function buscarDados() {
             const clienteId = document.getElementById('selectCliente').value;
-            const sku = document.getElementById('inputSku').value.trim();
+            const tipoBusca = document.getElementById('selectTipoBusca').value;
+            const termo = document.getElementById('inputTermoBusca').value.trim();
 
             if (!clienteId) {
                 alert("Por favor, selecione um cliente.");
                 return;
             }
-            if (!sku) {
-                alert("Por favor, digite um SKU válido.");
+            if (!termo) {
+                alert("Por favor, digite o valor da busca.");
                 return;
             }
 
@@ -521,7 +529,13 @@
             document.getElementById('jsonCompleto').innerText = ""; 
             document.getElementById('btnVerTributacao').classList.add('hidden');
 
-            const urlGetProduto = `${WEB_APP_URL}?action=produto&cliente=${encodeURIComponent(clienteId)}&sku=${sku}`;
+            let urlGetProduto = "";
+            if (tipoBusca === 'sku') {
+                urlGetProduto = `${WEB_APP_URL}?action=produto&cliente=${encodeURIComponent(clienteId)}&sku=${encodeURIComponent(termo)}`;
+            } else {
+                urlGetProduto = `${WEB_APP_URL}?action=produto_ean&cliente=${encodeURIComponent(clienteId)}&ean=${encodeURIComponent(termo)}`;
+            }
+
             document.getElementById('txtGetProduto').innerText = urlGetProduto;
 
             try {
@@ -540,7 +554,7 @@
                 }
 
                 if (!data.items || data.items.length === 0) {
-                    alert("Nenhum produto encontrado com esse SKU.");
+                    alert("Nenhum produto encontrado com esse código.");
                     return;
                 }
 
