@@ -72,8 +72,8 @@
                 <div id="spinnerLogin" class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-slate-950"></div>
             </button>
         </div>
-        <div class="mt-6 text-center text-[10px] text-slate-500 font-mono">
-            FRONT: v3.3.0 • BACK: v2.9.4
+        <div id="versaoLoginContainer" class="mt-6 text-center text-[10px] text-slate-500 font-mono">
+            Carregando versões...
         </div>
     </div>
 
@@ -93,9 +93,9 @@
                 <div class="text-xs font-mono bg-slate-900 px-3.5 py-1.5 rounded-lg border border-slate-800 text-slate-300 shadow-xs flex items-center gap-2">
                     <span id="labelUsuarioLogado" class="text-amber-400 font-bold">Usuário</span>
                     <span class="text-slate-600">|</span>
-                    <span class="text-emerald-400">FRONT: v3.3.0</span>
+                    <span id="versaoFrontHeader" class="text-emerald-400">FRONT: vX.X.X</span>
                     <span class="text-slate-600">•</span>
-                    <span class="text-cyan-400">BACK: v2.9.4</span>
+                    <span id="versaoBackHeader" class="text-cyan-400">BACK: Carregando...</span>
                 </div>
                 <button onclick="fazerLogout()" class="bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
                     Sair
@@ -384,9 +384,12 @@
     </div>
 
     <script>
-        // ATUALIZE COM A SUA URL DE DEPLOY DO APPS SCRIPT TERMINADA EM /exec
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz2gX_zaCLcAb6lEQy6LEWhkySVuRxq8QI_c8LcLtB0h5foddEG4RaTw3MxQQe1RuX-ew/exec";
+        // URL DE DEPLOY DO SEU APPS SCRIPT
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxtt8lIG2eXF9rJmz2hYvCXwuqPRgL66-W9L0p_rW7AZS3pTMUGh-Cl54W0cPww5miEFw/exec";
         
+        // NOVO: CONSTANTE DE VERSÃO DO FRONT-END AQUI NO TOPO!
+        const VERSAO_FRONT = "v3.4.0"; 
+
         let idTributacaoAtual = null;
         let clienteAtualId = null;
         let descTributacaoAtual = "";
@@ -414,6 +417,9 @@
         ];
 
         window.onload = function() {
+            // Inicia o carregamento das versões dinamicamente assim que a página abre
+            carregarVersoes();
+            
             const usuarioSalvo = localStorage.getItem('imendes_usuario');
             if (usuarioSalvo) {
                 document.getElementById('telaLogin').classList.add('hidden');
@@ -422,6 +428,27 @@
                 carregarClientes();
             }
         };
+
+        // NOVA FUNÇÃO: Busca a versão no back e preenche na tela
+        async function carregarVersoes() {
+            try {
+                const response = await fetch(`${WEB_APP_URL}?action=versao`);
+                const data = await response.json();
+                const versaoBack = data.versao || "Desconhecida";
+
+                // Atualiza a tela de login
+                document.getElementById('versaoLoginContainer').innerHTML = `FRONT: ${VERSAO_FRONT} &bull; BACK: ${versaoBack}`;
+                
+                // Atualiza o painel principal (quando logado)
+                document.getElementById('versaoFrontHeader').innerText = `FRONT: ${VERSAO_FRONT}`;
+                document.getElementById('versaoBackHeader').innerText = `BACK: ${versaoBack}`;
+            } catch (error) {
+                console.error("Erro ao buscar a versão do back-end", error);
+                document.getElementById('versaoLoginContainer').innerHTML = `FRONT: ${VERSAO_FRONT} &bull; BACK: Falha de conexão`;
+                document.getElementById('versaoFrontHeader').innerText = `FRONT: ${VERSAO_FRONT}`;
+                document.getElementById('versaoBackHeader').innerText = `BACK: Falha`;
+            }
+        }
 
         function atualizarPlaceholderBusca() {
             const tipo = document.getElementById('selectTipoBusca').value;
