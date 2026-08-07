@@ -6,7 +6,6 @@
     <title>Inspector - Análise Integração C5</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Adicionando a biblioteca SheetJS para ler planilhas Excel nativamente -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { 
@@ -48,10 +47,31 @@
             -webkit-appearance: none; 
             margin: 0; 
         }
-        /* Custom scrollbar para o log de ferramentas */
         .log-scroll::-webkit-scrollbar { width: 6px; }
         .log-scroll::-webkit-scrollbar-track { background: #0f111a; }
         .log-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        
+        .tab-btn {
+            padding: 0.75rem 1.25rem;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .tab-btn.active {
+            border-color: #fbbf24;
+            color: #fbbf24;
+        }
+        .tab-btn.inactive {
+            color: #94a3b8;
+        }
+        .tab-btn.inactive:hover {
+            color: #f8fafc;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
@@ -59,7 +79,12 @@
     <!-- TELA DE LOGIN -->
     <div id="telaLogin" class="w-full max-w-md imendes-card p-8">
         <div class="text-center mb-6">
-            <span class="text-4xl inline-block mb-2">🕵️</span>
+            <div class="flex justify-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-amber-400 drop-shadow-md" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </div>
             <h2 class="text-2xl font-extrabold text-white tracking-tight">Inspector</h2>
             <p class="text-xs text-slate-400 mt-1">Validador de integração CONSINCO & IMENDES</p>
         </div>
@@ -95,7 +120,10 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 border-b border-slate-800 pb-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                    <span class="text-3xl">🕵️</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-amber-400 drop-shadow-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
                     Inspector
                 </h1>
                 <p class="text-xs text-slate-400 mt-0.5 font-medium">Validação e auditoria de malha fiscal multi-empresa</p>
@@ -109,7 +137,6 @@
                     <span id="versaoBackHeader" class="text-cyan-400">BACK: Carregando...</span>
                 </div>
                 
-                <!-- Novo Botão Ferramentas -->
                 <button onclick="abrirModalFerramentas()" class="bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5">
                     <span>🔧</span> Ferramentas
                 </button>
@@ -120,7 +147,7 @@
             </div>
         </div>
         
-        <!-- Área de Pesquisa, Seleção de Cliente e Tipo de Busca -->
+        <!-- Área de Pesquisa -->
         <div class="flex flex-col md:flex-row gap-4 mb-8">
             <select id="selectCliente" class="w-full md:w-64 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input cursor-pointer">
                 <option value="">Carregando empresas...</option>
@@ -140,7 +167,6 @@
             </button>
         </div>
 
-        <!-- Mensagem de Carregamento -->
         <div id="loading" class="hidden flex items-center justify-center py-8">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400 mr-3"></div>
             <p class="text-amber-400 font-semibold text-lg">Consultando malha fiscal na TOTVS...</p>
@@ -185,7 +211,6 @@
                             <div><p class="text-xs text-slate-400">CST COFINS (Sai)</p><p class="font-bold text-white" id="cofinsSaida">-</p></div>
                         </div>
                         
-                        <!-- Bloco IPI Flexível -->
                         <div class="flex flex-wrap items-start gap-x-6 gap-y-4 pt-1">
                             <div class="min-w-[140px]">
                                 <p class="text-xs text-slate-400">Alíq. IPI</p>
@@ -222,7 +247,7 @@
                     </div>
                 </div>
 
-                <!-- BLOCO 3: Regra de Tributação (Divisão) + Botão de Análise -->
+                <!-- BLOCO 3: Regra de Tributação -->
                 <div class="bg-slate-900 border border-amber-500/30 p-5 rounded-lg shadow-xs flex flex-col justify-between">
                     <div>
                         <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-1">3. Tributação e Divisão</h3>
@@ -278,6 +303,70 @@
                     </div>
                 </div>
 
+                <!-- BLOCO 7: Reforma Tributária (CBS) -->
+                <div class="imendes-card p-5 border border-indigo-500/30">
+                    <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-1 flex items-center gap-2">
+                        <span>🏛️</span> 7. Reforma Tributária (CBS)
+                    </h3>
+                    <div class="space-y-3" id="blocoCbs">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><p class="text-[10px] text-slate-400 uppercase">Cenário</p><p class="font-bold text-white text-sm" id="cbsIdCenario">-</p></div>
+                            <div><p class="text-[10px] text-slate-400 uppercase">Status</p><p class="font-bold text-white text-sm" id="cbsStatus">-</p></div>
+                        </div>
+                        <div><p class="text-[10px] text-slate-400 uppercase">Descrição Cenário</p><p class="font-bold text-amber-300 text-xs mt-0.5" id="cbsDescCenario">-</p></div>
+                        <div><p class="text-[10px] text-slate-400 uppercase">Orientação</p><p class="font-bold text-indigo-300 text-[11px] leading-tight mt-0.5" id="cbsOrientacao">-</p></div>
+                        
+                        <div class="grid grid-cols-3 gap-2 bg-slate-900 p-2 rounded border border-slate-800">
+                            <div><p class="text-[10px] text-slate-400 uppercase">CST</p><p class="font-bold text-white text-xs" id="cbsCst">-</p></div>
+                            <div><p class="text-[10px] text-slate-400 uppercase">Class. Trib.</p><p class="font-bold text-white text-xs truncate" title="" id="cbsClassTrib">-</p></div>
+                            <div><p class="text-[10px] text-slate-400 uppercase">Alíquota</p><p class="font-bold text-white text-xs" id="cbsAliquota">-</p></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><p class="text-[10px] text-slate-400 uppercase">Validade Início</p><p class="font-mono text-[10px] text-slate-300" id="cbsValInicio">-</p></div>
+                            <div><p class="text-[10px] text-slate-400 uppercase">Validade Fim</p><p class="font-mono text-[10px] text-slate-300" id="cbsValFim">-</p></div>
+                        </div>
+                        
+                        <div class="space-y-1 mt-2 border-t border-slate-800 pt-2">
+                            <div class="flex justify-between items-center"><p class="text-[10px] text-slate-400 uppercase">Inclusão</p><p class="font-mono text-[10px] text-slate-300" id="cbsInc">-</p></div>
+                            <div class="flex justify-between items-center"><p class="text-[10px] text-slate-400 uppercase">Alteração</p><p class="font-mono text-[10px] text-slate-300" id="cbsAlt">-</p></div>
+                            <div class="flex justify-between items-center"><p class="text-[10px] text-slate-400 uppercase">Usa PDV?</p><p class="font-bold text-[10px] text-white bg-slate-800 px-1.5 py-0.5 rounded" id="cbsPdv">-</p></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BLOCO 8: Reforma Tributária (IBS) -->
+                <div class="imendes-card p-5 border border-teal-500/30">
+                    <h3 class="text-xs font-bold text-teal-400 uppercase tracking-wider mb-4 border-b border-slate-800 pb-1 flex items-center gap-2">
+                        <span>🏛️</span> 8. Reforma Tributária (IBS)
+                    </h3>
+                    <div class="space-y-3" id="blocoIbs">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><p class="text-[10px] text-slate-400 uppercase">Cenário</p><p class="font-bold text-white text-sm" id="ibsIdCenario">-</p></div>
+                            <div><p class="text-[10px] text-slate-400 uppercase">Status</p><p class="font-bold text-white text-sm" id="ibsStatus">-</p></div>
+                        </div>
+                        <div><p class="text-[10px] text-slate-400 uppercase">Descrição Cenário</p><p class="font-bold text-amber-300 text-xs mt-0.5" id="ibsDescCenario">-</p></div>
+                        <div><p class="text-[10px] text-slate-400 uppercase">Orientação</p><p class="font-bold text-teal-300 text-[11px] leading-tight mt-0.5" id="ibsOrientacao">-</p></div>
+                        
+                        <div class="grid grid-cols-3 gap-2 bg-slate-900 p-2 rounded border border-slate-800">
+                            <div><p class="text-[10px] text-slate-400 uppercase">CST</p><p class="font-bold text-white text-xs" id="ibsCst">-</p></div>
+                            <div><p class="text-[10px] text-slate-400 uppercase">Class. Trib.</p><p class="font-bold text-white text-xs truncate" title="" id="ibsClassTrib">-</p></div>
+                            <div><p class="text-[10px] text-slate-400 uppercase">Alíquota</p><p class="font-bold text-white text-xs" id="ibsAliquota">-</p></div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><p class="text-[10px] text-slate-400 uppercase">Validade Início</p><p class="font-mono text-[10px] text-slate-300" id="ibsValInicio">-</p></div>
+                            <div><p class="text-[10px] text-slate-400 uppercase">Validade Fim</p><p class="font-mono text-[10px] text-slate-300" id="ibsValFim">-</p></div>
+                        </div>
+                        
+                        <div class="space-y-1 mt-2 border-t border-slate-800 pt-2">
+                            <div class="flex justify-between items-center"><p class="text-[10px] text-slate-400 uppercase">Inclusão</p><p class="font-mono text-[10px] text-slate-300" id="ibsInc">-</p></div>
+                            <div class="flex justify-between items-center"><p class="text-[10px] text-slate-400 uppercase">Alteração</p><p class="font-mono text-[10px] text-slate-300" id="ibsAlt">-</p></div>
+                            <div class="flex justify-between items-center"><p class="text-[10px] text-slate-400 uppercase">Usa PDV?</p><p class="font-bold text-[10px] text-white bg-slate-800 px-1.5 py-0.5 rounded" id="ibsPdv">-</p></div>
+                        </div>
+                    </div>
+                </div>
+
             </div> <!-- FECHA GRID PRINCIPAL DE INFORMAÇÕES -->
 
             <!-- PAINEL FIXO: API Endpoints Trace -->
@@ -286,27 +375,38 @@
                     <span>API Endpoints Trace</span>
                     <span class="text-[10px] text-emerald-400 font-mono">Status: Ativo</span>
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-xs">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 font-mono text-xs">
                     <!-- Bloco Produto -->
                     <div class="bg-black p-3 rounded border border-slate-900 space-y-2">
                         <div>
-                            <p class="text-slate-400 text-[10px] font-sans font-bold">1A. GET Apps Script (Wrapper):</p>
+                            <p class="text-slate-400 text-[10px] font-sans font-bold">1A. GET Apps Script (Produto):</p>
                             <div class="text-emerald-400 break-all select-all" id="txtGetProduto">-</div>
                         </div>
                         <div class="border-t border-slate-900 pt-1">
-                            <p class="text-amber-300 text-[10px] font-sans font-bold">1B. GET Original (ERP Consinco):</p>
+                            <p class="text-amber-300 text-[10px] font-sans font-bold">1B. GET Original (Consinco):</p>
                             <div class="text-cyan-300 break-all select-all" id="txtGetProdutoOriginal">Aguardando consulta...</div>
                         </div>
                     </div>
                     <!-- Bloco Tributação -->
                     <div class="bg-black p-3 rounded border border-slate-900 space-y-2">
                         <div>
-                            <p class="text-slate-400 text-[10px] font-sans font-bold">2A. GET Apps Script (Wrapper):</p>
+                            <p class="text-slate-400 text-[10px] font-sans font-bold">2A. GET Apps Script (Tributação):</p>
                             <div class="text-emerald-400 break-all select-all" id="txtGetTributacao">-</div>
                         </div>
                         <div class="border-t border-slate-900 pt-1">
-                            <p class="text-amber-300 text-[10px] font-sans font-bold">2B. GET Original (ERP Consinco):</p>
+                            <p class="text-amber-300 text-[10px] font-sans font-bold">2B. GET Original (Consinco):</p>
                             <div class="text-cyan-300 break-all select-all" id="txtGetTributacaoOriginal">Aguardando consulta...</div>
+                        </div>
+                    </div>
+                    <!-- Bloco Reforma -->
+                    <div class="bg-black p-3 rounded border border-slate-900 space-y-2">
+                        <div>
+                            <p class="text-slate-400 text-[10px] font-sans font-bold">3A. GET Apps Script (Reforma):</p>
+                            <div class="text-emerald-400 break-all select-all" id="txtGetReforma">-</div>
+                        </div>
+                        <div class="border-t border-slate-900 pt-1">
+                            <p class="text-amber-300 text-[10px] font-sans font-bold">3B. GET Original (Consinco):</p>
+                            <div class="text-cyan-300 break-all select-all" id="txtGetReformaOriginal">Aguardando consulta...</div>
                         </div>
                     </div>
                 </div>
@@ -433,64 +533,207 @@
         </div>
     </div>
 
-    <!-- MODAL DE FERRAMENTAS / BATCH IPI -->
+    <!-- MODAL DE FERRAMENTAS MULTIPLAS -->
     <div id="modalFerramentas" class="fixed inset-0 bg-slate-950 bg-opacity-85 hidden z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-        <div class="bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col border border-slate-700 overflow-hidden text-slate-200">
+        <div class="bg-slate-900 rounded-xl shadow-2xl w-full max-w-[98vw] md:max-w-5xl max-h-[90vh] flex flex-col border border-slate-700 overflow-hidden text-slate-200">
             
             <div class="bg-slate-950 p-4 border-b border-slate-800 flex items-center justify-between">
                 <h3 class="font-bold text-lg text-white flex items-center gap-2">
-                    <span>🔧</span> Ferramentas: Atualização de IPI em Lote
+                    <span>🔧</span> Central de Ferramentas em Lote
                 </h3>
                 <button onclick="fecharModalFerramentas()" class="text-slate-400 hover:text-red-400 text-3xl font-bold leading-none px-2 cursor-pointer transition-colors">&times;</button>
             </div>
+
+            <!-- MENU DAS ABAS -->
+            <div class="flex gap-2 border-b border-slate-800 px-6 pt-4 bg-slate-950 shrink-0 overflow-x-auto">
+                <button id="tabIpi" onclick="alternarAbaFerramenta('ipi')" class="tab-btn active">
+                    1. Atualização IPI
+                </button>
+                <button id="tabAnalise" onclick="alternarAbaFerramenta('analise')" class="tab-btn inactive">
+                    2. Análise de Tributação
+                </button>
+                <button id="tabRtc" onclick="alternarAbaFerramenta('rtc')" class="tab-btn inactive">
+                    3. Implantador de Condições - RTC
+                </button>
+            </div>
             
-            <div class="p-6 flex-1 overflow-auto flex flex-col gap-6">
-                <!-- Instruções -->
+            <!-- ABA 1: ATUALIZAÇÃO DE IPI -->
+            <div id="ferramentaIpi" class="p-6 flex-1 overflow-auto flex flex-col gap-6">
                 <div class="bg-indigo-950/30 border border-indigo-900/50 p-4 rounded-lg">
-                    <h4 class="text-indigo-400 font-bold text-sm mb-2">Instruções da Planilha:</h4>
+                    <h4 class="text-indigo-400 font-bold text-sm mb-2">Instruções da Planilha (IPI):</h4>
                     <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
                         <li>Você pode subir arquivos Excel (<strong class="text-white">.xlsx, .xls</strong>) ou <strong class="text-white">.csv</strong>.</li>
                         <li><strong>Coluna A:</strong> ID da Família.</li>
                         <li><strong>Coluna B:</strong> Novo valor do IPI (pode usar ponto ou vírgula).</li>
-                        <li>A primeira linha será ignorada automaticamente se contiver texto (como "Família" e "IPI").</li>
+                        <li>A primeira linha será ignorada automaticamente se contiver texto.</li>
                     </ul>
                 </div>
 
-                <!-- Controles -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">1. Selecione o Cliente</label>
-                        <select id="selectClienteFerramenta" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
-                            <option value="">Carregando empresas...</option>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">1. Cliente</label>
+                        <select id="selectClienteIpi" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
+                            <option value="">Carregando...</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">2. Anexe a Planilha</label>
-                        <input type="file" id="inputArquivoIpi" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="w-full p-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-900 hover:file:bg-amber-500 file:cursor-pointer cursor-pointer">
+                        <input type="file" id="inputArquivoIpi" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="w-full p-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-300 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-900 hover:file:bg-amber-500 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Defina 0 para velocidade máxima">3. Atraso (ms)</label>
+                        <input type="number" id="delayIpi" value="200" min="0" step="10" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
                     </div>
                 </div>
 
                 <button id="btnProcessarLote" onclick="processarLoteIPI()" class="w-full imendes-btn py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
-                    <span>▶ Iniciar Processamento</span>
+                    <span>▶ Iniciar Processamento IPI</span>
                 </button>
 
-                <!-- Console de Logs -->
                 <div class="flex-1 flex flex-col min-h-[250px]">
                     <h4 class="text-xs font-bold text-slate-400 uppercase mb-2 flex justify-between items-end">
                         <span>Console de Execução</span>
-                        <span id="contadorLote" class="text-[10px] text-amber-400 font-mono">0 / 0</span>
+                        <span id="contadorLoteIpi" class="text-[10px] text-amber-400 font-mono">0 / 0</span>
                     </h4>
                     <pre id="logFerramentaIpi" class="flex-1 bg-black border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-slate-300 overflow-y-auto log-scroll whitespace-pre-wrap">Aguardando arquivo...</pre>
                 </div>
             </div>
+
+            <!-- ABA 2: ANÁLISE DE TRIBUTAÇÃO -->
+            <div id="ferramentaAnalise" class="p-6 flex-1 overflow-auto flex flex-col gap-6 hidden">
+                <div class="bg-emerald-950/30 border border-emerald-900/50 p-4 rounded-lg">
+                    <h4 class="text-emerald-400 font-bold text-sm mb-2">Instruções da Planilha (Consulta):</h4>
+                    <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
+                        <li>Suba um arquivo Excel (<strong class="text-white">.xlsx, .xls</strong>) com o SKU do Produto na <strong>Coluna A</strong>.</li>
+                        <li>Os SKUs serão agrupados e disparados em <strong class="text-white">lotes paralelos</strong> através dos servidores do Google.</li>
+                        <li>Aguarde o progresso. Se precisar interromper, clique em "Parar e Baixar Parcial".</li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">1. Cliente</label>
+                        <select id="selectClienteAnalise" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">2. Planilha SKUs</label>
+                        <input type="file" id="inputArquivoAnalise" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="w-full p-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-300 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-emerald-400 file:text-slate-900 hover:file:bg-emerald-500 cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Quantidade de SKUs por requisição simultânea">3. SKUs por Lote</label>
+                        <input type="number" id="tamanhoLoteAnalise" value="50" min="1" max="200" step="10" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Atraso aplicado entre cada LOTE enviado">4. Atraso Lote (ms)</label>
+                        <input type="number" id="delayAnalise" value="0" min="0" step="10" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
+                    </div>
+                </div>
+
+                <div class="flex gap-3">
+                    <button id="btnStartAnalise" onclick="processarAnaliseTributacao()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
+                        <span>▶ Iniciar Consulta em Lote Paralelo</span>
+                    </button>
+                    <button id="btnStopAnalise" onclick="pararAnaliseTributacao()" class="hidden flex-1 bg-red-600 hover:bg-red-500 text-white py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
+                        <span>⏹ Parar e Baixar Parcial</span>
+                    </button>
+                    <button id="btnDownloadAnalise" onclick="baixarExcelAnalise()" class="hidden flex-1 bg-cyan-600 hover:bg-cyan-500 text-white py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
+                        <span>⬇️ Baixar Planilha Final</span>
+                    </button>
+                </div>
+
+                <div class="flex-1 flex flex-col pt-2">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-2 flex justify-between items-end">
+                        <span>Progresso da Consulta (Lotes de SKUs)</span>
+                        <span id="progressAnaliseText" class="text-[10px] text-emerald-400 font-mono">Aguardando início...</span>
+                    </h4>
+                    <div class="w-full bg-slate-950 rounded-full h-5 border border-slate-800 overflow-hidden relative">
+                        <div id="progressAnaliseBar" class="bg-emerald-500 h-5 transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                    <div class="mt-4 p-4 bg-black border border-slate-800 rounded flex gap-6 text-xs text-slate-400 font-mono">
+                        <div>SKUs Lidos: <span id="analiseSucesso" class="text-emerald-400 font-bold text-sm">0</span></div>
+                        <div>Erros / Ñ Encontrado: <span id="analiseErro" class="text-red-400 font-bold text-sm">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 3: IMPLANTADOR DE CONDIÇÕES - RTC -->
+            <div id="ferramentaRtc" class="p-6 flex-1 overflow-auto flex flex-col gap-6 hidden">
+                <div class="bg-rose-950/30 border border-rose-900/50 p-4 rounded-lg">
+                    <h4 class="text-rose-400 font-bold text-sm mb-2">Instruções de Implantação (Reforma Tributária):</h4>
+                    <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
+                        <li>Suba uma planilha com a <strong>Coluna A</strong> = ID Família e a <strong>Coluna B</strong> = CClassTrib.</li>
+                        <li>O sistema identificará todos os CClassTribs únicos e buscará os Cenários Ativos.</li>
+                        <li>Você revisará os IDs de Cenário na tela e disparará a vinculação em lote.</li>
+                    </ul>
+                </div>
+
+                <!-- Passo 1: Upload -->
+                <div id="rtcPasso1" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">1. Cliente</label>
+                            <select id="selectClienteRtc" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
+                                <option value="">Carregando...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">2. Anexe a Planilha (Família x CClassTrib)</label>
+                            <input type="file" id="inputArquivoRtc" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="w-full p-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-300 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-rose-400 file:text-slate-900 hover:file:bg-rose-500 cursor-pointer">
+                        </div>
+                    </div>
+                    <button id="btnAnalisarRtc" onclick="analisarPlanilhaRtc()" class="w-full bg-rose-600 hover:bg-rose-500 text-white py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
+                        <span>▶ Analisar Planilha e Buscar Cenários</span>
+                    </button>
+                </div>
+
+                <!-- Passo 2: Mapeamento e Confirmação -->
+                <div id="rtcPasso2" class="hidden flex-col gap-4 flex-1">
+                    <h4 class="text-sm font-bold text-white border-b border-slate-800 pb-2">Confirmação de Cenários por CClassTrib</h4>
+                    <div class="flex-1 overflow-auto border border-slate-800 rounded bg-slate-950">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead class="bg-slate-900 text-slate-300 uppercase font-bold sticky top-0 shadow-xs">
+                                <tr>
+                                    <th class="p-3 border-r border-b border-slate-800 w-1/4">CClassTrib</th>
+                                    <th class="p-3 border-r border-b border-slate-800 w-1/4 text-center">Famílias Impactadas</th>
+                                    <th class="p-3 border-b border-slate-800">Cenários Encontrados (Ativos) - Edite se necessário</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbodyRtc" class="divide-y divide-slate-800 text-slate-300">
+                                <!-- Preenchido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="cancelarRtc()" class="w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg transition-all cursor-pointer font-bold">
+                            Cancelar
+                        </button>
+                        <button id="btnImplantarRtc" onclick="implantarCondicoesRtc()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
+                            <span>🚀 Confirmar e Implantar Condições</span>
+                        </button>
+                    </div>
+
+                    <!-- Console do RTC -->
+                    <div class="flex flex-col h-40 mt-4">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-2 flex justify-between items-end">
+                            <span>Console de Implantação</span>
+                        </h4>
+                        <pre id="logFerramentaRtc" class="flex-1 bg-black border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-slate-300 overflow-y-auto log-scroll whitespace-pre-wrap">Aguardando análise...</pre>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyGurMgwyRN3YxFmSMGLOkr7fjqQynypO4pO--CaSZLOJKI1cOOOCgFJ0TGolZkWrrCQ/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwmYoohm7QpARhIJrclxr-L_DwEszU1BGySNqzZyznxS_-2ucFeMtlOETqcgvt89b5u/exec";
         
         // VERSÃO FRONT ATUALIZADA
-        const VERSAO_FRONT = "v3.6.0"; 
+        const VERSAO_FRONT = "v5.0.0"; 
 
         let idTributacaoAtual = null;
         let clienteAtualId = null;
@@ -521,7 +764,6 @@
 
         window.onload = function() {
             carregarVersoes();
-            
             const usuarioSalvo = localStorage.getItem('imendes_usuario');
             if (usuarioSalvo) {
                 document.getElementById('telaLogin').classList.add('hidden');
@@ -562,23 +804,28 @@
             try {
                 const response = await fetch(`${WEB_APP_URL}?action=listar_clientes`);
                 const data = await response.json();
+                
                 const selectMain = document.getElementById('selectCliente');
-                const selectFerramenta = document.getElementById('selectClienteFerramenta');
+                const selectIpi = document.getElementById('selectClienteIpi');
+                const selectAnalise = document.getElementById('selectClienteAnalise');
+                const selectRtc = document.getElementById('selectClienteRtc');
                 
                 selectMain.innerHTML = '<option value="">Selecione o Cliente...</option>';
-                selectFerramenta.innerHTML = '<option value="">Selecione o Cliente...</option>';
+                selectIpi.innerHTML = '<option value="">Selecione o Cliente...</option>';
+                selectAnalise.innerHTML = '<option value="">Selecione o Cliente...</option>';
+                selectRtc.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 
                 if (data.clientes && Array.isArray(data.clientes)) {
                     data.clientes.forEach(c => {
-                        let optMain = document.createElement('option');
-                        optMain.value = c.id;
-                        optMain.innerText = c.nome;
+                        let optMain = new Option(c.nome, c.id);
+                        let optIpi = new Option(c.nome, c.id);
+                        let optAnalise = new Option(c.nome, c.id);
+                        let optRtc = new Option(c.nome, c.id);
+                        
                         selectMain.appendChild(optMain);
-
-                        let optFerramenta = document.createElement('option');
-                        optFerramenta.value = c.id;
-                        optFerramenta.innerText = c.nome;
-                        selectFerramenta.appendChild(optFerramenta);
+                        selectIpi.appendChild(optIpi);
+                        selectAnalise.appendChild(optAnalise);
+                        selectRtc.appendChild(optRtc);
                     });
                 }
             } catch (error) {
@@ -641,6 +888,56 @@
             document.getElementById('loginSenha').value = '';
         }
 
+        // ==========================================
+        // PREENCHIMENTO REFORMA TRIBUTÁRIA
+        // ==========================================
+        function preencherBlocoReforma(prefixo, dados) {
+            const fmtData = (d) => {
+                if(!d) return "-";
+                const dt = new Date(d);
+                return dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+            };
+            const fmtDataCurta = (d) => {
+                if(!d) return "-";
+                const dt = new Date(d);
+                return dt.toLocaleDateString('pt-BR');
+            };
+
+            if (!dados) {
+                document.getElementById(`${prefixo}IdCenario`).innerText = "N/A";
+                document.getElementById(`${prefixo}Status`).innerText = "N/A";
+                document.getElementById(`${prefixo}DescCenario`).innerText = "N/A";
+                document.getElementById(`${prefixo}Orientacao`).innerText = "N/A";
+                document.getElementById(`${prefixo}Cst`).innerText = "N/A";
+                document.getElementById(`${prefixo}ClassTrib`).innerText = "N/A";
+                document.getElementById(`${prefixo}ClassTrib`).title = "";
+                document.getElementById(`${prefixo}Aliquota`).innerText = "N/A";
+                document.getElementById(`${prefixo}ValInicio`).innerText = "N/A";
+                document.getElementById(`${prefixo}ValFim`).innerText = "N/A";
+                document.getElementById(`${prefixo}Inc`).innerText = "N/A";
+                document.getElementById(`${prefixo}Alt`).innerText = "N/A";
+                document.getElementById(`${prefixo}Pdv`).innerText = "N/A";
+                return;
+            }
+
+            document.getElementById(`${prefixo}IdCenario`).innerText = dados.idCenario || "N/A";
+            document.getElementById(`${prefixo}Status`).innerText = dados.status || "N/A";
+            document.getElementById(`${prefixo}DescCenario`).innerText = dados.descCenario || "N/A";
+            document.getElementById(`${prefixo}Orientacao`).innerText = dados.orientacao || "N/A";
+            document.getElementById(`${prefixo}Cst`).innerText = dados.codigoCST || "N/A";
+            document.getElementById(`${prefixo}ClassTrib`).innerText = dados.codigoClassTrib || "N/A";
+            document.getElementById(`${prefixo}ClassTrib`).title = dados.codigoClassTrib || "";
+            document.getElementById(`${prefixo}Aliquota`).innerText = dados.aliquota !== null ? dados.aliquota : "N/A";
+            document.getElementById(`${prefixo}ValInicio`).innerText = fmtDataCurta(dados.dtaInicialValidade);
+            document.getElementById(`${prefixo}ValFim`).innerText = fmtDataCurta(dados.dtaFinalValidade);
+            document.getElementById(`${prefixo}Inc`).innerText = `${dados.usuInclusao || '-'} | ${fmtData(dados.dtaHoraInclusao)}`;
+            document.getElementById(`${prefixo}Alt`).innerText = `${dados.usuUltimaAlteracao || '-'} | ${fmtData(dados.dtaHoraUltimaAlteracao)}`;
+            document.getElementById(`${prefixo}Pdv`).innerText = dados.indUtilizaPDV === 'S' ? 'SIM' : 'NÃO';
+        }
+
+        // ==========================================
+        // LÓGICA DO PAINEL PRINCIPAL (CARD DE CONSULTA)
+        // ==========================================
         async function buscarDados() {
             const clienteId = document.getElementById('selectCliente').value;
             const tipoBusca = document.getElementById('selectTipoBusca').value;
@@ -663,6 +960,9 @@
             document.getElementById('btnVerTributacao').classList.add('hidden');
             
             cancelarEdicaoIpi();
+            preencherBlocoReforma('cbs', null);
+            preencherBlocoReforma('ibs', null);
+            document.getElementById('txtGetReformaOriginal').innerText = "Aguardando consulta...";
 
             let urlGetProduto = "";
             if (tipoBusca === 'sku') {
@@ -759,6 +1059,31 @@
 
                 document.getElementById('jsonCompleto').innerText = JSON.stringify(produto, null, 2);
                 document.getElementById('resultado').classList.remove('hidden');
+
+                if (idFamiliaAtual) {
+                    document.getElementById('txtGetReforma').innerText = `${WEB_APP_URL}?action=reforma&cliente=${encodeURIComponent(clienteId)}&idFamilia=${idFamiliaAtual}`;
+                    try {
+                        const resRef = await fetch(`${WEB_APP_URL}?action=reforma&cliente=${encodeURIComponent(clienteId)}&idFamilia=${idFamiliaAtual}`);
+                        const datRef = await resRef.json();
+
+                        if(datRef.endpointOriginal) {
+                            document.getElementById('txtGetReformaOriginal').innerText = datRef.endpointOriginal;
+                        }
+
+                        let cbs = null, ibs = null;
+                        if (datRef.items && Array.isArray(datRef.items)) {
+                            cbs = datRef.items.find(i => i.idImposto === 1);
+                            ibs = datRef.items.find(i => i.idImposto === 2);
+                        }
+
+                        preencherBlocoReforma('cbs', cbs);
+                        preencherBlocoReforma('ibs', ibs);
+
+                    } catch(e) {
+                        console.error("Erro ao buscar reforma", e);
+                        document.getElementById('txtGetReformaOriginal').innerText = "Erro ao executar consulta da reforma.";
+                    }
+                }
                 
             } catch (error) {
                 alert("Erro ao conectar com o servidor. Detalhes: " + error.message);
@@ -768,7 +1093,7 @@
         }
 
         // ==========================================
-        // LÓGICA DE EDIÇÃO DO IPI INDIVIDUAL (CARD)
+        // EDIÇÃO INDIVIDUAL IPI
         // ==========================================
         function iniciarEdicaoIpi() {
             const spanIpi = document.getElementById('aliqIpi');
@@ -780,7 +1105,6 @@
             if (valorAtual === 'N/A' || valorAtual === '-') valorAtual = 0;
 
             inputEdit.value = valorAtual;
-            
             spanIpi.classList.add('hidden');
             btnEditar.classList.add('hidden');
             containerEdit.classList.remove('hidden');
@@ -828,19 +1152,15 @@
         }
 
         // ==========================================
-        // LÓGICA DE FERRAMENTAS - LOTE IPI (EXCEL)
+        // GERENCIAMENTO DE ABAS - FERRAMENTAS
         // ==========================================
         function abrirModalFerramentas() {
-            // Se já houver um cliente preenchido na tela principal, passa ele pro modal
             const clienteMain = document.getElementById('selectCliente').value;
             if (clienteMain) {
-                document.getElementById('selectClienteFerramenta').value = clienteMain;
+                document.getElementById('selectClienteIpi').value = clienteMain;
+                document.getElementById('selectClienteAnalise').value = clienteMain;
+                document.getElementById('selectClienteRtc').value = clienteMain;
             }
-            
-            document.getElementById('inputArquivoIpi').value = "";
-            document.getElementById('logFerramentaIpi').innerHTML = "Aguardando arquivo...";
-            document.getElementById('contadorLote').innerText = "0 / 0";
-            
             document.getElementById('modalFerramentas').classList.remove('hidden');
         }
 
@@ -848,21 +1168,42 @@
             document.getElementById('modalFerramentas').classList.add('hidden');
         }
 
+        function alternarAbaFerramenta(aba) {
+            ['tabIpi', 'tabAnalise', 'tabRtc'].forEach(t => {
+                document.getElementById(t).classList.remove('active', 'border-amber-400', 'text-amber-400');
+                document.getElementById(t).classList.add('inactive', 'border-transparent');
+            });
+            ['ferramentaIpi', 'ferramentaAnalise', 'ferramentaRtc'].forEach(f => {
+                document.getElementById(f).classList.add('hidden');
+            });
+
+            if (aba === 'ipi') {
+                document.getElementById('tabIpi').classList.remove('inactive', 'border-transparent');
+                document.getElementById('tabIpi').classList.add('active', 'border-amber-400', 'text-amber-400');
+                document.getElementById('ferramentaIpi').classList.remove('hidden');
+            } else if (aba === 'analise') {
+                document.getElementById('tabAnalise').classList.remove('inactive', 'border-transparent');
+                document.getElementById('tabAnalise').classList.add('active', 'border-amber-400', 'text-amber-400');
+                document.getElementById('ferramentaAnalise').classList.remove('hidden');
+            } else if (aba === 'rtc') {
+                document.getElementById('tabRtc').classList.remove('inactive', 'border-transparent');
+                document.getElementById('tabRtc').classList.add('active', 'border-amber-400', 'text-amber-400');
+                document.getElementById('ferramentaRtc').classList.remove('hidden');
+            }
+        }
+
+        // ==========================================
+        // ABA 1: BATCH IPI
+        // ==========================================
         async function processarLoteIPI() {
-            const clienteId = document.getElementById('selectClienteFerramenta').value;
+            const clienteId = document.getElementById('selectClienteIpi').value;
             const fileInput = document.getElementById('inputArquivoIpi');
             const logArea = document.getElementById('logFerramentaIpi');
             const btnProcessar = document.getElementById('btnProcessarLote');
+            const delayMs = parseInt(document.getElementById('delayIpi').value) || 0;
             
-            if (!clienteId) {
-                alert("Por favor, selecione um cliente na etapa 1.");
-                return;
-            }
-            
-            if (!fileInput.files.length) {
-                alert("Por favor, anexe uma planilha na etapa 2.");
-                return;
-            }
+            if (!clienteId) return alert("Por favor, selecione um cliente na etapa 1.");
+            if (!fileInput.files.length) return alert("Por favor, anexe uma planilha na etapa 2.");
 
             const file = fileInput.files[0];
             const reader = new FileReader();
@@ -874,91 +1215,387 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const jsonRows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                    const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
 
-                    let registrosParaProcessar = [];
-
-                    // Varre a planilha montando os dados
+                    let registros = [];
                     for (let i = 0; i < jsonRows.length; i++) {
                         const row = jsonRows[i];
-                        if (row.length < 2) continue; // Ignora linha vazia
-
-                        const idFamiliaRaw = String(row[0]).trim();
-                        const valorIpiRaw = String(row[1]).trim();
-
-                        // Pula cabeçalho se houver (ex: se a pessoa escreveu "Familia" na coluna A)
-                        if (idFamiliaRaw.toLowerCase() === 'familia' || isNaN(parseInt(idFamiliaRaw))) {
-                            continue;
-                        }
-
-                        registrosParaProcessar.push({ familia: idFamiliaRaw, ipi: valorIpiRaw });
+                        if (row.length < 2) continue;
+                        const f = String(row[0]).trim();
+                        const ipi = String(row[1]).trim();
+                        if (f.toLowerCase() === 'familia' || isNaN(parseInt(f))) continue;
+                        registros.push({ familia: f, ipi: ipi });
                     }
 
-                    const total = registrosParaProcessar.length;
-                    
-                    if(total === 0) {
-                        logArea.innerHTML = `<span class="text-red-400">Nenhum dado válido encontrado na planilha. Verifique as colunas A e B.</span>`;
-                        btnProcessar.disabled = false;
-                        btnProcessar.innerHTML = `<span>▶ Iniciar Processamento</span>`;
-                        return;
-                    }
+                    const total = registros.length;
+                    if(total === 0) throw new Error("Nenhum dado válido encontrado.");
 
-                    logArea.innerHTML = `<span class="text-cyan-400">Iniciando processamento de ${total} registros...</span>\n\n`;
-                    let sucessos = 0;
-                    let erros = 0;
+                    logArea.innerHTML = `<span class="text-cyan-400">Processando ${total} registros com atraso de ${delayMs}ms...</span>\n\n`;
+                    let suc = 0, err = 0;
 
-                    // Laço sequencial seguro (com await) para não travar a API TOTVS
                     for (let i = 0; i < total; i++) {
-                        const reg = registrosParaProcessar[i];
-                        document.getElementById('contadorLote').innerText = `${i + 1} / ${total}`;
+                        const reg = registros[i];
+                        document.getElementById('contadorLoteIpi').innerText = `${i + 1} / ${total}`;
+                        logArea.innerHTML += `Família <strong class="text-white">${reg.familia}</strong> (IPI: ${reg.ipi}) ... `;
                         
-                        logArea.innerHTML += `Processando Família <strong class="text-white">${reg.familia}</strong> (Novo IPI: ${reg.ipi}) ... `;
-                        logArea.scrollTop = logArea.scrollHeight;
-
                         const urlEndpoint = `${WEB_APP_URL}?action=atualizar_ipi&cliente=${encodeURIComponent(clienteId)}&idFamilia=${encodeURIComponent(reg.familia)}&valorIpi=${encodeURIComponent(reg.ipi)}`;
 
                         try {
-                            const response = await fetch(urlEndpoint);
-                            const dataResp = await response.json();
-
-                            if (dataResp.sucesso) {
-                                logArea.innerHTML += `<span class="text-emerald-400 font-bold">SUCESSO</span>\n`;
-                                sucessos++;
-                            } else {
-                                logArea.innerHTML += `<span class="text-red-400 font-bold">ERRO</span> <span class="text-slate-500">(${dataResp.erro || 'Desconhecido'})</span>\n`;
-                                erros++;
-                            }
-                        } catch (err) {
-                            logArea.innerHTML += `<span class="text-red-400 font-bold">FALHA DE CONEXÃO</span>\n`;
-                            erros++;
+                            const res = await fetch(urlEndpoint);
+                            const dat = await res.json();
+                            if (dat.sucesso) { logArea.innerHTML += `<span class="text-emerald-400">SUCESSO</span>\n`; suc++; } 
+                            else { logArea.innerHTML += `<span class="text-red-400">ERRO</span>\n`; err++; }
+                        } catch(ex) {
+                            logArea.innerHTML += `<span class="text-red-400">FALHA</span>\n`; err++;
                         }
-
                         logArea.scrollTop = logArea.scrollHeight;
                         
-                        // DEITA A APLICAÇÃO POR 400ms ENTRE CADA REQUISIÇÃO (Evita bloqueio da TOTVS)
-                        await new Promise(r => setTimeout(r, 400));
+                        if (delayMs > 0) await new Promise(r => setTimeout(r, delayMs)); 
                     }
 
-                    logArea.innerHTML += `\n<span class="text-amber-400">=================================</span>\n`;
-                    logArea.innerHTML += `<span class="text-amber-400 font-bold">LOTE FINALIZADO!</span>\n`;
-                    logArea.innerHTML += `<span class="text-emerald-400">Sucessos: ${sucessos}</span> | <span class="text-red-400">Erros: ${erros}</span>\n`;
-                    logArea.scrollTop = logArea.scrollHeight;
-
+                    logArea.innerHTML += `\n<span class="text-amber-400 font-bold">LOTE FINALIZADO! S: ${suc} | E: ${err}</span>\n`;
                 } catch (ex) {
-                    logArea.innerHTML = `<span class="text-red-400">Erro fatal ao ler o arquivo Excel: ${ex.message}</span>`;
+                    logArea.innerHTML = `<span class="text-red-400">Erro: ${ex.message}</span>`;
                 } finally {
                     btnProcessar.disabled = false;
-                    btnProcessar.innerHTML = `<span>▶ Iniciar Processamento</span>`;
+                    btnProcessar.innerHTML = `<span>▶ Iniciar Processamento IPI</span>`;
                 }
             };
-
             reader.readAsArrayBuffer(file);
         }
 
         // ==========================================
-        // MATRIZ DE TRIBUTAÇÃO C5
+        // ABA 2: ANÁLISE DE TRIBUTAÇÃO EM LOTE PARALELO
+        // ==========================================
+        let isAnaliseRunning = false;
+        let dadosAnaliseExcel = [];
+
+        async function processarAnaliseTributacao() {
+            const clienteId = document.getElementById('selectClienteAnalise').value;
+            const fileInput = document.getElementById('inputArquivoAnalise');
+            const loteSize = parseInt(document.getElementById('tamanhoLoteAnalise').value) || 50;
+            const delayMs = parseInt(document.getElementById('delayAnalise').value) || 0;
+            
+            if (!clienteId) return alert("Por favor, selecione um cliente na etapa 1.");
+            if (!fileInput.files.length) return alert("Por favor, anexe uma planilha de SKUs.");
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            document.getElementById('btnStartAnalise').classList.add('hidden');
+            document.getElementById('btnStopAnalise').classList.remove('hidden');
+            document.getElementById('btnDownloadAnalise').classList.add('hidden');
+            
+            const pBar = document.getElementById('progressAnaliseBar');
+            const pText = document.getElementById('progressAnaliseText');
+            const valSuc = document.getElementById('analiseSucesso');
+            const valErr = document.getElementById('analiseErro');
+
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+
+                    let skus = [];
+                    for (let i = 0; i < jsonRows.length; i++) {
+                        const val = String(jsonRows[i][0] || "").trim();
+                        if(val && val.toLowerCase() !== 'sku' && val.toLowerCase() !== 'idproduto') {
+                            skus.push(val);
+                        }
+                    }
+
+                    const totalSkus = skus.length;
+                    if(totalSkus === 0) throw new Error("Nenhum SKU válido encontrado na Coluna A.");
+
+                    const TAMANHO_LOTE = loteSize;
+                    const chunks = [];
+                    for (let i = 0; i < totalSkus; i += TAMANHO_LOTE) {
+                        chunks.push(skus.slice(i, i + TAMANHO_LOTE));
+                    }
+
+                    isAnaliseRunning = true;
+                    dadosAnaliseExcel = [];
+                    let suc = 0, err = 0;
+
+                    valSuc.innerText = "0"; valErr.innerText = "0";
+                    pBar.style.width = "0%";
+
+                    for (let i = 0; i < chunks.length; i++) {
+                        if(!isAnaliseRunning) break; 
+
+                        const chunkAtual = chunks[i];
+                        pText.innerText = `Processando Lote ${i+1} de ${chunks.length} (${chunkAtual.length} SKUs enviados simultaneamente)`;
+                        pBar.style.width = `${((i+1)/chunks.length)*100}%`;
+
+                        const skusAgrupados = chunkAtual.join(',');
+                        const urlEndpoint = `${WEB_APP_URL}?action=analise_lote&cliente=${encodeURIComponent(clienteId)}&skus=${encodeURIComponent(skusAgrupados)}`;
+
+                        try {
+                            const res = await fetch(urlEndpoint);
+                            const dat = await res.json();
+
+                            if (dat.sucesso && dat.resultados) {
+                                dat.resultados.forEach(itemResult => {
+                                    if (itemResult.sucesso && itemResult.dados && itemResult.dados.items && itemResult.dados.items.length > 0) {
+                                        const prod = itemResult.dados.items[0];
+                                        const divi = prod.familia?.familiaDivisao?.[0] || {};
+                                        
+                                        let eans = [];
+                                        if(prod.produtoCodigo) {
+                                            eans = prod.produtoCodigo.filter(c => c.tipoCodigo === 'E').map(c => c.codigoAcesso);
+                                        }
+
+                                        dadosAnaliseExcel.push({
+                                            "SKU": prod.idProduto || itemResult.sku,
+                                            "Descrição Completa": prod.descricaoCompleta || "",
+                                            "EAN": eans.join(" | "),
+                                            "ID Tributação": divi.idTributacao || "N/A",
+                                            "Descrição Tributação": divi.tributacao?.descricao || "N/A"
+                                        });
+                                        suc++;
+                                    } else {
+                                        dadosAnaliseExcel.push({ "SKU": itemResult.sku, "Descrição Completa": "NÃO ENCONTRADO / ERRO", "EAN": "", "ID Tributação": "", "Descrição Tributação": "" });
+                                        err++;
+                                    }
+                                });
+                                valSuc.innerText = suc;
+                                valErr.innerText = err;
+                            } else {
+                                chunkAtual.forEach(sku => {
+                                    dadosAnaliseExcel.push({ "SKU": sku, "Descrição Completa": "ERRO NO LOTE", "EAN": "", "ID Tributação": "", "Descrição Tributação": "" });
+                                    err++;
+                                });
+                                valErr.innerText = err;
+                            }
+                        } catch(ex) {
+                            chunkAtual.forEach(sku => {
+                                dadosAnaliseExcel.push({ "SKU": sku, "Descrição Completa": "FALHA DE CONEXÃO", "EAN": "", "ID Tributação": "", "Descrição Tributação": "" });
+                                err++;
+                            });
+                            valErr.innerText = err;
+                        }
+                        
+                        if (delayMs > 0) await new Promise(r => setTimeout(r, delayMs)); 
+                    }
+
+                    if(isAnaliseRunning) {
+                        pText.innerText = `Lotes Finalizados! Arquivo pronto para download.`;
+                        pBar.style.width = `100%`;
+                    }
+                    
+                } catch (ex) {
+                    alert("Erro ao ler planilha: " + ex.message);
+                } finally {
+                    isAnaliseRunning = false;
+                    document.getElementById('btnStartAnalise').classList.remove('hidden');
+                    document.getElementById('btnStopAnalise').classList.add('hidden');
+                    
+                    if(dadosAnaliseExcel.length > 0) {
+                        document.getElementById('btnDownloadAnalise').classList.remove('hidden');
+                    }
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function pararAnaliseTributacao() {
+            isAnaliseRunning = false;
+            document.getElementById('progressAnaliseText').innerText = "Processamento Interrompido. Você pode baixar o que foi salvo até agora.";
+        }
+
+        function baixarExcelAnalise() {
+            if(dadosAnaliseExcel.length === 0) return alert("Nenhum dado para baixar.");
+            const ws = XLSX.utils.json_to_sheet(dadosAnaliseExcel);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Tributacao_Inspector");
+            XLSX.writeFile(wb, "C5_Analise_Tributacao.xlsx");
+        }
+
+
+        // ==========================================
+        // ABA 3: IMPLANTADOR DE CONDIÇÕES - RTC
+        // ==========================================
+        let rtcFamiliasPorClassTrib = {};
+        let rtcCenariosAtivos = [];
+        let rtcClienteId = null;
+
+        async function analisarPlanilhaRtc() {
+            rtcClienteId = document.getElementById('selectClienteRtc').value;
+            const fileInput = document.getElementById('inputArquivoRtc');
+            const btn = document.getElementById('btnAnalisarRtc');
+            
+            if (!rtcClienteId) return alert("Por favor, selecione um cliente na etapa 1.");
+            if (!fileInput.files.length) return alert("Por favor, anexe uma planilha na etapa 2.");
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            btn.disabled = true;
+            btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-900 mr-2"></div> Analisando e Buscando API...`;
+
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
+
+                    rtcFamiliasPorClassTrib = {};
+
+                    for (let i = 0; i < jsonRows.length; i++) {
+                        const row = jsonRows[i];
+                        if (row.length < 2) continue;
+                        let fam = String(row[0]).trim();
+                        let cclass = String(row[1]).trim();
+                        
+                        if (fam.toLowerCase() === 'familia' || isNaN(parseInt(fam))) continue;
+
+                        if(!rtcFamiliasPorClassTrib[cclass]) {
+                            rtcFamiliasPorClassTrib[cclass] = [];
+                        }
+                        rtcFamiliasPorClassTrib[cclass].push(fam);
+                    }
+
+                    if(Object.keys(rtcFamiliasPorClassTrib).length === 0) {
+                        throw new Error("Nenhum dado válido encontrado. Certifique-se de que a Coluna A tenha ID Família numérico e a Coluna B tenha CClassTrib.");
+                    }
+
+                    // Busca TODOS os cenários da Reforma daquele cliente
+                    const urlEndpoint = `${WEB_APP_URL}?action=listar_cenarios&cliente=${encodeURIComponent(rtcClienteId)}`;
+                    const res = await fetch(urlEndpoint);
+                    const dat = await res.json();
+
+                    if (!dat.sucesso) {
+                        throw new Error(dat.erro || "Falha ao consultar cenários.");
+                    }
+
+                    // Filtra apenas os cenários ativos
+                    rtcCenariosAtivos = (dat.dados.items || []).filter(c => c.status === 'A');
+
+                    // Monta a Tabela de Mapeamento na UI
+                    const tbody = document.getElementById('tbodyRtc');
+                    tbody.innerHTML = "";
+
+                    for(let cclass in rtcFamiliasPorClassTrib) {
+                        const familiasVinculadas = rtcFamiliasPorClassTrib[cclass];
+                        
+                        // Cruza o CClassTrib da planilha com o codigoClassTrib da API
+                        const matchedScenarios = rtcCenariosAtivos
+                            .filter(c => String(c.codigoClassTrib).trim() === cclass)
+                            .map(c => c.idCenario);
+                            
+                        const sugestaoIds = matchedScenarios.join(', ');
+
+                        const tr = document.createElement('tr');
+                        tr.className = "hover:bg-slate-900";
+                        tr.innerHTML = `
+                            <td class="p-3 border-r border-b border-slate-800 font-mono text-amber-400 font-bold">${cclass}</td>
+                            <td class="p-3 border-r border-b border-slate-800 text-center">
+                                <span class="bg-slate-800 text-slate-300 px-2 py-1 rounded text-xs">${familiasVinculadas.length} famílias</span>
+                            </td>
+                            <td class="p-3 border-b border-slate-800">
+                                <input type="text" data-cclass="${cclass}" value="${sugestaoIds}" placeholder="Ex: 113, 114" class="w-full p-2 border border-slate-700 bg-black rounded text-emerald-400 font-bold focus:outline-none focus:border-amber-400 rtc-input-map">
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    }
+
+                    document.getElementById('rtcPasso1').classList.add('hidden');
+                    document.getElementById('rtcPasso2').classList.remove('hidden');
+                    document.getElementById('rtcPasso2').classList.add('flex');
+
+                } catch (ex) {
+                    alert("Erro RTC: " + ex.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `<span>▶ Analisar Planilha e Buscar Cenários</span>`;
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function cancelarRtc() {
+            document.getElementById('rtcPasso2').classList.add('hidden');
+            document.getElementById('rtcPasso2').classList.remove('flex');
+            document.getElementById('rtcPasso1').classList.remove('hidden');
+            document.getElementById('logFerramentaRtc').innerHTML = "Aguardando análise...";
+            document.getElementById('inputArquivoRtc').value = "";
+        }
+
+        async function implantarCondicoesRtc() {
+            const btn = document.getElementById('btnImplantarRtc');
+            const logArea = document.getElementById('logFerramentaRtc');
+            const inputsMap = document.querySelectorAll('.rtc-input-map');
+
+            let cenariosMappingToFamilias = {}; 
+
+            // Varre as inputs na tela que o usuário confirmou
+            for(let input of inputsMap) {
+                const cclass = input.getAttribute('data-cclass');
+                const inputValue = input.value.trim();
+                
+                if(!inputValue) continue; // Pula se estiver em branco
+
+                // Extrai os IDs de cenário digitados separados por vírgula
+                const idsCenario = inputValue.split(',').map(id => id.trim()).filter(id => id !== "");
+                const familiasDesseCclass = rtcFamiliasPorClassTrib[cclass];
+
+                // Agrupa as Famílias DENTRO de cada Cenário
+                for(let id of idsCenario) {
+                    if(!cenariosMappingToFamilias[id]) cenariosMappingToFamilias[id] = new Set();
+                    familiasDesseCclass.forEach(f => cenariosMappingToFamilias[id].add(f));
+                }
+            }
+
+            const idsParaProcessar = Object.keys(cenariosMappingToFamilias);
+            if(idsParaProcessar.length === 0) {
+                return alert("Nenhum Cenário informado para implantação.");
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-900 mr-2"></div> Implantando...`;
+            logArea.innerHTML = `<span class="text-amber-400">Iniciando Implantação de Condições...</span>\n`;
+
+            const TAMANHO_LOTE_POST = 20;
+
+            for(let idCenario of idsParaProcessar) {
+                // Converte o Set de famílias para Array e divide em pequenos lotes (20 por requisição para não estourar a URL)
+                const familiasDoCenario = Array.from(cenariosMappingToFamilias[idCenario]);
+                logArea.innerHTML += `\nPreparando Cenário <strong class="text-white">${idCenario}</strong> (${familiasDoCenario.length} Famílias vinculadas)\n`;
+                
+                for(let i = 0; i < familiasDoCenario.length; i += TAMANHO_LOTE_POST) {
+                    const loteFamilias = familiasDoCenario.slice(i, i + TAMANHO_LOTE_POST);
+                    logArea.innerHTML += ` -> Disparando Lote POST [${i+1} a ${i + loteFamilias.length}]... `;
+                    logArea.scrollTop = logArea.scrollHeight;
+
+                    const familiasAgrupadas = loteFamilias.join(',');
+                    const urlEndpoint = `${WEB_APP_URL}?action=vincular_cenarios_lote&cliente=${encodeURIComponent(rtcClienteId)}&idCenario=${encodeURIComponent(idCenario)}&familias=${encodeURIComponent(familiasAgrupadas)}`;
+
+                    try {
+                        const res = await fetch(urlEndpoint);
+                        const dat = await res.json();
+
+                        if (dat.sucesso) {
+                            logArea.innerHTML += `<span class="text-emerald-400">OK</span>\n`;
+                        } else {
+                            logArea.innerHTML += `<span class="text-red-400">ERRO (${dat.detalhes || dat.erro})</span>\n`;
+                        }
+                    } catch(ex) {
+                        logArea.innerHTML += `<span class="text-red-400">FALHA DE CONEXÃO</span>\n`;
+                    }
+                    
+                    logArea.scrollTop = logArea.scrollHeight;
+                    await new Promise(r => setTimeout(r, 200)); 
+                }
+            }
+
+            logArea.innerHTML += `\n<span class="text-emerald-400 font-bold">PROCESSO DE IMPLANTAÇÃO FINALIZADO!</span>\n`;
+            logArea.scrollTop = logArea.scrollHeight;
+            btn.innerHTML = `<span>🚀 Implantação Concluída</span>`;
+        }
+
+        // ==========================================
+        // MATRIZ DE TRIBUTAÇÃO C5 (MODAL SECUNDÁRIO)
         // ==========================================
         async function buscarRegrasUf() {
             if (!idTributacaoAtual || !clienteAtualId) return;
