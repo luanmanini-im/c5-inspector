@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C5 Inspector - Análise Integração C5</title>
+    <title>Inspector - Análise Integração C5</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Adicionando a biblioteca SheetJS para ler planilhas Excel nativamente -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         body { 
             background-color: #13161f; 
@@ -41,6 +43,15 @@
             opacity: 0.7;
             cursor: not-allowed;
         }
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        /* Custom scrollbar para o log de ferramentas */
+        .log-scroll::-webkit-scrollbar { width: 6px; }
+        .log-scroll::-webkit-scrollbar-track { background: #0f111a; }
+        .log-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
@@ -48,9 +59,9 @@
     <!-- TELA DE LOGIN -->
     <div id="telaLogin" class="w-full max-w-md imendes-card p-8">
         <div class="text-center mb-6">
-            <span class="w-3 h-3 bg-amber-400 rounded-full inline-block mb-2"></span>
-            <h2 class="text-2xl font-extrabold text-white tracking-tight">C5 Inspector</h2>
-            <p class="text-xs text-slate-400 mt-1">Validador de integração e malha fiscal</p>
+            <span class="text-4xl inline-block mb-2">🕵️</span>
+            <h2 class="text-2xl font-extrabold text-white tracking-tight">Inspector</h2>
+            <p class="text-xs text-slate-400 mt-1">Validador de integração CONSINCO & IMENDES</p>
         </div>
 
         <div id="loginErro" class="hidden mb-4 p-3 bg-red-950/50 border border-red-800 text-red-300 text-xs rounded text-center"></div>
@@ -84,12 +95,12 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 border-b border-slate-800 pb-4">
             <div>
                 <h1 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight flex items-center gap-2">
-                    <span class="w-3 h-3 bg-amber-400 rounded-full inline-block"></span>
-                    C5 Inspector · Análise de Integração
+                    <span class="text-3xl">🕵️</span>
+                    Inspector
                 </h1>
                 <p class="text-xs text-slate-400 mt-0.5 font-medium">Validação e auditoria de malha fiscal multi-empresa</p>
             </div>
-            <div class="mt-3 sm:mt-0 flex items-center gap-3">
+            <div class="mt-3 sm:mt-0 flex flex-wrap items-center gap-3">
                 <div class="text-xs font-mono bg-slate-900 px-3.5 py-1.5 rounded-lg border border-slate-800 text-slate-300 shadow-xs flex items-center gap-2">
                     <span id="labelUsuarioLogado" class="text-amber-400 font-bold">Usuário</span>
                     <span class="text-slate-600">|</span>
@@ -97,6 +108,12 @@
                     <span class="text-slate-600">•</span>
                     <span id="versaoBackHeader" class="text-cyan-400">BACK: Carregando...</span>
                 </div>
+                
+                <!-- Novo Botão Ferramentas -->
+                <button onclick="abrirModalFerramentas()" class="bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5">
+                    <span>🔧</span> Ferramentas
+                </button>
+
                 <button onclick="fazerLogout()" class="bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
                     Sair
                 </button>
@@ -110,8 +127,8 @@
             </select>
             
             <select id="selectTipoBusca" onchange="atualizarPlaceholderBusca()" class="w-full md:w-40 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input cursor-pointer">
-                <option value="sku">SKU (ID Produto)</option>
-                <option value="ean">EAN (Código)</option>
+                <option value="sku">SKU</option>
+                <option value="ean">EAN</option>
             </select>
 
             <input type="text" id="inputTermoBusca" placeholder="Digite o SKU (ex: 128453)" 
@@ -144,7 +161,10 @@
                         <div><p class="text-xs text-slate-400">ID Produto</p><p class="font-bold text-white" id="idProduto">-</p></div>
                         <div><p class="text-xs text-slate-400">ID Família</p><p class="font-bold text-white" id="idFamilia">-</p></div>
                         <div><p class="text-xs text-slate-400">Descrição Completa</p><p class="font-bold text-white" id="descricaoCompleta">-</p></div>
-                        <div><p class="text-xs text-slate-400">Código(s) EAN(s)</p><p class="font-bold text-amber-300 bg-amber-950/40 border border-amber-900/50 p-1 rounded inline-block" id="codigosEan">-</p></div>
+                        <div>
+                            <p class="text-xs text-slate-400">Código(s) EAN(s)</p>
+                            <p class="font-bold text-amber-300 bg-amber-950/40 border border-amber-900/50 p-1 rounded inline-block mt-1" id="codigosEan">-</p>
+                        </div>
                     </div>
                 </div>
 
@@ -164,11 +184,41 @@
                             <div><p class="text-xs text-slate-400">CST PIS (Saída)</p><p class="font-bold text-white" id="pisSaida">-</p></div>
                             <div><p class="text-xs text-slate-400">CST COFINS (Sai)</p><p class="font-bold text-white" id="cofinsSaida">-</p></div>
                         </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <div><p class="text-xs text-slate-400">Alíq. IPI</p><p class="font-bold text-white" id="aliqIpi">-</p></div>
-                            <div><p class="text-xs text-slate-400">Nat. Receita</p><p class="font-bold text-white" id="natRec">-</p></div>
-                            <div><p class="text-xs text-slate-400">Seq. Nat. Rec.</p><p class="font-bold text-white" id="seqNatRec">-</p></div>
+                        
+                        <!-- Bloco IPI Flexível -->
+                        <div class="flex flex-wrap items-start gap-x-6 gap-y-4 pt-1">
+                            <div class="min-w-[140px]">
+                                <p class="text-xs text-slate-400">Alíq. IPI</p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <p class="font-bold text-white" id="aliqIpi">-</p>
+                                    <button id="btnEditarIpi" onclick="iniciarEdicaoIpi()" class="hidden text-slate-400 hover:text-amber-400 cursor-pointer transition-colors" title="Editar IPI">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                            <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div id="containerEditIpi" class="hidden flex items-center gap-1.5 mt-0.5">
+                                    <input type="number" step="0.01" id="inputEditIpi" class="w-16 h-7 px-1.5 text-xs bg-slate-900 text-white border border-slate-600 rounded focus:outline-none focus:border-amber-400">
+                                    <button id="btnSalvarIpi" onclick="salvarIpi()" class="bg-emerald-600 hover:bg-emerald-500 text-white h-7 w-7 flex items-center justify-center rounded cursor-pointer transition-colors" title="Salvar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                                    </button>
+                                    <button id="btnCancelarIpi" onclick="cancelarEdicaoIpi()" class="bg-red-600 hover:bg-red-500 text-white h-7 w-7 flex items-center justify-center rounded cursor-pointer transition-colors" title="Cancelar">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                    </button>
+                                    <div id="spinnerIpi" class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-400 ml-1"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="min-w-[80px]">
+                                <p class="text-xs text-slate-400">Nat. Receita</p>
+                                <p class="font-bold text-white mt-0.5" id="natRec">-</p>
+                            </div>
+                            <div class="min-w-[80px]">
+                                <p class="text-xs text-slate-400">Seq. Nat. Rec.</p>
+                                <p class="font-bold text-white mt-0.5" id="seqNatRec">-</p>
+                            </div>
                         </div>
+
                     </div>
                 </div>
 
@@ -228,7 +278,7 @@
                     </div>
                 </div>
 
-            </div>
+            </div> <!-- FECHA GRID PRINCIPAL DE INFORMAÇÕES -->
 
             <!-- PAINEL FIXO: API Endpoints Trace -->
             <div class="bg-slate-950 text-slate-200 p-5 rounded-lg shadow-sm border border-slate-800">
@@ -383,15 +433,68 @@
         </div>
     </div>
 
+    <!-- MODAL DE FERRAMENTAS / BATCH IPI -->
+    <div id="modalFerramentas" class="fixed inset-0 bg-slate-950 bg-opacity-85 hidden z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+        <div class="bg-slate-900 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col border border-slate-700 overflow-hidden text-slate-200">
+            
+            <div class="bg-slate-950 p-4 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                    <span>🔧</span> Ferramentas: Atualização de IPI em Lote
+                </h3>
+                <button onclick="fecharModalFerramentas()" class="text-slate-400 hover:text-red-400 text-3xl font-bold leading-none px-2 cursor-pointer transition-colors">&times;</button>
+            </div>
+            
+            <div class="p-6 flex-1 overflow-auto flex flex-col gap-6">
+                <!-- Instruções -->
+                <div class="bg-indigo-950/30 border border-indigo-900/50 p-4 rounded-lg">
+                    <h4 class="text-indigo-400 font-bold text-sm mb-2">Instruções da Planilha:</h4>
+                    <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
+                        <li>Você pode subir arquivos Excel (<strong class="text-white">.xlsx, .xls</strong>) ou <strong class="text-white">.csv</strong>.</li>
+                        <li><strong>Coluna A:</strong> ID da Família.</li>
+                        <li><strong>Coluna B:</strong> Novo valor do IPI (pode usar ponto ou vírgula).</li>
+                        <li>A primeira linha será ignorada automaticamente se contiver texto (como "Família" e "IPI").</li>
+                    </ul>
+                </div>
+
+                <!-- Controles -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">1. Selecione o Cliente</label>
+                        <select id="selectClienteFerramenta" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
+                            <option value="">Carregando empresas...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">2. Anexe a Planilha</label>
+                        <input type="file" id="inputArquivoIpi" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="w-full p-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-900 hover:file:bg-amber-500 file:cursor-pointer cursor-pointer">
+                    </div>
+                </div>
+
+                <button id="btnProcessarLote" onclick="processarLoteIPI()" class="w-full imendes-btn py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
+                    <span>▶ Iniciar Processamento</span>
+                </button>
+
+                <!-- Console de Logs -->
+                <div class="flex-1 flex flex-col min-h-[250px]">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-2 flex justify-between items-end">
+                        <span>Console de Execução</span>
+                        <span id="contadorLote" class="text-[10px] text-amber-400 font-mono">0 / 0</span>
+                    </h4>
+                    <pre id="logFerramentaIpi" class="flex-1 bg-black border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-slate-300 overflow-y-auto log-scroll whitespace-pre-wrap">Aguardando arquivo...</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // URL DE DEPLOY DO SEU APPS SCRIPT
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz1PMRfY3KsIXB2QJZH0vEmqzvOsBekOvu2-vKlRNTXUt2FTmEbSuCav24z3zvzG3OZvw/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyGurMgwyRN3YxFmSMGLOkr7fjqQynypO4pO--CaSZLOJKI1cOOOCgFJ0TGolZkWrrCQ/exec";
         
-        // NOVO: CONSTANTE DE VERSÃO DO FRONT-END AQUI NO TOPO!
-        const VERSAO_FRONT = "v3.4.0"; 
+        // VERSÃO FRONT ATUALIZADA
+        const VERSAO_FRONT = "v3.6.0"; 
 
         let idTributacaoAtual = null;
         let clienteAtualId = null;
+        let idFamiliaAtual = null; 
         let descTributacaoAtual = "";
         let regrasGlobais = [];
         let regrasExibidasAtualmente = [];
@@ -417,7 +520,6 @@
         ];
 
         window.onload = function() {
-            // Inicia o carregamento das versões dinamicamente assim que a página abre
             carregarVersoes();
             
             const usuarioSalvo = localStorage.getItem('imendes_usuario');
@@ -429,17 +531,13 @@
             }
         };
 
-        // NOVA FUNÇÃO: Busca a versão no back e preenche na tela
         async function carregarVersoes() {
             try {
                 const response = await fetch(`${WEB_APP_URL}?action=versao`);
                 const data = await response.json();
                 const versaoBack = data.versao || "Desconhecida";
 
-                // Atualiza a tela de login
                 document.getElementById('versaoLoginContainer').innerHTML = `FRONT: ${VERSAO_FRONT} &bull; BACK: ${versaoBack}`;
-                
-                // Atualiza o painel principal (quando logado)
                 document.getElementById('versaoFrontHeader').innerText = `FRONT: ${VERSAO_FRONT}`;
                 document.getElementById('versaoBackHeader').innerText = `BACK: ${versaoBack}`;
             } catch (error) {
@@ -464,15 +562,23 @@
             try {
                 const response = await fetch(`${WEB_APP_URL}?action=listar_clientes`);
                 const data = await response.json();
-                const select = document.getElementById('selectCliente');
-                select.innerHTML = '<option value="">Selecione o Cliente...</option>';
+                const selectMain = document.getElementById('selectCliente');
+                const selectFerramenta = document.getElementById('selectClienteFerramenta');
+                
+                selectMain.innerHTML = '<option value="">Selecione o Cliente...</option>';
+                selectFerramenta.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 
                 if (data.clientes && Array.isArray(data.clientes)) {
                     data.clientes.forEach(c => {
-                        const opt = document.createElement('option');
-                        opt.value = c.id;
-                        opt.innerText = c.nome;
-                        select.appendChild(opt);
+                        let optMain = document.createElement('option');
+                        optMain.value = c.id;
+                        optMain.innerText = c.nome;
+                        selectMain.appendChild(optMain);
+
+                        let optFerramenta = document.createElement('option');
+                        optFerramenta.value = c.id;
+                        optFerramenta.innerText = c.nome;
+                        selectFerramenta.appendChild(optFerramenta);
                     });
                 }
             } catch (error) {
@@ -555,6 +661,8 @@
             document.getElementById('resultado').classList.add('hidden');
             document.getElementById('jsonCompleto').innerText = ""; 
             document.getElementById('btnVerTributacao').classList.add('hidden');
+            
+            cancelarEdicaoIpi();
 
             let urlGetProduto = "";
             if (tipoBusca === 'sku') {
@@ -589,6 +697,7 @@
                 const familia = produto.familia || {};
                 const divisao = familia.familiaDivisao?.[0] || {};
 
+                idFamiliaAtual = produto.idFamilia; 
                 idTributacaoAtual = divisao.idTributacao;
                 descTributacaoAtual = divisao.tributacao?.descricao || "Nenhuma regra vinculada";
 
@@ -618,7 +727,12 @@
                 document.getElementById('cofinsEntrada').innerText = familia.situacaoNfCofins || "N/A";
                 document.getElementById('pisSaida').innerText = familia.situacaoNfPisSai || "N/A";
                 document.getElementById('cofinsSaida').innerText = familia.situacaoNfCofinsSai || "N/A";
+                
                 document.getElementById('aliqIpi').innerText = familia.aliquotaIpi !== null ? familia.aliquotaIpi : "N/A";
+                if(idFamiliaAtual) {
+                    document.getElementById('btnEditarIpi').classList.remove('hidden');
+                }
+
                 document.getElementById('natRec').innerText = familia.codNatRec || "N/A";
                 document.getElementById('seqNatRec').innerText = familia.seqNatRec || "N/A";
 
@@ -653,6 +767,199 @@
             }
         }
 
+        // ==========================================
+        // LÓGICA DE EDIÇÃO DO IPI INDIVIDUAL (CARD)
+        // ==========================================
+        function iniciarEdicaoIpi() {
+            const spanIpi = document.getElementById('aliqIpi');
+            const btnEditar = document.getElementById('btnEditarIpi');
+            const containerEdit = document.getElementById('containerEditIpi');
+            const inputEdit = document.getElementById('inputEditIpi');
+
+            let valorAtual = spanIpi.innerText.trim();
+            if (valorAtual === 'N/A' || valorAtual === '-') valorAtual = 0;
+
+            inputEdit.value = valorAtual;
+            
+            spanIpi.classList.add('hidden');
+            btnEditar.classList.add('hidden');
+            containerEdit.classList.remove('hidden');
+            inputEdit.focus();
+        }
+
+        function cancelarEdicaoIpi() {
+            document.getElementById('aliqIpi').classList.remove('hidden');
+            if(idFamiliaAtual) document.getElementById('btnEditarIpi').classList.remove('hidden');
+            document.getElementById('containerEditIpi').classList.add('hidden');
+        }
+
+        async function salvarIpi() {
+            const novoValor = document.getElementById('inputEditIpi').value;
+            if (novoValor === '') return;
+
+            document.getElementById('inputEditIpi').disabled = true;
+            document.getElementById('btnSalvarIpi').classList.add('hidden');
+            document.getElementById('btnCancelarIpi').classList.add('hidden');
+            document.getElementById('spinnerIpi').classList.remove('hidden');
+
+            const urlEndpoint = `${WEB_APP_URL}?action=atualizar_ipi&cliente=${encodeURIComponent(clienteAtualId)}&idFamilia=${encodeURIComponent(idFamiliaAtual)}&valorIpi=${encodeURIComponent(novoValor)}`;
+
+            try {
+                const response = await fetch(urlEndpoint);
+                const data = await response.json();
+
+                if (data.sucesso) {
+                    alert(data.mensagem);
+                    document.getElementById('aliqIpi').innerText = novoValor;
+                    cancelarEdicaoIpi();
+                } else {
+                    alert("IPI não atualizado.\nDetalhes: " + (data.erro || '') + "\n" + (data.detalhes || ''));
+                    cancelarEdicaoIpi();
+                }
+            } catch (error) {
+                alert("IPI não atualizado. Ocorreu uma falha na requisição.");
+                cancelarEdicaoIpi();
+            } finally {
+                document.getElementById('inputEditIpi').disabled = false;
+                document.getElementById('btnSalvarIpi').classList.remove('hidden');
+                document.getElementById('btnCancelarIpi').classList.remove('hidden');
+                document.getElementById('spinnerIpi').classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // LÓGICA DE FERRAMENTAS - LOTE IPI (EXCEL)
+        // ==========================================
+        function abrirModalFerramentas() {
+            // Se já houver um cliente preenchido na tela principal, passa ele pro modal
+            const clienteMain = document.getElementById('selectCliente').value;
+            if (clienteMain) {
+                document.getElementById('selectClienteFerramenta').value = clienteMain;
+            }
+            
+            document.getElementById('inputArquivoIpi').value = "";
+            document.getElementById('logFerramentaIpi').innerHTML = "Aguardando arquivo...";
+            document.getElementById('contadorLote').innerText = "0 / 0";
+            
+            document.getElementById('modalFerramentas').classList.remove('hidden');
+        }
+
+        function fecharModalFerramentas() {
+            document.getElementById('modalFerramentas').classList.add('hidden');
+        }
+
+        async function processarLoteIPI() {
+            const clienteId = document.getElementById('selectClienteFerramenta').value;
+            const fileInput = document.getElementById('inputArquivoIpi');
+            const logArea = document.getElementById('logFerramentaIpi');
+            const btnProcessar = document.getElementById('btnProcessarLote');
+            
+            if (!clienteId) {
+                alert("Por favor, selecione um cliente na etapa 1.");
+                return;
+            }
+            
+            if (!fileInput.files.length) {
+                alert("Por favor, anexe uma planilha na etapa 2.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            btnProcessar.disabled = true;
+            btnProcessar.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-900 mr-2"></div> Processando...`;
+
+            reader.onload = async function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const jsonRows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+
+                    let registrosParaProcessar = [];
+
+                    // Varre a planilha montando os dados
+                    for (let i = 0; i < jsonRows.length; i++) {
+                        const row = jsonRows[i];
+                        if (row.length < 2) continue; // Ignora linha vazia
+
+                        const idFamiliaRaw = String(row[0]).trim();
+                        const valorIpiRaw = String(row[1]).trim();
+
+                        // Pula cabeçalho se houver (ex: se a pessoa escreveu "Familia" na coluna A)
+                        if (idFamiliaRaw.toLowerCase() === 'familia' || isNaN(parseInt(idFamiliaRaw))) {
+                            continue;
+                        }
+
+                        registrosParaProcessar.push({ familia: idFamiliaRaw, ipi: valorIpiRaw });
+                    }
+
+                    const total = registrosParaProcessar.length;
+                    
+                    if(total === 0) {
+                        logArea.innerHTML = `<span class="text-red-400">Nenhum dado válido encontrado na planilha. Verifique as colunas A e B.</span>`;
+                        btnProcessar.disabled = false;
+                        btnProcessar.innerHTML = `<span>▶ Iniciar Processamento</span>`;
+                        return;
+                    }
+
+                    logArea.innerHTML = `<span class="text-cyan-400">Iniciando processamento de ${total} registros...</span>\n\n`;
+                    let sucessos = 0;
+                    let erros = 0;
+
+                    // Laço sequencial seguro (com await) para não travar a API TOTVS
+                    for (let i = 0; i < total; i++) {
+                        const reg = registrosParaProcessar[i];
+                        document.getElementById('contadorLote').innerText = `${i + 1} / ${total}`;
+                        
+                        logArea.innerHTML += `Processando Família <strong class="text-white">${reg.familia}</strong> (Novo IPI: ${reg.ipi}) ... `;
+                        logArea.scrollTop = logArea.scrollHeight;
+
+                        const urlEndpoint = `${WEB_APP_URL}?action=atualizar_ipi&cliente=${encodeURIComponent(clienteId)}&idFamilia=${encodeURIComponent(reg.familia)}&valorIpi=${encodeURIComponent(reg.ipi)}`;
+
+                        try {
+                            const response = await fetch(urlEndpoint);
+                            const dataResp = await response.json();
+
+                            if (dataResp.sucesso) {
+                                logArea.innerHTML += `<span class="text-emerald-400 font-bold">SUCESSO</span>\n`;
+                                sucessos++;
+                            } else {
+                                logArea.innerHTML += `<span class="text-red-400 font-bold">ERRO</span> <span class="text-slate-500">(${dataResp.erro || 'Desconhecido'})</span>\n`;
+                                erros++;
+                            }
+                        } catch (err) {
+                            logArea.innerHTML += `<span class="text-red-400 font-bold">FALHA DE CONEXÃO</span>\n`;
+                            erros++;
+                        }
+
+                        logArea.scrollTop = logArea.scrollHeight;
+                        
+                        // DEITA A APLICAÇÃO POR 400ms ENTRE CADA REQUISIÇÃO (Evita bloqueio da TOTVS)
+                        await new Promise(r => setTimeout(r, 400));
+                    }
+
+                    logArea.innerHTML += `\n<span class="text-amber-400">=================================</span>\n`;
+                    logArea.innerHTML += `<span class="text-amber-400 font-bold">LOTE FINALIZADO!</span>\n`;
+                    logArea.innerHTML += `<span class="text-emerald-400">Sucessos: ${sucessos}</span> | <span class="text-red-400">Erros: ${erros}</span>\n`;
+                    logArea.scrollTop = logArea.scrollHeight;
+
+                } catch (ex) {
+                    logArea.innerHTML = `<span class="text-red-400">Erro fatal ao ler o arquivo Excel: ${ex.message}</span>`;
+                } finally {
+                    btnProcessar.disabled = false;
+                    btnProcessar.innerHTML = `<span>▶ Iniciar Processamento</span>`;
+                }
+            };
+
+            reader.readAsArrayBuffer(file);
+        }
+
+        // ==========================================
+        // MATRIZ DE TRIBUTAÇÃO C5
+        // ==========================================
         async function buscarRegrasUf() {
             if (!idTributacaoAtual || !clienteAtualId) return;
 
@@ -857,4 +1164,3 @@
     </script>
 </body>
 </html>
-<!-- atualizando esteira -->
