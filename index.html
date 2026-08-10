@@ -175,7 +175,15 @@
         <!-- Área de Resultados -->
         <div id="resultado" class="hidden space-y-6">
             
-            <h2 class="text-xl font-bold text-white border-b border-slate-800 pb-2" id="headerProduto">Nome do Produto</h2>
+            <!-- ALTERAÇÃO AQUI: Título com o botão de Atualização do Saneamento -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-2">
+                <h2 class="text-xl font-bold text-white" id="headerProduto">Nome do Produto</h2>
+                <button id="btnAtualizarSaneamento" onclick="dispararSaneamentoTributario()" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-4 py-2 rounded-lg transition-all shadow-md cursor-pointer text-xs flex items-center gap-2">
+                    <span>🔄</span>
+                    <span id="txtBtnSaneamento">Atualizar Saneamento</span>
+                    <div id="spinnerSaneamento" class="hidden animate-spin rounded-full h-3.5 w-3.5 border-b-2 border-slate-950"></div>
+                </button>
+            </div>
 
             <!-- GRID PRINCIPAL DE INFORMAÇÕES -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -550,7 +558,7 @@
                     1. Atualização IPI
                 </button>
                 <button id="tabAnalise" onclick="alternarAbaFerramenta('analise')" class="tab-btn inactive">
-                    2. Análise de Tributação
+                    2. Análise de Tributação por Produto
                 </button>
                 <button id="tabRtc" onclick="alternarAbaFerramenta('rtc')" class="tab-btn inactive">
                     3. Implantador de Condições - RTC
@@ -602,15 +610,15 @@
             <!-- ABA 2: ANÁLISE DE TRIBUTAÇÃO -->
             <div id="ferramentaAnalise" class="p-6 flex-1 overflow-auto flex flex-col gap-6 hidden">
                 <div class="bg-emerald-950/30 border border-emerald-900/50 p-4 rounded-lg">
-                    <h4 class="text-emerald-400 font-bold text-sm mb-2">Instruções da Planilha (Consulta):</h4>
+                    <h4 class="text-emerald-400 font-bold text-sm mb-2">Instruções da Planilha (Consulta Otimizada):</h4>
                     <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
-                        <li>Suba um arquivo Excel (<strong class="text-white">.xlsx, .xls</strong>) com o SKU do Produto na <strong>Coluna A</strong>.</li>
-                        <li>Os SKUs serão agrupados e disparados em <strong class="text-white">lotes paralelos</strong> através dos servidores do Google.</li>
-                        <li>Aguarde o progresso. Se precisar interromper, clique em "Parar e Baixar Parcial".</li>
+                        <li>Suba um arquivo Excel (<strong class="text-white">.xlsx, .xls</strong>) ou <strong class="text-white">.csv</strong>.</li>
+                        <li><strong>Apenas na Coluna A:</strong> Insira o SKU do Produto (um por linha).</li>
+                        <li>O sistema utilizará a <strong>Consulta Leve</strong> (omitindo EAN) para alta performance em grandes volumes.</li>
                     </ul>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">1. Cliente</label>
                         <select id="selectClienteAnalise" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
@@ -622,18 +630,14 @@
                         <input type="file" id="inputArquivoAnalise" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="w-full p-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-300 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-emerald-400 file:text-slate-900 hover:file:bg-emerald-500 cursor-pointer">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Quantidade de SKUs por requisição simultânea">3. SKUs por Lote</label>
-                        <input type="number" id="tamanhoLoteAnalise" value="50" min="1" max="200" step="10" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Atraso aplicado entre cada LOTE enviado">4. Atraso Lote (ms)</label>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Atraso aplicado entre cada GET enviado">3. Atraso Lote (ms)</label>
                         <input type="number" id="delayAnalise" value="0" min="0" step="10" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
                     </div>
                 </div>
 
                 <div class="flex gap-3">
                     <button id="btnStartAnalise" onclick="processarAnaliseTributacao()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
-                        <span>▶ Iniciar Consulta em Lote Paralelo</span>
+                        <span>▶ Iniciar Consulta Sequencial Leve</span>
                     </button>
                     <button id="btnStopAnalise" onclick="pararAnaliseTributacao()" class="hidden flex-1 bg-red-600 hover:bg-red-500 text-white py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
                         <span>⏹ Parar e Baixar Parcial</span>
@@ -645,14 +649,14 @@
 
                 <div class="flex-1 flex flex-col pt-2">
                     <h4 class="text-xs font-bold text-slate-400 uppercase mb-2 flex justify-between items-end">
-                        <span>Progresso da Consulta (Lotes de SKUs)</span>
+                        <span>Progresso da Consulta</span>
                         <span id="progressAnaliseText" class="text-[10px] text-emerald-400 font-mono">Aguardando início...</span>
                     </h4>
                     <div class="w-full bg-slate-950 rounded-full h-5 border border-slate-800 overflow-hidden relative">
                         <div id="progressAnaliseBar" class="bg-emerald-500 h-5 transition-all duration-300" style="width: 0%"></div>
                     </div>
                     <div class="mt-4 p-4 bg-black border border-slate-800 rounded flex gap-6 text-xs text-slate-400 font-mono">
-                        <div>SKUs Lidos: <span id="analiseSucesso" class="text-emerald-400 font-bold text-sm">0</span></div>
+                        <div>Sucessos: <span id="analiseSucesso" class="text-emerald-400 font-bold text-sm">0</span></div>
                         <div>Erros / Ñ Encontrado: <span id="analiseErro" class="text-red-400 font-bold text-sm">0</span></div>
                     </div>
                 </div>
@@ -730,14 +734,15 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwmYoohm7QpARhIJrclxr-L_DwEszU1BGySNqzZyznxS_-2ucFeMtlOETqcgvt89b5u/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby95WH6wHSc-fcAqaSnM_XLCH27Agy8nyFQqLJvvAXjJ9v7Edr4f_ecoDmckOmWSsoDYA/exec";
         
         // VERSÃO FRONT ATUALIZADA
-        const VERSAO_FRONT = "v5.0.0"; 
+        const VERSAO_FRONT = "v5.1.0"; 
 
         let idTributacaoAtual = null;
         let clienteAtualId = null;
         let idFamiliaAtual = null; 
+        let skuProdutoAtual = null; // ALTERAÇÃO: Guarda o SKU do produto atual para o disparo
         let descTributacaoAtual = "";
         let regrasGlobais = [];
         let regrasExibidasAtualmente = [];
@@ -997,6 +1002,7 @@
                 const familia = produto.familia || {};
                 const divisao = familia.familiaDivisao?.[0] || {};
 
+                skuProdutoAtual = produto.idProduto; // ALTERAÇÃO: Armazena o código/SKU
                 idFamiliaAtual = produto.idFamilia; 
                 idTributacaoAtual = divisao.idTributacao;
                 descTributacaoAtual = divisao.tributacao?.descricao || "Nenhuma regra vinculada";
@@ -1089,6 +1095,52 @@
                 alert("Erro ao conectar com o servidor. Detalhes: " + error.message);
             } finally {
                 document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // ALTERAÇÃO NOVO: DISPARO DO SANEAMENTO TRIBUTÁRIO
+        // ==========================================
+        async function dispararSaneamentoTributario() {
+            if (!skuProdutoAtual) {
+                alert("Nenhum produto selecionado.");
+                return;
+            }
+
+            const emailUsuario = localStorage.getItem('imendes_usuario');
+            if (!emailUsuario) {
+                alert("Usuário não identificado. Por favor, faça login novamente.");
+                return;
+            }
+
+            const aviso = "Aviso: verifique se você está logado no portal IMendes na tela do cliente TOTVS.\n\nDeseja adequar CGO?";
+            const adequarCgo = confirm(aviso);
+
+            const btn = document.getElementById('btnAtualizarSaneamento');
+            const txtBtn = document.getElementById('txtBtnSaneamento');
+            const spinner = document.getElementById('spinnerSaneamento');
+
+            btn.disabled = true;
+            txtBtn.innerText = "Enviando...";
+            spinner.classList.remove('hidden');
+
+            const url = `${WEB_APP_URL}?action=saneamento_tributario&email=${encodeURIComponent(emailUsuario)}&sku=${encodeURIComponent(skuProdutoAtual)}&adequarCgo=${adequarCgo}`;
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.sucesso) {
+                    alert("Saneamento Tributário enviado com sucesso!");
+                } else {
+                    alert("Falha no envio do Saneamento Tributário: " + (data.erro || JSON.stringify(data)));
+                }
+            } catch (e) {
+                alert("Erro de conexão ao enviar Saneamento Tributário: " + e.message);
+            } finally {
+                btn.disabled = false;
+                txtBtn.innerText = "Atualizar Saneamento";
+                spinner.classList.add('hidden');
             }
         }
 
@@ -1265,7 +1317,7 @@
         }
 
         // ==========================================
-        // ABA 2: ANÁLISE DE TRIBUTAÇÃO EM LOTE PARALELO
+        // ABA 2: ANÁLISE DE TRIBUTAÇÃO EM LOTE SEQUENCIAL (MODO LEVE)
         // ==========================================
         let isAnaliseRunning = false;
         let dadosAnaliseExcel = [];
@@ -1273,7 +1325,6 @@
         async function processarAnaliseTributacao() {
             const clienteId = document.getElementById('selectClienteAnalise').value;
             const fileInput = document.getElementById('inputArquivoAnalise');
-            const loteSize = parseInt(document.getElementById('tamanhoLoteAnalise').value) || 50;
             const delayMs = parseInt(document.getElementById('delayAnalise').value) || 0;
             
             if (!clienteId) return alert("Por favor, selecione um cliente na etapa 1.");
@@ -1300,19 +1351,13 @@
                     let skus = [];
                     for (let i = 0; i < jsonRows.length; i++) {
                         const val = String(jsonRows[i][0] || "").trim();
-                        if(val && val.toLowerCase() !== 'sku' && val.toLowerCase() !== 'idproduto') {
+                        if(val && val.toLowerCase() !== 'sku' && val.toLowerCase() !== 'idproduto' && val.toLowerCase() !== 'id_produto') {
                             skus.push(val);
                         }
                     }
 
                     const totalSkus = skus.length;
                     if(totalSkus === 0) throw new Error("Nenhum SKU válido encontrado na Coluna A.");
-
-                    const TAMANHO_LOTE = loteSize;
-                    const chunks = [];
-                    for (let i = 0; i < totalSkus; i += TAMANHO_LOTE) {
-                        chunks.push(skus.slice(i, i + TAMANHO_LOTE));
-                    }
 
                     isAnaliseRunning = true;
                     dadosAnaliseExcel = [];
@@ -1321,58 +1366,43 @@
                     valSuc.innerText = "0"; valErr.innerText = "0";
                     pBar.style.width = "0%";
 
-                    for (let i = 0; i < chunks.length; i++) {
+                    for (let i = 0; i < totalSkus; i++) {
                         if(!isAnaliseRunning) break; 
 
-                        const chunkAtual = chunks[i];
-                        pText.innerText = `Processando Lote ${i+1} de ${chunks.length} (${chunkAtual.length} SKUs enviados simultaneamente)`;
-                        pBar.style.width = `${((i+1)/chunks.length)*100}%`;
+                        const sku = skus[i];
+                        pText.innerText = `Consultando: ${i+1} / ${totalSkus} (SKU: ${sku})`;
+                        pBar.style.width = `${((i+1)/totalSkus)*100}%`;
 
-                        const skusAgrupados = chunkAtual.join(',');
-                        const urlEndpoint = `${WEB_APP_URL}?action=analise_lote&cliente=${encodeURIComponent(clienteId)}&skus=${encodeURIComponent(skusAgrupados)}`;
+                        // NOVA ROTA: produto_leve (Corta o peso do JSON em 80%)
+                        const urlEndpoint = `${WEB_APP_URL}?action=produto_leve&cliente=${encodeURIComponent(clienteId)}&sku=${encodeURIComponent(sku)}`;
 
                         try {
                             const res = await fetch(urlEndpoint);
                             const dat = await res.json();
 
-                            if (dat.sucesso && dat.resultados) {
-                                dat.resultados.forEach(itemResult => {
-                                    if (itemResult.sucesso && itemResult.dados && itemResult.dados.items && itemResult.dados.items.length > 0) {
-                                        const prod = itemResult.dados.items[0];
-                                        const divi = prod.familia?.familiaDivisao?.[0] || {};
-                                        
-                                        let eans = [];
-                                        if(prod.produtoCodigo) {
-                                            eans = prod.produtoCodigo.filter(c => c.tipoCodigo === 'E').map(c => c.codigoAcesso);
-                                        }
+                            if (dat.items && dat.items.length > 0) {
+                                const prod = dat.items[0];
+                                const divi = prod.familia?.familiaDivisao?.[0] || {};
+                                
+                                let eansText = "Omitido (Modo Leve)";
 
-                                        dadosAnaliseExcel.push({
-                                            "SKU": prod.idProduto || itemResult.sku,
-                                            "Descrição Completa": prod.descricaoCompleta || "",
-                                            "EAN": eans.join(" | "),
-                                            "ID Tributação": divi.idTributacao || "N/A",
-                                            "Descrição Tributação": divi.tributacao?.descricao || "N/A"
-                                        });
-                                        suc++;
-                                    } else {
-                                        dadosAnaliseExcel.push({ "SKU": itemResult.sku, "Descrição Completa": "NÃO ENCONTRADO / ERRO", "EAN": "", "ID Tributação": "", "Descrição Tributação": "" });
-                                        err++;
-                                    }
+                                dadosAnaliseExcel.push({
+                                    "SKU": prod.idProduto || sku,
+                                    "Descrição Completa": prod.descricaoCompleta || "",
+                                    "EAN": eansText,
+                                    "ID Tributação": divi.idTributacao || "N/A",
+                                    "Descrição Tributação": divi.tributacao?.descricao || "N/A"
                                 });
+                                suc++;
                                 valSuc.innerText = suc;
-                                valErr.innerText = err;
                             } else {
-                                chunkAtual.forEach(sku => {
-                                    dadosAnaliseExcel.push({ "SKU": sku, "Descrição Completa": "ERRO NO LOTE", "EAN": "", "ID Tributação": "", "Descrição Tributação": "" });
-                                    err++;
-                                });
+                                dadosAnaliseExcel.push({ "SKU": sku, "Descrição Completa": "NÃO ENCONTRADO", "EAN": "", "ID Tributação": "", "Descrição Tributação": "" });
+                                err++;
                                 valErr.innerText = err;
                             }
                         } catch(ex) {
-                            chunkAtual.forEach(sku => {
-                                dadosAnaliseExcel.push({ "SKU": sku, "Descrição Completa": "FALHA DE CONEXÃO", "EAN": "", "ID Tributação": "", "Descrição Tributação": "" });
-                                err++;
-                            });
+                            dadosAnaliseExcel.push({ "SKU": sku, "Descrição Completa": "FALHA DE CONEXÃO", "EAN": "", "ID Tributação": "", "Descrição Tributação": "" });
+                            err++;
                             valErr.innerText = err;
                         }
                         
@@ -1380,7 +1410,7 @@
                     }
 
                     if(isAnaliseRunning) {
-                        pText.innerText = `Lotes Finalizados! Arquivo pronto para download.`;
+                        pText.innerText = `Consulta Finalizada! Arquivo pronto para download.`;
                         pBar.style.width = `100%`;
                     }
                     
@@ -1460,7 +1490,6 @@
                         throw new Error("Nenhum dado válido encontrado. Certifique-se de que a Coluna A tenha ID Família numérico e a Coluna B tenha CClassTrib.");
                     }
 
-                    // Busca TODOS os cenários da Reforma daquele cliente
                     const urlEndpoint = `${WEB_APP_URL}?action=listar_cenarios&cliente=${encodeURIComponent(rtcClienteId)}`;
                     const res = await fetch(urlEndpoint);
                     const dat = await res.json();
@@ -1469,17 +1498,14 @@
                         throw new Error(dat.erro || "Falha ao consultar cenários.");
                     }
 
-                    // Filtra apenas os cenários ativos
                     rtcCenariosAtivos = (dat.dados.items || []).filter(c => c.status === 'A');
 
-                    // Monta a Tabela de Mapeamento na UI
                     const tbody = document.getElementById('tbodyRtc');
                     tbody.innerHTML = "";
 
                     for(let cclass in rtcFamiliasPorClassTrib) {
                         const familiasVinculadas = rtcFamiliasPorClassTrib[cclass];
                         
-                        // Cruza o CClassTrib da planilha com o codigoClassTrib da API
                         const matchedScenarios = rtcCenariosAtivos
                             .filter(c => String(c.codigoClassTrib).trim() === cclass)
                             .map(c => c.idCenario);
@@ -1529,18 +1555,15 @@
 
             let cenariosMappingToFamilias = {}; 
 
-            // Varre as inputs na tela que o usuário confirmou
             for(let input of inputsMap) {
                 const cclass = input.getAttribute('data-cclass');
                 const inputValue = input.value.trim();
                 
-                if(!inputValue) continue; // Pula se estiver em branco
+                if(!inputValue) continue; 
 
-                // Extrai os IDs de cenário digitados separados por vírgula
                 const idsCenario = inputValue.split(',').map(id => id.trim()).filter(id => id !== "");
                 const familiasDesseCclass = rtcFamiliasPorClassTrib[cclass];
 
-                // Agrupa as Famílias DENTRO de cada Cenário
                 for(let id of idsCenario) {
                     if(!cenariosMappingToFamilias[id]) cenariosMappingToFamilias[id] = new Set();
                     familiasDesseCclass.forEach(f => cenariosMappingToFamilias[id].add(f));
@@ -1559,7 +1582,6 @@
             const TAMANHO_LOTE_POST = 20;
 
             for(let idCenario of idsParaProcessar) {
-                // Converte o Set de famílias para Array e divide em pequenos lotes (20 por requisição para não estourar a URL)
                 const familiasDoCenario = Array.from(cenariosMappingToFamilias[idCenario]);
                 logArea.innerHTML += `\nPreparando Cenário <strong class="text-white">${idCenario}</strong> (${familiasDoCenario.length} Famílias vinculadas)\n`;
                 
@@ -1578,7 +1600,9 @@
                         if (dat.sucesso) {
                             logArea.innerHTML += `<span class="text-emerald-400">OK</span>\n`;
                         } else {
-                            logArea.innerHTML += `<span class="text-red-400">ERRO (${dat.detalhes || dat.erro})</span>\n`;
+                            let strErro = dat.detalhes || dat.erro;
+                            if (strErro && strErro.length > 150) strErro = "Objeto modificado na API TOTVS.";
+                            logArea.innerHTML += `<span class="text-red-400">ERRO (${strErro})</span>\n`;
                         }
                     } catch(ex) {
                         logArea.innerHTML += `<span class="text-red-400">FALHA DE CONEXÃO</span>\n`;
