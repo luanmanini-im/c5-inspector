@@ -175,7 +175,7 @@
         <!-- Área de Resultados -->
         <div id="resultado" class="hidden space-y-6">
             
-            <!-- ALTERAÇÃO AQUI: Título com o botão de Atualização do Saneamento -->
+            <!-- Título com o botão de Atualização do Saneamento -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-2">
                 <h2 class="text-xl font-bold text-white" id="headerProduto">Nome do Produto</h2>
                 <button id="btnAtualizarSaneamento" onclick="dispararSaneamentoTributario()" class="bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold px-4 py-2 rounded-lg transition-all shadow-md cursor-pointer text-xs flex items-center gap-2">
@@ -273,7 +273,7 @@
                     </div>
 
                     <button id="btnVerTributacao" onclick="buscarRegrasUf()" class="mt-4 w-full bg-amber-400 hover:bg-amber-500 text-slate-950 font-bold py-3 px-4 rounded-lg transition-colors hidden flex justify-center items-center shadow-md cursor-pointer">
-                        Análisar Tributação
+                        Analisar Tributação
                     </button>
                 </div>
 
@@ -734,20 +734,24 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby95WH6wHSc-fcAqaSnM_XLCH27Agy8nyFQqLJvvAXjJ9v7Edr4f_ecoDmckOmWSsoDYA/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyKrVngsxnsl-eBqHakmmUx7itXRI3jQP8qRGF5WDfvFU8N08E8wulCuP1nYMWKZA52bw/exec";
         
-        // VERSÃO FRONT ATUALIZADA
-        const VERSAO_FRONT = "v5.2.0"; 
+        // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
+        const VERSAO_FRONT = "v5.3.0"; 
 
         let idTributacaoAtual = null;
         let clienteAtualId = null;
         let idFamiliaAtual = null; 
-        let skuProdutoAtual = null; // ALTERAÇÃO: Guarda o SKU do produto atual para o disparo
+        let skuProdutoAtual = null; 
         let descTributacaoAtual = "";
         let regrasGlobais = [];
         let regrasExibidasAtualmente = [];
         let tipoAtivoAtual = "";
         let regraSelecionadaJson = null;
+
+        // Variavel global para gerenciar os dados dos clientes e acesso local
+        let bdClientes = {};
+        let tokensLocais = {};
 
         const MAPA_REGIMES = {
             0: "0 - Normal",
@@ -778,6 +782,110 @@
             }
         };
 
+        // ==========================================
+        // NOVO NÚCLEO HÍBRIDO (ROTEADOR DE REQUESTS)
+        // ==========================================
+        async function autenticarLocal(clienteData) {
+            const clienteId = clienteData.id;
+            if (tokensLocais[clienteId]) return tokensLocais[clienteId]; 
+
+            console.log(`[LOCAL] Gerando Token para: ${clienteData.nome}`);
+            const loginUrl = `${clienteData.urlBase}/api/v1/auth/login`;
+            const payload = { company: clienteData.company, username: clienteData.username, password: clienteData.password };
+            
+            try {
+                const response = await fetch(loginUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.access_token) {
+                        tokensLocais[clienteId] = data.access_token;
+                        return data.access_token;
+                    }
+                }
+                throw new Error("Credenciais inválidas na rede local.");
+            } catch (error) {
+                throw new Error(`FALHA CORS OU REDE LOCAL na URL: ${loginUrl}. \nDetalhes: ${error.message}`);
+            }
+        }
+
+        async function fetchHibrido(action, clienteId, parametrosAdicionais = {}, method = 'GET') {
+            const cliente = bdClientes[clienteId];
+            if (!cliente) throw new Error("Cliente não encontrado na base.");
+
+            // ==== FLUXO LOCAL (DIRETO PARA TOTVS) ====
+            if (cliente.modoVpn) {
+                try {
+                    const token = await autenticarLocal(cliente);
+                    let urlLocal = "";
+                    let fetchOptions = {
+                        method: method,
+                        headers: { "Authorization": `Bearer ${token}` }
+                    };
+
+                    if (action === 'produto') {
+                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${parametrosAdicionais.sku}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
+                    } else if (action === 'produto_leve') {
+                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${parametrosAdicionais.sku}&Expand=familia.familiaDivisao.tributacao`;
+                    } else if (action === 'produto_ean') {
+                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?CodigoAcesso=${parametrosAdicionais.ean}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
+                    } else if (action === 'tributacao') {
+                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisApi/api/v1/Tributacao/uf?IdTributacao=${parametrosAdicionais.idTributacao}&pageSize=10000`;
+                    } else if (action === 'reforma') {
+                        urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?Familia=${parametrosAdicionais.idFamilia}&status=A&orderby=id`;
+                    } else if (action === 'listar_cenarios') {
+                        urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?pagesize=1000`;
+                    } else if (action === 'atualizar_ipi') {
+                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Familia?idFamilia=${parametrosAdicionais.idFamilia}`;
+                        fetchOptions.method = 'PATCH';
+                        fetchOptions.headers["Content-Type"] = "application/json";
+                        fetchOptions.body = JSON.stringify([{ "path": "aliquotaIpi", "op": "replace", "value": parametrosAdicionais.valorIpi.replace(',', '.') }]);
+                    } else if (action === 'vincular_cenarios_lote') {
+                        urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios/${parametrosAdicionais.idCenario}/condicoes`;
+                        const famArray = parametrosAdicionais.familias.split(',');
+                        const reqPayload = famArray.map(f => ({ "idCondicao": 2, "identificador": "FAMILIA", "valor": f, "indTipoEntidade": "N" }));
+                        fetchOptions.method = 'POST';
+                        fetchOptions.headers["Content-Type"] = "application/json";
+                        fetchOptions.body = JSON.stringify(reqPayload);
+                    }
+                    
+                    console.log(`[LOCAL] Rota: ${urlLocal}`);
+                    const response = await fetch(urlLocal, fetchOptions);
+                    
+                    if (action === 'atualizar_ipi' && (response.status === 200 || response.status === 204)) return { sucesso: true, mensagem: "IPI Atualizado (Local)" };
+                    if (action === 'vincular_cenarios_lote' && response.ok) return { sucesso: true, mensagem: "Vinculado (Local)" };
+
+                    let data = await response.json();
+                    
+                    if (action === 'tributacao' && Array.isArray(data)) data = { items: data };
+                    else if (action === 'listar_cenarios') data = { sucesso: true, dados: data };
+                    
+                    data.endpointOriginal = urlLocal + " (VIA REDE LOCAL DIRETA)";
+                    return data;
+
+                } catch (error) {
+                    console.error("Erro na Rota Local", error);
+                    return { erro: "Falha Híbrida Local", detalhes: error.message };
+                }
+            } 
+            // ==== FLUXO NUVEM (VIA APPS SCRIPT) ====
+            else {
+                let urlGas = `${WEB_APP_URL}?action=${action}&cliente=${encodeURIComponent(clienteId)}`;
+                for (let key in parametrosAdicionais) {
+                    urlGas += `&${key}=${encodeURIComponent(parametrosAdicionais[key])}`;
+                }
+                const response = await fetch(urlGas);
+                return await response.json();
+            }
+        }
+
+        // ==========================================
+        // INFRAESTRUTURA BÁSICA
+        // ==========================================
         async function carregarVersoes() {
             try {
                 const response = await fetch(`${WEB_APP_URL}?action=versao`);
@@ -788,10 +896,7 @@
                 document.getElementById('versaoFrontHeader').innerText = `FRONT: ${VERSAO_FRONT}`;
                 document.getElementById('versaoBackHeader').innerText = `BACK: ${versaoBack}`;
             } catch (error) {
-                console.error("Erro ao buscar a versão do back-end", error);
                 document.getElementById('versaoLoginContainer').innerHTML = `FRONT: ${VERSAO_FRONT} &bull; BACK: Falha de conexão`;
-                document.getElementById('versaoFrontHeader').innerText = `FRONT: ${VERSAO_FRONT}`;
-                document.getElementById('versaoBackHeader').innerText = `BACK: Falha`;
             }
         }
 
@@ -822,10 +927,12 @@
                 
                 if (data.clientes && Array.isArray(data.clientes)) {
                     data.clientes.forEach(c => {
-                        let optMain = new Option(c.nome, c.id);
-                        let optIpi = new Option(c.nome, c.id);
-                        let optAnalise = new Option(c.nome, c.id);
-                        let optRtc = new Option(c.nome, c.id);
+                        bdClientes[c.id] = c; 
+                        const tagLocal = c.modoVpn ? " [ VPN LOCAL ]" : "";
+                        let optMain = new Option(c.nome + tagLocal, c.id);
+                        let optIpi = new Option(c.nome + tagLocal, c.id);
+                        let optAnalise = new Option(c.nome + tagLocal, c.id);
+                        let optRtc = new Option(c.nome + tagLocal, c.id);
                         
                         selectMain.appendChild(optMain);
                         selectIpi.appendChild(optIpi);
@@ -893,9 +1000,6 @@
             document.getElementById('loginSenha').value = '';
         }
 
-        // ==========================================
-        // PREENCHIMENTO REFORMA TRIBUTÁRIA
-        // ==========================================
         function preencherBlocoReforma(prefixo, dados) {
             const fmtData = (d) => {
                 if(!d) return "-";
@@ -941,21 +1045,15 @@
         }
 
         // ==========================================
-        // LÓGICA DO PAINEL PRINCIPAL (CARD DE CONSULTA)
+        // LÓGICA DO PAINEL PRINCIPAL (ATUALIZADA)
         // ==========================================
         async function buscarDados() {
             const clienteId = document.getElementById('selectCliente').value;
             const tipoBusca = document.getElementById('selectTipoBusca').value;
             const termo = document.getElementById('inputTermoBusca').value.trim();
 
-            if (!clienteId) {
-                alert("Por favor, selecione um cliente.");
-                return;
-            }
-            if (!termo) {
-                alert("Por favor, digite o valor da busca.");
-                return;
-            }
+            if (!clienteId) return alert("Por favor, selecione um cliente.");
+            if (!termo) return alert("Por favor, digite o valor da busca.");
 
             clienteAtualId = clienteId;
 
@@ -969,55 +1067,38 @@
             preencherBlocoReforma('ibs', null);
             document.getElementById('txtGetReformaOriginal').innerText = "Aguardando consulta...";
 
-            let urlGetProduto = "";
-            if (tipoBusca === 'sku') {
-                urlGetProduto = `${WEB_APP_URL}?action=produto&cliente=${encodeURIComponent(clienteId)}&sku=${encodeURIComponent(termo)}`;
-            } else {
-                urlGetProduto = `${WEB_APP_URL}?action=produto_ean&cliente=${encodeURIComponent(clienteId)}&ean=${encodeURIComponent(termo)}`;
-            }
-
-            document.getElementById('txtGetProduto').innerText = urlGetProduto;
+            let action = tipoBusca === 'sku' ? 'produto' : 'produto_ean';
+            let params = tipoBusca === 'sku' ? { sku: termo } : { ean: termo };
+            
+            document.getElementById('txtGetProduto').innerText = `-> ${bdClientes[clienteId].modoVpn ? '[ROTA VPN]' : '[ROTA NUVEM]'} action=${action}`;
 
             try {
-                const response = await fetch(urlGetProduto);
-                const data = await response.json();
+                const data = await fetchHibrido(action, clienteId, params);
 
-                if (data.erro) {
-                    alert("Erro: " + data.erro);
-                    return;
-                }
+                if (data.erro) return alert("Erro: " + data.erro + (data.detalhes ? `\nDetalhes: ${data.detalhes}` : ''));
+                
+                document.getElementById('txtGetProdutoOriginal').innerText = data.endpointOriginal || "N/A";
 
-                if (data.endpointOriginal) {
-                    document.getElementById('txtGetProdutoOriginal').innerText = data.endpointOriginal;
-                } else {
-                    document.getElementById('txtGetProdutoOriginal').innerText = "Endpoint nativo não retornado pelo script.";
-                }
-
-                if (!data.items || data.items.length === 0) {
-                    alert("Nenhum produto encontrado com esse código.");
-                    return;
-                }
+                if (!data.items || data.items.length === 0) return alert("Nenhum produto encontrado com esse código.");
 
                 const produto = data.items[0];
                 const familia = produto.familia || {};
                 const divisao = familia.familiaDivisao?.[0] || {};
 
-                skuProdutoAtual = produto.idProduto; // ALTERAÇÃO: Armazena o código/SKU
+                skuProdutoAtual = produto.idProduto; 
                 idFamiliaAtual = produto.idFamilia; 
                 idTributacaoAtual = divisao.idTributacao;
                 descTributacaoAtual = divisao.tributacao?.descricao || "Nenhuma regra vinculada";
 
                 if (idTributacaoAtual) {
-                    document.getElementById('txtGetTributacao').innerText = `${WEB_APP_URL}?action=tributacao&cliente=${encodeURIComponent(clienteId)}&idTributacao=${idTributacaoAtual}`;
+                    document.getElementById('txtGetTributacao').innerText = `-> Próxima Rota: Tributação ID=${idTributacaoAtual}`;
                 } else {
                     document.getElementById('txtGetTributacao').innerText = "Nenhum ID de Tributação vinculado.";
                 }
 
                 let eansEncontrados = "Nenhum";
                 if (produto.produtoCodigo && produto.produtoCodigo.length > 0) {
-                    const eans = produto.produtoCodigo
-                        .filter(cod => cod.tipoCodigo === "E")
-                        .map(cod => cod.codigoAcesso);
+                    const eans = produto.produtoCodigo.filter(cod => cod.tipoCodigo === "E").map(cod => cod.codigoAcesso);
                     if (eans.length > 0) eansEncontrados = eans.join(", ");
                 }
 
@@ -1035,9 +1116,7 @@
                 document.getElementById('cofinsSaida').innerText = familia.situacaoNfCofinsSai || "N/A";
                 
                 document.getElementById('aliqIpi').innerText = familia.aliquotaIpi !== null ? familia.aliquotaIpi : "N/A";
-                if(idFamiliaAtual) {
-                    document.getElementById('btnEditarIpi').classList.remove('hidden');
-                }
+                if(idFamiliaAtual) document.getElementById('btnEditarIpi').classList.remove('hidden');
 
                 document.getElementById('natRec').innerText = familia.codNatRec || "N/A";
                 document.getElementById('seqNatRec').innerText = familia.seqNatRec || "N/A";
@@ -1047,9 +1126,7 @@
                 document.getElementById('idPauta').innerText = divisao.idPauta || "N/A";
                 document.getElementById('nomeFamDiv').innerText = divisao.familia?.nomeFamilia || "N/A";
 
-                if (idTributacaoAtual) {
-                    document.getElementById('btnVerTributacao').classList.remove('hidden');
-                }
+                if (idTributacaoAtual) document.getElementById('btnVerTributacao').classList.remove('hidden');
 
                 document.getElementById('pUserAlt').innerText = produto.usuarioAlteracao || "N/A";
                 document.getElementById('pDataAlt').innerText = produto.dataHoraAlteracao || "N/A";
@@ -1067,14 +1144,11 @@
                 document.getElementById('resultado').classList.remove('hidden');
 
                 if (idFamiliaAtual) {
-                    document.getElementById('txtGetReforma').innerText = `${WEB_APP_URL}?action=reforma&cliente=${encodeURIComponent(clienteId)}&idFamilia=${idFamiliaAtual}`;
+                    document.getElementById('txtGetReforma').innerText = `-> ${bdClientes[clienteId].modoVpn ? '[ROTA VPN]' : '[ROTA NUVEM]'} action=reforma`;
                     try {
-                        const resRef = await fetch(`${WEB_APP_URL}?action=reforma&cliente=${encodeURIComponent(clienteId)}&idFamilia=${idFamiliaAtual}`);
-                        const datRef = await resRef.json();
+                        const datRef = await fetchHibrido('reforma', clienteId, { idFamilia: idFamiliaAtual });
 
-                        if(datRef.endpointOriginal) {
-                            document.getElementById('txtGetReformaOriginal').innerText = datRef.endpointOriginal;
-                        }
+                        if(datRef.endpointOriginal) document.getElementById('txtGetReformaOriginal').innerText = datRef.endpointOriginal;
 
                         let cbs = null, ibs = null;
                         if (datRef.items && Array.isArray(datRef.items)) {
@@ -1092,26 +1166,17 @@
                 }
                 
             } catch (error) {
-                alert("Erro ao conectar com o servidor. Detalhes: " + error.message);
+                alert("Erro ao conectar. Detalhes: " + error.message);
             } finally {
                 document.getElementById('loading').classList.add('hidden');
             }
         }
 
-        // ==========================================
-        // ALTERAÇÃO NOVO: DISPARO DO SANEAMENTO TRIBUTÁRIO
-        // ==========================================
         async function dispararSaneamentoTributario() {
-            if (!skuProdutoAtual) {
-                alert("Nenhum produto selecionado.");
-                return;
-            }
+            if (!skuProdutoAtual) return alert("Nenhum produto selecionado.");
 
             const emailUsuario = localStorage.getItem('imendes_usuario');
-            if (!emailUsuario) {
-                alert("Usuário não identificado. Por favor, faça login novamente.");
-                return;
-            }
+            if (!emailUsuario) return alert("Usuário não identificado. Por favor, faça login novamente.");
 
             const aviso = "Aviso: verifique se você está logado no portal IMendes na tela do cliente TOTVS.\n\nDeseja adequar CGO?";
             const adequarCgo = confirm(aviso);
@@ -1130,11 +1195,8 @@
                 const response = await fetch(url);
                 const data = await response.json();
 
-                if (data.sucesso) {
-                    alert("Saneamento Tributário enviado com sucesso!");
-                } else {
-                    alert("Falha no envio do Saneamento Tributário: " + (data.erro || JSON.stringify(data)));
-                }
+                if (data.sucesso) alert("Saneamento Tributário enviado com sucesso!");
+                else alert("Falha no envio do Saneamento Tributário: " + (data.erro || JSON.stringify(data)));
             } catch (e) {
                 alert("Erro de conexão ao enviar Saneamento Tributário: " + e.message);
             } finally {
@@ -1144,9 +1206,6 @@
             }
         }
 
-        // ==========================================
-        // EDIÇÃO INDIVIDUAL IPI
-        // ==========================================
         function iniciarEdicaoIpi() {
             const spanIpi = document.getElementById('aliqIpi');
             const btnEditar = document.getElementById('btnEditarIpi');
@@ -1178,11 +1237,8 @@
             document.getElementById('btnCancelarIpi').classList.add('hidden');
             document.getElementById('spinnerIpi').classList.remove('hidden');
 
-            const urlEndpoint = `${WEB_APP_URL}?action=atualizar_ipi&cliente=${encodeURIComponent(clienteAtualId)}&idFamilia=${encodeURIComponent(idFamiliaAtual)}&valorIpi=${encodeURIComponent(novoValor)}`;
-
             try {
-                const response = await fetch(urlEndpoint);
-                const data = await response.json();
+                const data = await fetchHibrido('atualizar_ipi', clienteAtualId, { idFamilia: idFamiliaAtual, valorIpi: novoValor });
 
                 if (data.sucesso) {
                     alert(data.mensagem);
@@ -1290,11 +1346,8 @@
                         document.getElementById('contadorLoteIpi').innerText = `${i + 1} / ${total}`;
                         logArea.innerHTML += `Família <strong class="text-white">${reg.familia}</strong> (IPI: ${reg.ipi}) ... `;
                         
-                        const urlEndpoint = `${WEB_APP_URL}?action=atualizar_ipi&cliente=${encodeURIComponent(clienteId)}&idFamilia=${encodeURIComponent(reg.familia)}&valorIpi=${encodeURIComponent(reg.ipi)}`;
-
                         try {
-                            const res = await fetch(urlEndpoint);
-                            const dat = await res.json();
+                            const dat = await fetchHibrido('atualizar_ipi', clienteId, { idFamilia: reg.familia, valorIpi: reg.ipi });
                             if (dat.sucesso) { logArea.innerHTML += `<span class="text-emerald-400">SUCESSO</span>\n`; suc++; } 
                             else { logArea.innerHTML += `<span class="text-red-400">ERRO</span>\n`; err++; }
                         } catch(ex) {
@@ -1373,23 +1426,17 @@
                         pText.innerText = `Consultando: ${i+1} / ${totalSkus} (SKU: ${sku})`;
                         pBar.style.width = `${((i+1)/totalSkus)*100}%`;
 
-                        // NOVA ROTA: produto_leve (Corta o peso do JSON em 80%)
-                        const urlEndpoint = `${WEB_APP_URL}?action=produto_leve&cliente=${encodeURIComponent(clienteId)}&sku=${encodeURIComponent(sku)}`;
-
                         try {
-                            const res = await fetch(urlEndpoint);
-                            const dat = await res.json();
+                            const dat = await fetchHibrido('produto_leve', clienteId, { sku: sku });
 
                             if (dat.items && dat.items.length > 0) {
                                 const prod = dat.items[0];
                                 const divi = prod.familia?.familiaDivisao?.[0] || {};
                                 
-                                let eansText = "Omitido (Modo Leve)";
-
                                 dadosAnaliseExcel.push({
                                     "SKU": prod.idProduto || sku,
                                     "Descrição Completa": prod.descricaoCompleta || "",
-                                    "EAN": eansText,
+                                    "EAN": "Omitido (Modo Leve)",
                                     "ID Tributação": divi.idTributacao || "N/A",
                                     "Descrição Tributação": divi.tributacao?.descricao || "N/A"
                                 });
@@ -1442,7 +1489,6 @@
             XLSX.writeFile(wb, "C5_Analise_Tributacao.xlsx");
         }
 
-
         // ==========================================
         // ABA 3: IMPLANTADOR DE CONDIÇÕES - RTC
         // ==========================================
@@ -1487,12 +1533,10 @@
                     }
 
                     if(Object.keys(rtcFamiliasPorClassTrib).length === 0) {
-                        throw new Error("Nenhum dado válido encontrado. Certifique-se de que a Coluna A tenha ID Família numérico e a Coluna B tenha CClassTrib.");
+                        throw new Error("Nenhum dado válido encontrado.");
                     }
 
-                    const urlEndpoint = `${WEB_APP_URL}?action=listar_cenarios&cliente=${encodeURIComponent(rtcClienteId)}`;
-                    const res = await fetch(urlEndpoint);
-                    const dat = await res.json();
+                    const dat = await fetchHibrido('listar_cenarios', rtcClienteId);
 
                     if (!dat.sucesso) {
                         throw new Error(dat.erro || "Falha ao consultar cenários.");
@@ -1571,9 +1615,7 @@
             }
 
             const idsParaProcessar = Object.keys(cenariosMappingToFamilias);
-            if(idsParaProcessar.length === 0) {
-                return alert("Nenhum Cenário informado para implantação.");
-            }
+            if(idsParaProcessar.length === 0) return alert("Nenhum Cenário informado.");
 
             btn.disabled = true;
             btn.innerHTML = `<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-900 mr-2"></div> Implantando...`;
@@ -1591,11 +1633,9 @@
                     logArea.scrollTop = logArea.scrollHeight;
 
                     const familiasAgrupadas = loteFamilias.join(',');
-                    const urlEndpoint = `${WEB_APP_URL}?action=vincular_cenarios_lote&cliente=${encodeURIComponent(rtcClienteId)}&idCenario=${encodeURIComponent(idCenario)}&familias=${encodeURIComponent(familiasAgrupadas)}`;
 
                     try {
-                        const res = await fetch(urlEndpoint);
-                        const dat = await res.json();
+                        const dat = await fetchHibrido('vincular_cenarios_lote', rtcClienteId, { idCenario: idCenario, familias: familiasAgrupadas });
 
                         if (dat.sucesso) {
                             logArea.innerHTML += `<span class="text-emerald-400">OK</span>\n`;
@@ -1613,7 +1653,7 @@
                 }
             }
 
-            logArea.innerHTML += `\n<span class="text-emerald-400 font-bold">PROCESSO DE IMPLANTAÇÃO FINALIZADO!</span>\n`;
+            logArea.innerHTML += `\n<span class="text-emerald-400 font-bold">PROCESSO FINALIZADO!</span>\n`;
             logArea.scrollTop = logArea.scrollHeight;
             btn.innerHTML = `<span>🚀 Implantação Concluída</span>`;
         }
@@ -1631,11 +1671,8 @@
             document.getElementById('modalIdTrib').innerText = idTributacaoAtual;
             document.getElementById('modalDescTrib').innerText = descTributacaoAtual;
 
-            const urlGetTrib = `${WEB_APP_URL}?action=tributacao&cliente=${encodeURIComponent(clienteAtualId)}&idTributacao=${idTributacaoAtual}`;
-
             try {
-                const response = await fetch(urlGetTrib);
-                const data = await response.json();
+                const data = await fetchHibrido('tributacao', clienteAtualId, { idTributacao: idTributacaoAtual });
 
                 if (data.erro) {
                     alert("Erro da TOTVS: " + data.erro);
@@ -1643,11 +1680,7 @@
                     return;
                 }
 
-                if (data.endpointOriginal) {
-                    document.getElementById('txtGetTributacaoOriginal').innerText = data.endpointOriginal;
-                } else {
-                    document.getElementById('txtGetTributacaoOriginal').innerText = "Endpoint nativo de tributação não retornado pelo script.";
-                }
+                document.getElementById('txtGetTributacaoOriginal').innerText = data.endpointOriginal || "N/A";
 
                 regrasGlobais = data.items || data;
                 
