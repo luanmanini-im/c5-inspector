@@ -286,6 +286,10 @@
                                 <p class="font-bold text-amber-300 text-sm mt-1" id="descTributacao">-</p>
                             </div>
                             <div class="grid grid-cols-2 gap-2">
+                                <div><p class="text-xs text-slate-400">Aceita Pauta</p><p class="font-bold text-white" id="aceitaPauta">-</p></div>
+                                <div><p class="text-xs text-slate-400">Status Tributação</p><p class="font-bold text-white" id="statusTributacao">-</p></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
                                 <div><p class="text-xs text-slate-400">ID Pauta</p><p class="font-bold text-white" id="idPauta">-</p></div>
                                 <div><p class="text-xs text-slate-400">Nome Família</p><p class="font-bold text-white text-xs mt-1" id="nomeFamDiv">-</p></div>
                             </div>
@@ -765,6 +769,8 @@
         let idDivisaoAtual = null;
         let skuProdutoAtual = null; 
         let descTributacaoAtual = "";
+        let aceitaPautaAtual = null;
+        let statusTributacaoAtual = null;
         let regrasGlobais = [];
         let regrasExibidasAtualmente = [];
         let tipoAtivoAtual = "";
@@ -1111,6 +1117,8 @@
                 idDivisaoAtual = divisao.idDivisao || divisao.id || "1";
                 idTributacaoAtual = divisao.idTributacao;
                 descTributacaoAtual = divisao.tributacao?.descricao || "Nenhuma regra vinculada";
+                aceitaPautaAtual = divisao.aceitaPauta || null;
+                statusTributacaoAtual = divisao.statusTributacao || null;
 
                 if (idTributacaoAtual) {
                     document.getElementById('txtGetTributacao').innerText = `-> Próxima Rota: Tributação ID=${idTributacaoAtual}`;
@@ -1145,6 +1153,8 @@
 
                 document.getElementById('idTributacao').innerText = idTributacaoAtual || "N/A";
                 document.getElementById('descTributacao').innerText = descTributacaoAtual;
+                document.getElementById('aceitaPauta').innerText = aceitaPautaAtual || "N/A";
+                document.getElementById('statusTributacao').innerText = statusTributacaoAtual || "N/A";
                 document.getElementById('idPauta').innerText = divisao.idPauta || "N/A";
                 document.getElementById('nomeFamDiv').innerText = divisao.familia?.nomeFamilia || "N/A";
 
