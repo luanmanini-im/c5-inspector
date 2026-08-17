@@ -156,6 +156,7 @@
             <select id="selectTipoBusca" onchange="atualizarPlaceholderBusca()" class="w-full md:w-40 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input cursor-pointer">
                 <option value="sku">SKU</option>
                 <option value="ean">EAN</option>
+                <option value="familia">FAMILIA</option>
             </select>
 
             <input type="text" id="inputTermoBusca" placeholder="Digite o SKU (ex: 128453)" 
@@ -341,10 +342,23 @@
                         <span>🏛️</span> 7. Reforma Tributária (CBS)
                     </h3>
                     <div class="space-y-3" id="blocoCbs">
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><p class="text-[10px] text-slate-400 uppercase">Cenário</p><p class="font-bold text-white text-sm" id="cbsIdCenario">-</p></div>
-                            <div><p class="text-[10px] text-slate-400 uppercase">Status</p><p class="font-bold text-white text-sm" id="cbsStatus">-</p></div>
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <p class="text-[10px] text-slate-400 uppercase">Cenário</p>
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    <p class="font-bold text-white text-sm" id="cbsIdCenario">-</p>
+                                    <button id="btnEditarCbs" onclick="iniciarEdicaoCbs()" class="text-amber-400 hover:text-amber-300 text-xs p-0.5 cursor-pointer" title="Editar Cenário">✏️</button>
+                                    <button id="btnExcluirCbs" onclick="excluirCondicaoCbs()" class="text-red-400 hover:text-red-300 text-xs p-0.5 cursor-pointer" title="Excluir Vínculo">🗑️</button>
+                                </div>
+                                <div id="containerEditCbs" class="hidden mt-2 flex gap-1 items-end">
+                                    <input type="number" id="inputEditCbs" placeholder="ID novo" class="flex-1 p-2 border rounded text-xs imendes-input">
+                                    <button onclick="salvarEdicaoCbs()" id="btnSalvarCbs" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-2 rounded text-xs font-bold cursor-pointer">✓</button>
+                                    <button onclick="cancelarEdicaoCbs()" id="btnCancelarCbs" class="bg-red-600 hover:bg-red-500 text-white px-2 py-2 rounded text-xs font-bold cursor-pointer">✕</button>
+                                    <div id="spinnerCbs" class="hidden animate-spin rounded-full h-6 w-6 border-4 border-amber-400 border-t-transparent"></div>
+                                </div>
+                            </div>
                         </div>
+                        <div><p class="text-[10px] text-slate-400 uppercase">Status</p><p class="font-bold text-white text-sm" id="cbsStatus">-</p></div>
                         <div><p class="text-[10px] text-slate-400 uppercase">Descrição Cenário</p><p class="font-bold text-amber-300 text-xs mt-0.5" id="cbsDescCenario">-</p></div>
                         <div><p class="text-[10px] text-slate-400 uppercase">Orientação</p><p class="font-bold text-indigo-300 text-[11px] leading-tight mt-0.5" id="cbsOrientacao">-</p></div>
                         
@@ -373,10 +387,23 @@
                         <span>🏛️</span> 8. Reforma Tributária (IBS)
                     </h3>
                     <div class="space-y-3" id="blocoIbs">
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><p class="text-[10px] text-slate-400 uppercase">Cenário</p><p class="font-bold text-white text-sm" id="ibsIdCenario">-</p></div>
-                            <div><p class="text-[10px] text-slate-400 uppercase">Status</p><p class="font-bold text-white text-sm" id="ibsStatus">-</p></div>
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <p class="text-[10px] text-slate-400 uppercase">Cenário</p>
+                                <div class="flex items-center gap-1.5 mt-0.5">
+                                    <p class="font-bold text-white text-sm" id="ibsIdCenario">-</p>
+                                    <button id="btnEditarIbs" onclick="iniciarEdicaoIbs()" class="text-amber-400 hover:text-amber-300 text-xs p-0.5 cursor-pointer" title="Editar Cenário">✏️</button>
+                                    <button id="btnExcluirIbs" onclick="excluirCondicaoIbs()" class="text-red-400 hover:text-red-300 text-xs p-0.5 cursor-pointer" title="Excluir Vínculo">🗑️</button>
+                                </div>
+                                <div id="containerEditIbs" class="hidden mt-2 flex gap-1 items-end">
+                                    <input type="number" id="inputEditIbs" placeholder="ID novo" class="flex-1 p-2 border rounded text-xs imendes-input">
+                                    <button onclick="salvarEdicaoIbs()" id="btnSalvarIbs" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-2 rounded text-xs font-bold cursor-pointer">✓</button>
+                                    <button onclick="cancelarEdicaoIbs()" id="btnCancelarIbs" class="bg-red-600 hover:bg-red-500 text-white px-2 py-2 rounded text-xs font-bold cursor-pointer">✕</button>
+                                    <div id="spinnerIbs" class="hidden animate-spin rounded-full h-6 w-6 border-4 border-amber-400 border-t-transparent"></div>
+                                </div>
+                            </div>
                         </div>
+                        <div><p class="text-[10px] text-slate-400 uppercase">Status</p><p class="font-bold text-white text-sm" id="ibsStatus">-</p></div>
                         <div><p class="text-[10px] text-slate-400 uppercase">Descrição Cenário</p><p class="font-bold text-amber-300 text-xs mt-0.5" id="ibsDescCenario">-</p></div>
                         <div><p class="text-[10px] text-slate-400 uppercase">Orientação</p><p class="font-bold text-teal-300 text-[11px] leading-tight mt-0.5" id="ibsOrientacao">-</p></div>
                         
@@ -590,7 +617,7 @@
             </div>
             
             <!-- ABA 1: ATUALIZAÇÃO DE IPI -->
-            <div id="ferramentaIpi" class="p-6 flex-1 overflow-auto flex flex-col gap-6">
+            <div id="ferramentaIpi" class="p-6 flex-1 overflow-auto flex flex-col gap-6 min-h-0">
                 <div class="bg-indigo-950/30 border border-indigo-900/50 p-4 rounded-lg">
                     <h4 class="text-indigo-400 font-bold text-sm mb-2">Instruções da Planilha (IPI):</h4>
                     <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
@@ -632,7 +659,7 @@
             </div>
 
             <!-- ABA 2: ANÁLISE DE TRIBUTAÇÃO -->
-            <div id="ferramentaAnalise" class="p-6 flex-1 overflow-auto flex flex-col gap-6 hidden">
+            <div id="ferramentaAnalise" class="p-6 flex-1 overflow-auto flex flex-col gap-6 hidden min-h-0">
                 <div class="bg-emerald-950/30 border border-emerald-900/50 p-4 rounded-lg">
                     <h4 class="text-emerald-400 font-bold text-sm mb-2">Instruções da Planilha (Consulta Otimizada):</h4>
                     <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
@@ -687,7 +714,7 @@
             </div>
 
             <!-- ABA 3: IMPLANTADOR DE CONDIÇÕES - RTC -->
-            <div id="ferramentaRtc" class="p-6 flex-1 overflow-auto flex flex-col gap-6 hidden">
+            <div id="ferramentaRtc" class="p-6 flex-1 overflow-auto flex flex-col gap-6 hidden min-h-0">
                 <div class="bg-rose-950/30 border border-rose-900/50 p-4 rounded-lg">
                     <h4 class="text-rose-400 font-bold text-sm mb-2">Instruções de Implantação (Reforma Tributária):</h4>
                     <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
@@ -758,16 +785,17 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyi62yKro3PFuOGG4jlOavLUWRx5417h9WePRR1ST9Wks89DYdc0huc1bmDt2LJ-pP0Bw/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7F5aFsOFEEiljG_AlvfsiKT37-ibUWzHfNCXgZCHteap2irvwcyd4UCRqiojOIHpi-g/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.3.2"; 
+        const VERSAO_FRONT = "v5.5.0"; 
 
         let idTributacaoAtual = null;
         let clienteAtualId = null;
-        let idFamiliaAtual = null; 
+        let idFamiliaAtual = null;
         let idDivisaoAtual = null;
-        let skuProdutoAtual = null; 
+        let skuProdutoAtual = null;
+        let produtoAtualCompleto = null;  // 🔧 Nova variável para guardar produto completo
         let descTributacaoAtual = "";
         let aceitaPautaAtual = null;
         let statusTributacaoAtual = null;
@@ -775,6 +803,8 @@
         let regrasExibidasAtualmente = [];
         let tipoAtivoAtual = "";
         let regraSelecionadaJson = null;
+        let idCenarioCbsAtual = null;
+        let idCenarioIbsAtual = null;
 
         // Variavel global para gerenciar os dados dos clientes e acesso local
         let bdClientes = {};
@@ -860,6 +890,8 @@
                         urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${parametrosAdicionais.sku}&Expand=familia.familiaDivisao.tributacao`;
                     } else if (action === 'produto_ean') {
                         urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?CodigoAcesso=${parametrosAdicionais.ean}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
+                    } else if (action === 'produto_familia') {
+                        urlLocal = `${cliente.urlBase}/SMProdutosAPI/api/v4/produtos/dados-cadastrais?IdFamilia=${parametrosAdicionais.idFamilia}`;
                     } else if (action === 'tributacao') {
                         urlLocal = `${cliente.urlBase}/CadastrosEstruturaisApi/api/v1/Tributacao/uf?IdTributacao=${parametrosAdicionais.idTributacao}&pageSize=10000`;
                     } else if (action === 'reforma') {
@@ -878,35 +910,130 @@
                         fetchOptions.method = 'POST';
                         fetchOptions.headers["Content-Type"] = "application/json";
                         fetchOptions.body = JSON.stringify(reqPayload);
+                    } else if (action === 'excluir_condicao_cenario') {
+                        const { idCenario, idFamilia } = parametrosAdicionais;
+                        urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios/${idCenario}/condicoes`;
+                        const payload = [{
+                            idCondicao: 2,
+                            identificador: "FAMILIA",
+                            valor: String(idFamilia),
+                            indTipoEntidade: "N"
+                        }];
+                        fetchOptions.method = 'DELETE';
+                        fetchOptions.headers["Content-Type"] = "application/json";
+                        fetchOptions.body = JSON.stringify(payload);
+                    } else if (action === 'incluir_condicao_cenario') {
+                        const { idCenario, idFamilia } = parametrosAdicionais;
+                        urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios/${idCenario}/condicoes`;
+                        const payload = [{
+                            idCondicao: 2,
+                            identificador: "FAMILIA",
+                            valor: String(idFamilia),
+                            indTipoEntidade: "N"
+                        }];
+                        fetchOptions.method = 'POST';
+                        fetchOptions.headers["Content-Type"] = "application/json";
+                        fetchOptions.body = JSON.stringify(payload);
                     }
                     
                     console.log(`[LOCAL] Rota: ${urlLocal}`);
                     const response = await fetch(urlLocal, fetchOptions);
                     
+                    // ✅ VERIFICAR ERROS HTTP
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        console.error(`[LOCAL ERROR] HTTP ${response.status}: ${errorBody}`);
+                        return {
+                            erro: `Erro HTTP ${response.status} da API`,
+                            statusCode: response.status,
+                            message: response.statusText,
+                            detalhes: errorBody.substring(0, 200)
+                        };
+                    }
+
                     if (action === 'atualizar_ipi' && (response.status === 200 || response.status === 204)) return { sucesso: true, mensagem: "IPI Atualizado (Local)" };
                     if (action === 'vincular_cenarios_lote' && response.ok) return { sucesso: true, mensagem: "Vinculado (Local)" };
+                    if (action === 'excluir_condicao_cenario' && (response.status === 200 || response.status === 204)) return { sucesso: true, statusCode: response.status };
+                    if (action === 'incluir_condicao_cenario' && (response.status === 200 || response.status === 201)) return { sucesso: true, statusCode: response.status };
 
                     let data = await response.json();
-                    
+
                     if (action === 'tributacao' && Array.isArray(data)) data = { items: data };
+                    else if (action === 'produto_familia' && Array.isArray(data)) data = { items: data };
                     else if (action === 'listar_cenarios') data = { sucesso: true, dados: data };
-                    
+
                     data.endpointOriginal = urlLocal + " (VIA REDE LOCAL DIRETA)";
                     return data;
 
                 } catch (error) {
                     console.error("Erro na Rota Local", error);
-                    return { erro: "Falha Híbrida Local", detalhes: error.message };
+                    return { erro: "Falha Híbrida Local", statusCode: 500, detalhes: error.message };
                 }
             } 
             // ==== FLUXO NUVEM (VIA APPS SCRIPT) ====
             else {
-                let urlGas = `${WEB_APP_URL}?action=${action}&cliente=${encodeURIComponent(clienteId)}`;
-                for (let key in parametrosAdicionais) {
-                    urlGas += `&${key}=${encodeURIComponent(parametrosAdicionais[key])}`;
+                try {
+                    let urlGas = `${WEB_APP_URL}?action=${action}&cliente=${encodeURIComponent(clienteId)}`;
+                    for (let key in parametrosAdicionais) {
+                        urlGas += `&${key}=${encodeURIComponent(parametrosAdicionais[key])}`;
+                    }
+                    console.log(`[CLOUD] URL: ${urlGas}`);
+                    const response = await fetch(urlGas);
+                    
+                    // ✅ VERIFICAR ERROS HTTP
+                    if (!response.ok) {
+                        const errorBody = await response.text();
+                        console.error(`[CLOUD ERROR] HTTP ${response.status}: ${errorBody}`);
+                        return {
+                            erro: `Erro HTTP ${response.status} da API`,
+                            statusCode: response.status,
+                            message: response.statusText,
+                            detalhes: errorBody.substring(0, 200)
+                        };
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // ✅ VERIFICAR STATUSCODE PRIMEIRO (prioritário sobre campo "erro")
+                    if (data.statusCode && data.statusCode >= 400) {
+                        // É um erro real baseado no HTTP status
+                        console.error(`[CLOUD ERROR] Erro na resposta (HTTP ${data.statusCode}):`, data);
+                        return {
+                            erro: data.erro || data.error,
+                            statusCode: data.statusCode,
+                            message: data.message,
+                            detalhes: data.detalhes || data.details
+                        };
+                    }
+                    
+                    // ✅ Se statusCode for 2xx (200-299), é SUCESSO (ignorar campo "erro" enganoso)
+                    if (data.statusCode && data.statusCode >= 200 && data.statusCode < 300) {
+                        console.log(`[CLOUD SUCCESS] HTTP ${data.statusCode}:`, data);
+                        // Operação bem-sucedida, retornar com sucesso mesmo se tem campo "erro"
+                        return { 
+                            sucesso: true, 
+                            statusCode: data.statusCode, 
+                            detalhes: data.detalhes,
+                            dados: data.dados || data.items || data
+                        };
+                    }
+                    
+                    // ✅ Fallback: verificar campo "erro" (casos sem statusCode explícito)
+                    if (data.erro || data.error) {
+                        console.error(`[CLOUD ERROR] Erro na resposta:`, data);
+                        return {
+                            erro: data.erro || data.error,
+                            statusCode: data.statusCode || 500,
+                            message: data.message,
+                            detalhes: data.detalhes || data.details
+                        };
+                    }
+                    
+                    return data;
+                } catch (error) {
+                    console.error("Erro na Rota Cloud", error);
+                    return { erro: "Falha na requisição ao servidor", statusCode: 500, detalhes: error.message };
                 }
-                const response = await fetch(urlGas);
-                return await response.json();
             }
         }
 
@@ -932,8 +1059,10 @@
             const input = document.getElementById('inputTermoBusca');
             if (tipo === 'sku') {
                 input.placeholder = "Digite o SKU (ex: 128453)";
-            } else {
+            } else if (tipo === 'ean') {
                 input.placeholder = "Digite o EAN (ex: 7891000100103)";
+            } else if (tipo === 'familia') {
+                input.placeholder = "Digite o ID Família (ex: 136649)";
             }
         }
 
@@ -1027,48 +1156,104 @@
             document.getElementById('loginSenha').value = '';
         }
 
-        function preencherBlocoReforma(prefixo, dados) {
+        let carregandoReforma = false; // Flag global para controlar estado de carregamento
+
+        function preencherBlocoReforma(prefixo, dados, isCarregando = false) {
+            console.log(`[preencherBloco${prefixo.toUpperCase()}] Dados recebidos:`, dados, `(Carregando: ${isCarregando})`);
+            
             const fmtData = (d) => {
                 if(!d) return "-";
-                const dt = new Date(d);
-                return dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                try {
+                    const dt = new Date(d);
+                    return dt.toLocaleDateString('pt-BR') + ' ' + dt.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                } catch(e) {
+                    return String(d);
+                }
             };
             const fmtDataCurta = (d) => {
                 if(!d) return "-";
-                const dt = new Date(d);
-                return dt.toLocaleDateString('pt-BR');
+                try {
+                    const dt = new Date(d);
+                    return dt.toLocaleDateString('pt-BR');
+                } catch(e) {
+                    return String(d);
+                }
             };
 
             if (!dados) {
-                document.getElementById(`${prefixo}IdCenario`).innerText = "N/A";
-                document.getElementById(`${prefixo}Status`).innerText = "N/A";
-                document.getElementById(`${prefixo}DescCenario`).innerText = "N/A";
-                document.getElementById(`${prefixo}Orientacao`).innerText = "N/A";
-                document.getElementById(`${prefixo}Cst`).innerText = "N/A";
-                document.getElementById(`${prefixo}ClassTrib`).innerText = "N/A";
+                console.log(`[preencherBloco${prefixo.toUpperCase()}] Dados null/undefined, limpando campos`);
+                
+                // Mostrar "⏳ Carregando..." durante busca, ou "N/A" se não está carregando
+                const textoPlaceholder = isCarregando ? "⏳ Carregando..." : "N/A";
+                
+                document.getElementById(`${prefixo}IdCenario`).innerText = textoPlaceholder;
+                document.getElementById(`${prefixo}Status`).innerText = textoPlaceholder;
+                document.getElementById(`${prefixo}DescCenario`).innerText = textoPlaceholder;
+                document.getElementById(`${prefixo}Orientacao`).innerText = textoPlaceholder;
+                document.getElementById(`${prefixo}Cst`).innerText = textoPlaceholder;
+                document.getElementById(`${prefixo}ClassTrib`).innerText = textoPlaceholder;
                 document.getElementById(`${prefixo}ClassTrib`).title = "";
-                document.getElementById(`${prefixo}Aliquota`).innerText = "N/A";
-                document.getElementById(`${prefixo}ValInicio`).innerText = "N/A";
-                document.getElementById(`${prefixo}ValFim`).innerText = "N/A";
-                document.getElementById(`${prefixo}Inc`).innerText = "N/A";
-                document.getElementById(`${prefixo}Alt`).innerText = "N/A";
-                document.getElementById(`${prefixo}Pdv`).innerText = "N/A";
+                document.getElementById(`${prefixo}Aliquota`).innerText = textoPlaceholder;
+                document.getElementById(`${prefixo}ValInicio`).innerText = textoPlaceholder;
+                document.getElementById(`${prefixo}ValFim`).innerText = textoPlaceholder;
+                document.getElementById(`${prefixo}Inc`).innerText = textoPlaceholder;
+                document.getElementById(`${prefixo}Alt`).innerText = textoPlaceholder;
+                document.getElementById(`${prefixo}Pdv`).innerText = textoPlaceholder;
+                
+                // Desabilitar botões durante carregamento
+                const btnEditar = document.getElementById(`btnEditar${prefixo.toUpperCase()}`);
+                const btnRemover = document.getElementById(`btnRemover${prefixo.toUpperCase()}`);
+                if (btnEditar) btnEditar.disabled = isCarregando;
+                if (btnRemover) btnRemover.disabled = isCarregando;
+                
+                if (prefixo === 'cbs') {
+                    idCenarioCbsAtual = null;
+                } else if (prefixo === 'ibs') {
+                    idCenarioIbsAtual = null;
+                }
                 return;
             }
 
-            document.getElementById(`${prefixo}IdCenario`).innerText = dados.idCenario || "N/A";
-            document.getElementById(`${prefixo}Status`).innerText = dados.status || "N/A";
-            document.getElementById(`${prefixo}DescCenario`).innerText = dados.descCenario || "N/A";
-            document.getElementById(`${prefixo}Orientacao`).innerText = dados.orientacao || "N/A";
-            document.getElementById(`${prefixo}Cst`).innerText = dados.codigoCST || "N/A";
-            document.getElementById(`${prefixo}ClassTrib`).innerText = dados.codigoClassTrib || "N/A";
-            document.getElementById(`${prefixo}ClassTrib`).title = dados.codigoClassTrib || "";
-            document.getElementById(`${prefixo}Aliquota`).innerText = dados.aliquota !== null ? dados.aliquota : "N/A";
-            document.getElementById(`${prefixo}ValInicio`).innerText = fmtDataCurta(dados.dtaInicialValidade);
-            document.getElementById(`${prefixo}ValFim`).innerText = fmtDataCurta(dados.dtaFinalValidade);
-            document.getElementById(`${prefixo}Inc`).innerText = `${dados.usuInclusao || '-'} | ${fmtData(dados.dtaHoraInclusao)}`;
-            document.getElementById(`${prefixo}Alt`).innerText = `${dados.usuUltimaAlteracao || '-'} | ${fmtData(dados.dtaHoraUltimaAlteracao)}`;
-            document.getElementById(`${prefixo}Pdv`).innerText = dados.indUtilizaPDV === 'S' ? 'SIM' : 'NÃO';
+            // Preencher campos com valores padrão para N/A se não existirem
+            const idCenario = dados.idCenario || dados.id || "N/A";
+            const status = dados.status || dados.statusCenario || "N/A";
+            const descCenario = dados.descCenario || dados.descricao || dados.description || "N/A";
+            const orientacao = dados.orientacao || "N/A";
+            const cst = dados.codigoCST || dados.cst || "N/A";
+            const classTrib = dados.codigoClassTrib || dados.classTrib || dados.classificacaoTributaria || "N/A";
+            const aliquota = dados.aliquota !== null && dados.aliquota !== undefined ? dados.aliquota : "N/A";
+            const valInicio = fmtDataCurta(dados.dtaInicialValidade || dados.dataInicio);
+            const valFim = fmtDataCurta(dados.dtaFinalValidade || dados.dataFim);
+            const inc = `${dados.usuInclusao || dados.usuarioInclusao || '-'} | ${fmtData(dados.dtaHoraInclusao || dados.dataInclusao)}`;
+            const alt = `${dados.usuUltimaAlteracao || dados.usuarioAlteracao || '-'} | ${fmtData(dados.dtaHoraUltimaAlteracao || dados.dataAlteracao)}`;
+            const pdv = (dados.indUtilizaPDV || dados.utilizaPDV || 'N') === 'S' ? 'SIM' : 'NÃO';
+
+            console.log(`[preencherBloco${prefixo.toUpperCase()}] Campos extraídos:`, {
+                idCenario, status, descCenario, orientacao, cst, classTrib, aliquota
+            });
+
+            document.getElementById(`${prefixo}IdCenario`).innerText = idCenario;
+            document.getElementById(`${prefixo}Status`).innerText = status;
+            document.getElementById(`${prefixo}DescCenario`).innerText = descCenario;
+            document.getElementById(`${prefixo}Orientacao`).innerText = orientacao;
+            document.getElementById(`${prefixo}Cst`).innerText = cst;
+            document.getElementById(`${prefixo}ClassTrib`).innerText = classTrib;
+            document.getElementById(`${prefixo}ClassTrib`).title = classTrib;
+            document.getElementById(`${prefixo}Aliquota`).innerText = aliquota;
+            document.getElementById(`${prefixo}ValInicio`).innerText = valInicio;
+            document.getElementById(`${prefixo}ValFim`).innerText = valFim;
+            document.getElementById(`${prefixo}Inc`).innerText = inc;
+            document.getElementById(`${prefixo}Alt`).innerText = alt;
+            document.getElementById(`${prefixo}Pdv`).innerText = pdv;
+            
+            // Armazenar IDs dos cenários
+            if (prefixo === 'cbs') {
+                idCenarioCbsAtual = idCenario;
+                console.log(`[CBS] ID atualizado para:`, idCenario);
+            } else if (prefixo === 'ibs') {
+                idCenarioIbsAtual = idCenario;
+                console.log(`[IBS] ID atualizado para:`, idCenario);
+            }
         }
 
         // ==========================================
@@ -1086,33 +1271,91 @@
 
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('resultado').classList.add('hidden');
-            document.getElementById('jsonCompleto').innerText = ""; 
+            document.getElementById('jsonCompleto').innerText = "";
             document.getElementById('btnVerTributacao').classList.add('hidden');
-            
-            cancelarEdicaoIpi();
-            preencherBlocoReforma('cbs', null);
-            preencherBlocoReforma('ibs', null);
-            document.getElementById('txtGetReformaOriginal').innerText = "Aguardando consulta...";
 
-            let action = tipoBusca === 'sku' ? 'produto' : 'produto_ean';
-            let params = tipoBusca === 'sku' ? { sku: termo } : { ean: termo };
-            
+            cancelarEdicaoIpi();
+            carregandoReforma = true;
+            preencherBlocoReforma('cbs', null, true);  // ← Indicar que está carregando
+            preencherBlocoReforma('ibs', null, true);  // ← Indicar que está carregando
+            document.getElementById('txtGetReformaOriginal').innerText = "⏳ Aguardando consulta...";
+
+            let action, params;
+
+            if (tipoBusca === 'sku') {
+                action = 'produto';
+                params = { sku: termo };
+            } else if (tipoBusca === 'ean') {
+                action = 'produto_ean';
+                params = { ean: termo };
+            } else if (tipoBusca === 'familia') {
+                action = 'produto_familia';
+                params = { idFamilia: termo };
+            }
+
             document.getElementById('txtGetProduto').innerText = `-> ${bdClientes[clienteId].modoVpn ? '[ROTA VPN]' : '[ROTA NUVEM]'} action=${action}`;
 
             try {
                 const data = await fetchHibrido(action, clienteId, params);
 
                 if (data.erro) return alert("Erro: " + data.erro + (data.detalhes ? `\nDetalhes: ${data.detalhes}` : ''));
-                
+
                 document.getElementById('txtGetProdutoOriginal').innerText = data.endpointOriginal || "N/A";
 
-                if (!data.items || data.items.length === 0) return alert("Nenhum produto encontrado com esse código.");
+                let produto;
 
-                const produto = data.items[0];
+                if (tipoBusca === 'familia') {
+                    // Para busca por família, temos um array de produtos
+                    if (!data.items || data.items.length === 0) return alert("Nenhum produto encontrado para esta Família.");
+
+                    // Se houver dados do produto destaque (primeiro com detalhes completos)
+                    if (data.produtoDestaque) {
+                        produto = data.produtoDestaque;
+                    } else {
+                        // Caso contrário, usar o primeiro item da lista
+                        const primeiroItem = data.items[0];
+                        // Converter dados da API SMProdutosAPI para formato compatível
+                        produto = {
+                            idProduto: primeiroItem.IdProduto,
+                            idFamilia: primeiroItem.IdFamilia,
+                            descricaoCompleta: primeiroItem.DescricaoCompleta,
+                            familia: {
+                                codNbmsh: "-",
+                                codCest: "-",
+                                situacaoNfPis: "-",
+                                situacaoNfCofins: "-",
+                                situacaoNfPisSai: "-",
+                                situacaoNfCofinsSai: "-",
+                                aliquotaIpi: "-",
+                                codNatRec: "-",
+                                seqNatRec: "-",
+                                nomeFamilia: primeiroItem.DescricaoFamilia || "-"
+                            },
+                            produtoCodigo: []
+                        };
+                        // Adicionar o EAN do primeiro item se disponível
+                        if (primeiroItem.CodigoAcessoPrincipal) {
+                            produto.produtoCodigo.push({
+                                tipoCodigo: "E",
+                                codigoAcesso: primeiroItem.CodigoAcessoPrincipal
+                            });
+                        }
+                    }
+
+                    // Mostrar aviso de múltiplos produtos
+                    if (data.items.length > 1) {
+                        alert(`Família contém ${data.items.length} produto(s). Exibindo o primeiro.\n\nPara consultar um SKU específico, use a busca por SKU.`);
+                    }
+                } else {
+                    // Para busca por SKU e EAN
+                    if (!data.items || data.items.length === 0) return alert("Nenhum produto encontrado com esse código.");
+                    produto = data.items[0];
+                }
+
                 const familia = produto.familia || {};
                 const divisao = familia.familiaDivisao?.[0] || {};
 
-                skuProdutoAtual = produto.idProduto; 
+                skuProdutoAtual = produto.idProduto;
                 idFamiliaAtual = produto.idFamilia;
                 idDivisaoAtual = divisao.idDivisao || divisao.id || "1";
                 idTributacaoAtual = divisao.idTributacao;
@@ -1144,7 +1387,7 @@
                 document.getElementById('cofinsEntrada').innerText = familia.situacaoNfCofins || "N/A";
                 document.getElementById('pisSaida').innerText = familia.situacaoNfPisSai || "N/A";
                 document.getElementById('cofinsSaida').innerText = familia.situacaoNfCofinsSai || "N/A";
-                
+
                 document.getElementById('aliqIpi').innerText = familia.aliquotaIpi !== null ? familia.aliquotaIpi : "N/A";
                 if(idFamiliaAtual) document.getElementById('btnEditarIpi').classList.remove('hidden');
 
@@ -1156,7 +1399,7 @@
                 document.getElementById('aceitaPauta').innerText = aceitaPautaAtual || "N/A";
                 document.getElementById('statusTributacao').innerText = statusTributacaoAtual || "N/A";
                 document.getElementById('idPauta').innerText = divisao.idPauta || "N/A";
-                document.getElementById('nomeFamDiv').innerText = divisao.familia?.nomeFamilia || "N/A";
+                document.getElementById('nomeFamDiv').innerText = divisao.familia?.nomeFamilia || familia.nomeFamilia || "N/A";
 
                 if (idTributacaoAtual) {
                     document.getElementById('btnVerTributacao').classList.remove('hidden');
@@ -1175,7 +1418,12 @@
                 document.getElementById('dUserAlt').innerText = divisao.usuarioAlteracao || "N/A";
                 document.getElementById('dDataAlt').innerText = divisao.dtaHorAlteracao || "N/A";
 
-                document.getElementById('jsonCompleto').innerText = JSON.stringify(produto, null, 2);
+                console.log("[DEBUG] Preenchendo jsonCompleto com produto:", produto?.idProduto);
+                const jsonString = JSON.stringify(produto, null, 2);
+                console.log("[DEBUG] JSON stringificado, tamanho:", jsonString?.length);
+                document.getElementById('jsonCompleto').innerText = jsonString;
+                produtoAtualCompleto = produto;  // 🔧 Guardar na variável global
+                console.log("[DEBUG] jsonCompleto preenchido, conteúdo atual:", document.getElementById('jsonCompleto').innerText?.substring(0, 100));
                 document.getElementById('resultado').classList.remove('hidden');
 
                 if (idFamiliaAtual) {
@@ -1183,23 +1431,78 @@
                     try {
                         const datRef = await fetchHibrido('reforma', clienteId, { idFamilia: idFamiliaAtual });
 
+                        console.log("[REFORMA COMPLETA RESPONSE]", datRef);
+                        console.log("[REFORMA ESTRUTURA]", {
+                            temItems: datRef.items ? 'SIM' : 'NÃO',
+                            numItems: datRef.items ? datRef.items.length : 0,
+                            primeiroItem: datRef.items && datRef.items[0] ? datRef.items[0] : null,
+                            keys: datRef.items && datRef.items[0] ? Object.keys(datRef.items[0]) : null
+                        });
+
                         if(datRef.endpointOriginal) document.getElementById('txtGetReformaOriginal').innerText = datRef.endpointOriginal;
 
+
+                        // Verificar se houve erro
+                        if (datRef.erro) {
+                            console.error("[REFORMA] Erro na resposta:", datRef.erro);
+                            preencherBlocoReforma('cbs', null, false);
+                            preencherBlocoReforma('ibs', null, false);
+                            carregandoReforma = false;  // ← Fim do carregamento
+                            return;
+                        }
+
                         let cbs = null, ibs = null;
+                        
+                        // Tentar extrair de várias formas
                         if (datRef.items && Array.isArray(datRef.items)) {
+                            console.log("[REFORMA] Encontrado items (array)");
                             cbs = datRef.items.find(i => i.idImposto === 1);
                             ibs = datRef.items.find(i => i.idImposto === 2);
+                        } else if (Array.isArray(datRef)) {
+                            console.log("[REFORMA] Response é um array direto");
+                            cbs = datRef.find(i => i.idImposto === 1);
+                            ibs = datRef.find(i => i.idImposto === 2);
+                        } else if (datRef.dados && Array.isArray(datRef.dados)) {
+                            console.log("[REFORMA] Encontrado dados (array)");
+                            cbs = datRef.dados.find(i => i.idImposto === 1);
+                            ibs = datRef.dados.find(i => i.idImposto === 2);
+                        } else {
+                            console.warn("[REFORMA] Estrutura desconhecida:", Object.keys(datRef));
+                        }
+
+                        console.log("[REFORMA CBS ENCONTRADO]", cbs);
+                        console.log("[REFORMA IBS ENCONTRADO]", ibs);
+                        
+                        console.log("[DEBUG REFORMA 1] Verificando variável global...");
+                        console.log("[DEBUG REFORMA 1B] produtoAtualCompleto:", produtoAtualCompleto ? `Existe (${Object.keys(produtoAtualCompleto).length} propriedades)` : 'NULL/UNDEFINED');
+                        console.log("[DEBUG REFORMA 1C] produtoAtualCompleto.idProduto:", produtoAtualCompleto?.idProduto);
+
+                        // Usar variável global em vez de tentar acessar HTML
+                        if (produtoAtualCompleto && Object.keys(produtoAtualCompleto).length > 0) {
+                            console.log("[DEBUG REFORMA 2] Produto encontrado na variável global");
+                            produtoAtualCompleto._reforma = datRef;
+                            document.getElementById('jsonCompleto').innerText = JSON.stringify(produtoAtualCompleto, null, 2);
+                            console.log("[DEBUG REFORMA 3] JSON atualizado com reforma");
+                        } else {
+                            // Se não houver produto, criar um objeto com apenas a reforma
+                            console.warn("[REFORMA] Produto vazio na variável global, criando objeto com apenas a reforma");
+                            const reformaObject = { _reforma: datRef, _nota: "Produto estava vazio ao processar reforma" };
+                            document.getElementById('jsonCompleto').innerText = JSON.stringify(reformaObject, null, 2);
                         }
 
                         preencherBlocoReforma('cbs', cbs);
                         preencherBlocoReforma('ibs', ibs);
+                        carregandoReforma = false;  // ← Fim do carregamento
 
                     } catch(e) {
-                        console.error("Erro ao buscar reforma", e);
-                        document.getElementById('txtGetReformaOriginal').innerText = "Erro ao executar consulta da reforma.";
+                        console.error("[REFORMA ERRO]", e);
+                        document.getElementById('txtGetReformaOriginal').innerText = "Erro ao executar consulta da reforma: " + e.message;
+                        preencherBlocoReforma('cbs', null, false);
+                        preencherBlocoReforma('ibs', null, false);
+                        carregandoReforma = false;  // ← Fim do carregamento
                     }
                 }
-                
+
             } catch (error) {
                 alert("Erro ao conectar. Detalhes: " + error.message);
             } finally {
@@ -1665,7 +1968,11 @@
                                 <span class="bg-slate-800 text-slate-300 px-2 py-1 rounded text-xs">${familiasVinculadas.length} famílias</span>
                             </td>
                             <td class="p-3 border-b border-slate-800">
-                                <input type="text" data-cclass="${cclass}" value="${sugestaoIds}" placeholder="Ex: 113, 114" class="w-full p-2 border border-slate-700 bg-black rounded text-emerald-400 font-bold focus:outline-none focus:border-amber-400 rtc-input-map">
+                                <div class="flex gap-2 items-center">
+                                    <input type="text" data-cclass="${cclass}" value="${sugestaoIds}" placeholder="Ex: 113, 114" class="flex-1 p-2 border border-slate-700 bg-black rounded text-emerald-400 font-bold focus:outline-none focus:border-amber-400 rtc-input-map">
+                                    <button onclick="editarCenarioRtc('${cclass}')" title="Editar" class="px-3 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded text-sm font-bold transition-colors">✏️</button>
+                                    <button onclick="limparCenarioRtc('${cclass}')" title="Limpar/Deletar" class="px-3 py-2 bg-red-700 hover:bg-red-600 text-white rounded text-sm font-bold transition-colors">🗑️</button>
+                                </div>
                             </td>
                         `;
                         tbody.appendChild(tr);
@@ -1691,6 +1998,25 @@
             document.getElementById('rtcPasso1').classList.remove('hidden');
             document.getElementById('logFerramentaRtc').innerHTML = "Aguardando análise...";
             document.getElementById('inputArquivoRtc').value = "";
+        }
+
+        function editarCenarioRtc(cclass) {
+            const input = document.querySelector(`input[data-cclass="${cclass}"]`);
+            if (input) {
+                input.disabled = false;
+                input.focus();
+                input.select();
+            }
+        }
+
+        function limparCenarioRtc(cclass) {
+            if (confirm(`Deseja limpar o cenário para CClassTrib ${cclass}?`)) {
+                const input = document.querySelector(`input[data-cclass="${cclass}"]`);
+                if (input) {
+                    input.value = "";
+                    input.focus();
+                }
+            }
         }
 
         async function implantarCondicoesRtc() {
@@ -1940,6 +2266,468 @@
             document.getElementById('labelUfJsonModal').innerText = `UF Destino: ${regraSelecionadaJson.ufClienteFornecedor || 'GERAL'} | Tipo: ${regraSelecionadaJson.tipo || '-'}`;
             document.getElementById('conteudoJsonLinha').innerText = JSON.stringify(regraSelecionadaJson, null, 2);
             document.getElementById('modalJsonLinha').classList.remove('hidden');
+        }
+
+        // ==========================================
+        // CBS - EDITAR/EXCLUIR CENÁRIO
+        // ==========================================
+        function iniciarEdicaoCbs() {
+            const spanCenario = document.getElementById('cbsIdCenario');
+            const btnEditar = document.getElementById('btnEditarCbs');
+            const containerEdit = document.getElementById('containerEditCbs');
+            const inputEdit = document.getElementById('inputEditCbs');
+
+            let valorAtual = spanCenario.innerText.trim();
+            if (valorAtual === 'N/A' || valorAtual === '-') valorAtual = '';
+
+            inputEdit.value = valorAtual;
+            spanCenario.classList.add('hidden');
+            containerEdit.classList.remove('hidden');
+            inputEdit.focus();
+        }
+
+        function cancelarEdicaoCbs() {
+            document.getElementById('cbsIdCenario').classList.remove('hidden');
+            document.getElementById('containerEditCbs').classList.add('hidden');
+        }
+
+        async function salvarEdicaoCbs() {
+            const novoValor = document.getElementById('inputEditCbs').value.trim();
+            if (novoValor === '') {
+                alert("❌ Por favor, digite um ID de cenário válido.");
+                return;
+            }
+            
+            // Normalizar valor atual para comparação
+            const valorAtualNormalizado = (idCenarioCbsAtual && idCenarioCbsAtual !== 'N/A') ? String(idCenarioCbsAtual) : null;
+            
+            if (valorAtualNormalizado && String(novoValor) === String(valorAtualNormalizado)) {
+                alert("⚠️ O novo ID é igual ao atual. Nenhuma alteração necessária.");
+                cancelarEdicaoCbs();
+                return;
+            }
+
+            document.getElementById('inputEditCbs').disabled = true;
+            document.getElementById('btnSalvarCbs').classList.add('hidden');
+            document.getElementById('btnCancelarCbs').classList.add('hidden');
+            document.getElementById('spinnerCbs').classList.remove('hidden');
+
+            try {
+                let erroDelete = null;
+
+                // PASSO 1: Se havia um cenário anterior (não null e não "N/A"), deletar primeiro
+                if (valorAtualNormalizado) {
+                    console.log("[CBS PASSO 1] Deletando cenário anterior:", valorAtualNormalizado);
+                    const resultDelete = await fetchHibrido('excluir_condicao_cenario', clienteAtualId, {
+                        idCenario: valorAtualNormalizado,
+                        idFamilia: idFamiliaAtual
+                    });
+                    console.log("[CBS DELETE] Resultado:", resultDelete);
+                    
+                    // Verificar erro no DELETE (mas NÃO interromper, apenas registrar)
+                    if (resultDelete.erro) {
+                        erroDelete = `Erro ao excluir vínculo anterior: ${resultDelete.erro}`;
+                        console.warn("[CBS AVISO] " + erroDelete + " - Continuando com POST do novo cenário");
+                    }
+                    if (resultDelete.statusCode && resultDelete.statusCode >= 400) {
+                        erroDelete = `Erro ao excluir (HTTP ${resultDelete.statusCode}): ${resultDelete.message || resultDelete.detalhes || 'Desconhecido'}`;
+                        console.warn("[CBS AVISO] " + erroDelete + " - Continuando com POST do novo cenário");
+                    }
+                } else {
+                    console.log("[CBS PASSO 1] Nenhum cenário anterior para deletar - criando novo");
+                }
+
+                // PASSO 2: SEMPRE incluir no novo cenário (POST), mesmo se DELETE falhou
+                console.log("[CBS PASSO 2] Incluindo no novo cenário:", novoValor);
+                const resultInclude = await fetchHibrido('incluir_condicao_cenario', clienteAtualId, {
+                    idCenario: novoValor,
+                    idFamilia: idFamiliaAtual
+                });
+                console.log("[CBS INCLUDE] Resultado:", resultInclude);
+                
+                // ✅ VERIFICAR: Se sucesso = true, operação foi bem-sucedida
+                if (resultInclude.sucesso) {
+                    // Sucesso! Não fazer nada, continuar o fluxo
+                    console.log("[CBS] POST foi bem-sucedido com statusCode:", resultInclude.statusCode);
+                } else if (resultInclude.erro) {
+                    // Erro real
+                    throw new Error(`Erro ao incluir novo cenário: ${resultInclude.erro}`);
+                } else if (resultInclude.statusCode && resultInclude.statusCode >= 400) {
+                    // Erro HTTP
+                    throw new Error(`Erro ao incluir (HTTP ${resultInclude.statusCode}): ${resultInclude.message || resultInclude.detalhes || 'Desconhecido'}`);
+                }
+
+                // Se houve erro no DELETE, avisar o usuário
+                if (erroDelete) {
+                    console.warn("[CBS] DELETE falhou mas POST foi bem-sucedido. Erro: " + erroDelete);
+                }
+
+                // PASSO 3: Aguardar um pouco para o backend processar
+                console.log("[CBS PASSO 3] Aguardando processamento do servidor...");
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                // PASSO 4: Recarregar dados da reforma
+                console.log("[CBS PASSO 4] Recarregando dados de reforma para família:", idFamiliaAtual);
+                const dataReforma = await fetchHibrido('reforma', clienteAtualId, { idFamilia: idFamiliaAtual });
+                console.log("[CBS REFORMA RESPONSE]", dataReforma);
+                
+                // Verificar se há erro na resposta de reforma
+                if (dataReforma.erro) {
+                    console.warn("[CBS] Erro ao recarregar reforma:", dataReforma.erro);
+                    alert("⚠️ Cenário alterado, mas houve erro ao recarregar dados: " + dataReforma.erro);
+                    cancelarEdicaoCbs();
+                    return;
+                }
+
+                let cbsData = null;
+                
+                // Tentar várias formas de extrair os dados CBS
+                if (dataReforma && Array.isArray(dataReforma)) {
+                    cbsData = dataReforma.find(i => i.idImposto === 1);
+                } else if (dataReforma && dataReforma.items && Array.isArray(dataReforma.items)) {
+                    cbsData = dataReforma.items.find(i => i.idImposto === 1);
+                } else if (dataReforma && dataReforma.dados && Array.isArray(dataReforma.dados)) {
+                    cbsData = dataReforma.dados.find(i => i.idImposto === 1);
+                }
+
+                console.log("[CBS DATA EXTRAÍDO]", cbsData);
+
+                if (cbsData) {
+                    console.log("[CBS] Preenchendo bloco com novo cenário:", cbsData.idCenario);
+                    preencherBlocoReforma('cbs', cbsData);
+                    alert("✅ Cenário CBS alterado com sucesso!");
+                    // Atualizar display imediatamente
+                    document.getElementById('cbsIdCenario').innerText = cbsData.idCenario || novoValor;
+                } else {
+                    console.warn("[CBS] Nenhum dado CBS encontrado na resposta da reforma");
+                    alert("✅ Cenário CBS alterado com sucesso! (Atualizando tela...)");
+                    // Atualizar manualmente a variável global
+                    idCenarioCbsAtual = novoValor;
+                    document.getElementById('cbsIdCenario').innerText = novoValor;
+                    // Fazer uma busca novamente para garantir sincronização
+                    setTimeout(() => buscarDados(), 1000);
+                }
+
+                cancelarEdicaoCbs();
+
+            } catch (error) {
+                console.error("[CBS ERROR]", error);
+                alert("❌ Erro ao alterar Cenário CBS.\n\nDetalhes: " + error.message);
+            } finally {
+                document.getElementById('inputEditCbs').disabled = false;
+                document.getElementById('btnSalvarCbs').classList.remove('hidden');
+                document.getElementById('btnCancelarCbs').classList.remove('hidden');
+                document.getElementById('spinnerCbs').classList.add('hidden');
+                cancelarEdicaoCbs();
+            }
+        }
+
+        async function excluirCondicaoCbs() {
+            if (!idCenarioCbsAtual || idCenarioCbsAtual === 'N/A') return alert("⚠️ Nenhum cenário CBS vinculado para remover.");
+            
+            const confirmar = confirm(`Deseja realmente remover a família ${idFamiliaAtual} do cenário CBS ${idCenarioCbsAtual}?`);
+            if (!confirmar) return;
+
+            const btn = document.getElementById('btnExcluirCbs');
+            btn.disabled = true;
+            btn.innerText = "⏳ Removendo...";
+
+            try {
+                console.log("[CBS EXCLUIR] Iniciando exclusão:", { idCenario: idCenarioCbsAtual, idFamilia: idFamiliaAtual });
+                const data = await fetchHibrido('excluir_condicao_cenario', clienteAtualId, {
+                    idCenario: idCenarioCbsAtual,
+                    idFamilia: idFamiliaAtual
+                });
+
+                console.log("[CBS EXCLUIR RESPOSTA]", data);
+
+                // ✅ VERIFICAR ERRO NA RESPOSTA
+                if (data.erro) {
+                    alert(`❌ Erro ao remover:\n\n${data.erro}\n\nHTTP: ${data.statusCode || 'N/A'}\n${data.detalhes ? '\nDetalhes: ' + data.detalhes : ''}`);
+                    return;
+                }
+
+                // Verificar sucesso por diferentes critérios
+                const foiBemSucedido = data.sucesso === true || 
+                                      data.statusCode === 200 || 
+                                      data.statusCode === 204 ||
+                                      (data.statusCode >= 200 && data.statusCode < 300);
+
+                if (foiBemSucedido) {
+                    alert("✅ Vínculo CBS removido com sucesso!");
+                    
+                    // Limpar UI imediatamente
+                    preencherBlocoReforma('cbs', null, false);
+                    
+                    // Recarregar dados da reforma para confirmar
+                    console.log("[CBS EXCLUIR] Recarregando dados de reforma");
+                    try {
+                        const dataReforma = await fetchHibrido('reforma', clienteAtualId, { idFamilia: idFamiliaAtual });
+                        console.log("[CBS EXCLUIR REFORMA RESPONSE]", dataReforma);
+                        
+                        if (dataReforma.erro) {
+                            console.warn("[CBS EXCLUIR] Erro ao recarregar reforma:", dataReforma.erro);
+                            return;
+                        }
+                        
+                        let cbsData = null;
+                        if (dataReforma && Array.isArray(dataReforma)) {
+                            cbsData = dataReforma.find(i => i.idImposto === 1);
+                        } else if (dataReforma && dataReforma.items && Array.isArray(dataReforma.items)) {
+                            cbsData = dataReforma.items.find(i => i.idImposto === 1);
+                        } else if (dataReforma && dataReforma.dados && Array.isArray(dataReforma.dados)) {
+                            cbsData = dataReforma.dados.find(i => i.idImposto === 1);
+                        }
+                        
+                        if (cbsData) {
+                            // Se ainda há dados, atualizar
+                            preencherBlocoReforma('cbs', cbsData);
+                        }
+                    } catch (reloadError) {
+                        console.warn("[CBS EXCLUIR] Erro ao recarregar dados:", reloadError);
+                    }
+                } else {
+                    const mensagem = data.message || data.detalhes || JSON.stringify(data);
+                    alert(`❌ Falha ao remover:\n\n${mensagem}`);
+                }
+            } catch (error) {
+                console.error("[CBS EXCLUIR ERROR]", error);
+                alert(`❌ Erro ao excluir vínculo CBS.\n\nDetalhes: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "🗑️";
+            }
+        }
+
+        // ==========================================
+        // IBS - EDITAR/EXCLUIR CENÁRIO
+        // ==========================================
+        function iniciarEdicaoIbs() {
+            const spanCenario = document.getElementById('ibsIdCenario');
+            const btnEditar = document.getElementById('btnEditarIbs');
+            const containerEdit = document.getElementById('containerEditIbs');
+            const inputEdit = document.getElementById('inputEditIbs');
+
+            let valorAtual = spanCenario.innerText.trim();
+            if (valorAtual === 'N/A' || valorAtual === '-') valorAtual = '';
+
+            inputEdit.value = valorAtual;
+            spanCenario.classList.add('hidden');
+            containerEdit.classList.remove('hidden');
+            inputEdit.focus();
+        }
+
+        function cancelarEdicaoIbs() {
+            document.getElementById('ibsIdCenario').classList.remove('hidden');
+            document.getElementById('containerEditIbs').classList.add('hidden');
+        }
+
+        async function salvarEdicaoIbs() {
+            const novoValor = document.getElementById('inputEditIbs').value.trim();
+            if (novoValor === '') {
+                alert("❌ Por favor, digite um ID de cenário válido.");
+                return;
+            }
+            
+            // Normalizar valor atual para comparação
+            const valorAtualNormalizado = (idCenarioIbsAtual && idCenarioIbsAtual !== 'N/A') ? String(idCenarioIbsAtual) : null;
+            
+            if (valorAtualNormalizado && String(novoValor) === String(valorAtualNormalizado)) {
+                alert("⚠️ O novo ID é igual ao atual. Nenhuma alteração necessária.");
+                cancelarEdicaoIbs();
+                return;
+            }
+
+            document.getElementById('inputEditIbs').disabled = true;
+            document.getElementById('btnSalvarIbs').classList.add('hidden');
+            document.getElementById('btnCancelarIbs').classList.add('hidden');
+            document.getElementById('spinnerIbs').classList.remove('hidden');
+
+            try {
+                let erroDelete = null;
+
+                // PASSO 1: Se havia um cenário anterior (não null e não "N/A"), deletar primeiro
+                if (valorAtualNormalizado) {
+                    console.log("[IBS PASSO 1] Deletando cenário anterior:", valorAtualNormalizado);
+                    const resultDelete = await fetchHibrido('excluir_condicao_cenario', clienteAtualId, {
+                        idCenario: valorAtualNormalizado,
+                        idFamilia: idFamiliaAtual
+                    });
+                    console.log("[IBS DELETE] Resultado:", resultDelete);
+                    
+                    // Verificar erro no DELETE (mas NÃO interromper, apenas registrar)
+                    if (resultDelete.erro) {
+                        erroDelete = `Erro ao excluir vínculo anterior: ${resultDelete.erro}`;
+                        console.warn("[IBS AVISO] " + erroDelete + " - Continuando com POST do novo cenário");
+                    }
+                    if (resultDelete.statusCode && resultDelete.statusCode >= 400) {
+                        erroDelete = `Erro ao excluir (HTTP ${resultDelete.statusCode}): ${resultDelete.message || resultDelete.detalhes || 'Desconhecido'}`;
+                        console.warn("[IBS AVISO] " + erroDelete + " - Continuando com POST do novo cenário");
+                    }
+                } else {
+                    console.log("[IBS PASSO 1] Nenhum cenário anterior para deletar - criando novo");
+                }
+
+                // PASSO 2: SEMPRE incluir no novo cenário (POST), mesmo se DELETE falhou
+                console.log("[IBS PASSO 2] Incluindo no novo cenário:", novoValor);
+                const resultInclude = await fetchHibrido('incluir_condicao_cenario', clienteAtualId, {
+                    idCenario: novoValor,
+                    idFamilia: idFamiliaAtual
+                });
+                console.log("[IBS INCLUDE] Resultado:", resultInclude);
+                
+                // ✅ VERIFICAR: Se sucesso = true, operação foi bem-sucedida
+                if (resultInclude.sucesso) {
+                    // Sucesso! Não fazer nada, continuar o fluxo
+                    console.log("[IBS] POST foi bem-sucedido com statusCode:", resultInclude.statusCode);
+                } else if (resultInclude.erro) {
+                    // Erro real
+                    throw new Error(`Erro ao incluir novo cenário: ${resultInclude.erro}`);
+                } else if (resultInclude.statusCode && resultInclude.statusCode >= 400) {
+                    // Erro HTTP
+                    throw new Error(`Erro ao incluir (HTTP ${resultInclude.statusCode}): ${resultInclude.message || resultInclude.detalhes || 'Desconhecido'}`);
+                }
+
+                // Se houve erro no DELETE, avisar o usuário
+                if (erroDelete) {
+                    console.warn("[IBS] DELETE falhou mas POST foi bem-sucedido. Erro: " + erroDelete);
+                }
+
+                // PASSO 3: Aguardar um pouco para o backend processar
+                console.log("[IBS PASSO 3] Aguardando processamento do servidor...");
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                // PASSO 4: Recarregar dados da reforma
+                console.log("[IBS PASSO 4] Recarregando dados de reforma para família:", idFamiliaAtual);
+                const dataReforma = await fetchHibrido('reforma', clienteAtualId, { idFamilia: idFamiliaAtual });
+                console.log("[IBS REFORMA RESPONSE]", dataReforma);
+                
+                // Verificar se há erro na resposta de reforma
+                if (dataReforma.erro) {
+                    console.warn("[IBS] Erro ao recarregar reforma:", dataReforma.erro);
+                    alert("⚠️ Cenário alterado, mas houve erro ao recarregar dados: " + dataReforma.erro);
+                    cancelarEdicaoIbs();
+                    return;
+                }
+
+                let ibsData = null;
+                
+                // Tentar várias formas de extrair os dados IBS
+                if (dataReforma && Array.isArray(dataReforma)) {
+                    ibsData = dataReforma.find(i => i.idImposto === 2);
+                } else if (dataReforma && dataReforma.items && Array.isArray(dataReforma.items)) {
+                    ibsData = dataReforma.items.find(i => i.idImposto === 2);
+                } else if (dataReforma && dataReforma.dados && Array.isArray(dataReforma.dados)) {
+                    ibsData = dataReforma.dados.find(i => i.idImposto === 2);
+                }
+
+                console.log("[IBS DATA EXTRAÍDO]", ibsData);
+
+                if (ibsData) {
+                    console.log("[IBS] Preenchendo bloco com novo cenário:", ibsData.idCenario);
+                    preencherBlocoReforma('ibs', ibsData);
+                    alert("✅ Cenário IBS alterado com sucesso!");
+                    // Atualizar display imediatamente
+                    document.getElementById('ibsIdCenario').innerText = ibsData.idCenario || novoValor;
+                } else {
+                    console.warn("[IBS] Nenhum dado IBS encontrado na resposta da reforma");
+                    alert("✅ Cenário IBS alterado com sucesso! (Atualizando tela...)");
+                    // Atualizar manualmente a variável global
+                    idCenarioIbsAtual = novoValor;
+                    document.getElementById('ibsIdCenario').innerText = novoValor;
+                    // Fazer uma busca novamente para garantir sincronização
+                    setTimeout(() => buscarDados(), 1000);
+                }
+
+                cancelarEdicaoIbs();
+
+            } catch (error) {
+                console.error("[IBS ERROR]", error);
+                alert("❌ Erro ao alterar Cenário IBS.\n\nDetalhes: " + error.message);
+            } finally {
+                document.getElementById('inputEditIbs').disabled = false;
+                document.getElementById('btnSalvarIbs').classList.remove('hidden');
+                document.getElementById('btnCancelarIbs').classList.remove('hidden');
+                document.getElementById('spinnerIbs').classList.add('hidden');
+                cancelarEdicaoIbs();
+            }
+        }
+
+        async function excluirCondicaoIbs() {
+            if (!idCenarioIbsAtual || idCenarioIbsAtual === 'N/A') return alert("⚠️ Nenhum cenário IBS vinculado para remover.");
+            
+            const confirmar = confirm(`Deseja realmente remover a família ${idFamiliaAtual} do cenário IBS ${idCenarioIbsAtual}?`);
+            if (!confirmar) return;
+
+            const btn = document.getElementById('btnExcluirIbs');
+            btn.disabled = true;
+            btn.innerText = "⏳ Removendo...";
+
+            try {
+                console.log("[IBS EXCLUIR] Iniciando exclusão:", { idCenario: idCenarioIbsAtual, idFamilia: idFamiliaAtual });
+                const data = await fetchHibrido('excluir_condicao_cenario', clienteAtualId, {
+                    idCenario: idCenarioIbsAtual,
+                    idFamilia: idFamiliaAtual
+                });
+
+                console.log("[IBS EXCLUIR RESPOSTA]", data);
+
+                // ✅ VERIFICAR ERRO NA RESPOSTA
+                if (data.erro) {
+                    alert(`❌ Erro ao remover:\n\n${data.erro}\n\nHTTP: ${data.statusCode || 'N/A'}\n${data.detalhes ? '\nDetalhes: ' + data.detalhes : ''}`);
+                    return;
+                }
+
+                // Verificar sucesso por diferentes critérios
+                const foiBemSucedido = data.sucesso === true || 
+                                      data.statusCode === 200 || 
+                                      data.statusCode === 204 ||
+                                      (data.statusCode >= 200 && data.statusCode < 300);
+
+                if (foiBemSucedido) {
+                    alert("✅ Vínculo IBS removido com sucesso!");
+                    
+                    // Limpar UI imediatamente
+                    preencherBlocoReforma('ibs', null, false);
+                    
+                    // Recarregar dados da reforma para confirmar
+                    console.log("[IBS EXCLUIR] Recarregando dados de reforma");
+                    try {
+                        const dataReforma = await fetchHibrido('reforma', clienteAtualId, { idFamilia: idFamiliaAtual });
+                        console.log("[IBS EXCLUIR REFORMA RESPONSE]", dataReforma);
+                        
+                        if (dataReforma.erro) {
+                            console.warn("[IBS EXCLUIR] Erro ao recarregar reforma:", dataReforma.erro);
+                            return;
+                        }
+                        
+                        let ibsData = null;
+                        if (dataReforma && Array.isArray(dataReforma)) {
+                            ibsData = dataReforma.find(i => i.idImposto === 2);
+                        } else if (dataReforma && dataReforma.items && Array.isArray(dataReforma.items)) {
+                            ibsData = dataReforma.items.find(i => i.idImposto === 2);
+                        } else if (dataReforma && dataReforma.dados && Array.isArray(dataReforma.dados)) {
+                            ibsData = dataReforma.dados.find(i => i.idImposto === 2);
+                        }
+                        
+                        if (ibsData) {
+                            // Se ainda há dados, atualizar
+                            preencherBlocoReforma('ibs', ibsData);
+                        }
+                    } catch (reloadError) {
+                        console.warn("[IBS EXCLUIR] Erro ao recarregar dados:", reloadError);
+                    }
+                } else {
+                    const mensagem = data.message || data.detalhes || JSON.stringify(data);
+                    alert(`❌ Falha ao remover:\n\n${mensagem}`);
+                }
+            } catch (error) {
+                console.error("[IBS EXCLUIR ERROR]", error);
+                alert(`❌ Erro ao excluir vínculo IBS.\n\nDetalhes: ${error.message}`);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "🗑️";
+            }
         }
 
         function copiarJsonLinha() {
