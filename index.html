@@ -785,10 +785,10 @@
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx7F5aFsOFEEiljG_AlvfsiKT37-ibUWzHfNCXgZCHteap2irvwcyd4UCRqiojOIHpi-g/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx6rfoo0x7X6gRH4O_xa2WaB57Zc3KMtEwVvEC-5GdNYZuTMkFb-AVd0qhyJsQOWzTrJg/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.5.0"; 
+        const VERSAO_FRONT = "v5.5.1"; 
 
         let idTributacaoAtual = null;
         let clienteAtualId = null;
@@ -2313,53 +2313,57 @@
             document.getElementById('spinnerCbs').classList.remove('hidden');
 
             try {
-                let erroDelete = null;
+                // ✅ LÓGICA CONDICIONAL:
+                // - Se N/A: usar apenas incluir_condicao_cenario
+                // - Se tem cenário anterior: usar alterar_condicao_cenario (transação atômica)
 
-                // PASSO 1: Se havia um cenário anterior (não null e não "N/A"), deletar primeiro
-                if (valorAtualNormalizado) {
-                    console.log("[CBS PASSO 1] Deletando cenário anterior:", valorAtualNormalizado);
-                    const resultDelete = await fetchHibrido('excluir_condicao_cenario', clienteAtualId, {
-                        idCenario: valorAtualNormalizado,
-                        idFamilia: idFamiliaAtual
+                if (!valorAtualNormalizado) {
+                    // CASO 1: N/A → Apenas incluir novo cenário
+                    console.log("[CBS INCLUIR] Adicionando novo cenário (N/A → " + novoValor + ")");
+                    const resultInclude = await fetchHibrido('incluir_condicao_cenario', clienteAtualId, {
+                        idCenario: novoValor,
+                        idFamilia: idFamiliaAtual,
+                        tipoImposto: 'CBS'
                     });
-                    console.log("[CBS DELETE] Resultado:", resultDelete);
+                    console.log("[CBS INCLUIR] Resultado:", resultInclude);
                     
-                    // Verificar erro no DELETE (mas NÃO interromper, apenas registrar)
-                    if (resultDelete.erro) {
-                        erroDelete = `Erro ao excluir vínculo anterior: ${resultDelete.erro}`;
-                        console.warn("[CBS AVISO] " + erroDelete + " - Continuando com POST do novo cenário");
+                    if (!resultInclude.sucesso) {
+                        if (resultInclude.erro) {
+                            throw new Error(`${resultInclude.erro}${resultInclude.detalhes ? '\n\nDetalhes: ' + resultInclude.detalhes : ''}`);
+                        } else if (resultInclude.statusCode && resultInclude.statusCode >= 400) {
+                            throw new Error(`Erro na inclusão (HTTP ${resultInclude.statusCode}): ${resultInclude.message || resultInclude.detalhes || 'Desconhecido'}`);
+                        } else {
+                            throw new Error('Erro desconhecido ao incluir cenário');
+                        }
                     }
-                    if (resultDelete.statusCode && resultDelete.statusCode >= 400) {
-                        erroDelete = `Erro ao excluir (HTTP ${resultDelete.statusCode}): ${resultDelete.message || resultDelete.detalhes || 'Desconhecido'}`;
-                        console.warn("[CBS AVISO] " + erroDelete + " - Continuando com POST do novo cenário");
-                    }
+                    console.log("[CBS INCLUIR] Operação executada com sucesso");
                 } else {
-                    console.log("[CBS PASSO 1] Nenhum cenário anterior para deletar - criando novo");
-                }
+                    // CASO 2: Tem cenário anterior → Usar alteração atômica (valida ANTES de DELETE)
+                    console.log("[CBS ALTERAR] Alterando cenário com validação:", {
+                        idCenarioAntigo: valorAtualNormalizado,
+                        novoIdCenario: novoValor,
+                        idFamilia: idFamiliaAtual,
+                        tipoImposto: 'CBS'
+                    });
+                    
+                    const resultAlerar = await fetchHibrido('alterar_condicao_cenario', clienteAtualId, {
+                        idCenarioAntigo: valorAtualNormalizado,
+                        novoIdCenario: novoValor,
+                        idFamilia: idFamiliaAtual,
+                        tipoImposto: 'CBS'
+                    });
+                    console.log("[CBS ALTERAR] Resultado:", resultAlerar);
 
-                // PASSO 2: SEMPRE incluir no novo cenário (POST), mesmo se DELETE falhou
-                console.log("[CBS PASSO 2] Incluindo no novo cenário:", novoValor);
-                const resultInclude = await fetchHibrido('incluir_condicao_cenario', clienteAtualId, {
-                    idCenario: novoValor,
-                    idFamilia: idFamiliaAtual
-                });
-                console.log("[CBS INCLUDE] Resultado:", resultInclude);
-                
-                // ✅ VERIFICAR: Se sucesso = true, operação foi bem-sucedida
-                if (resultInclude.sucesso) {
-                    // Sucesso! Não fazer nada, continuar o fluxo
-                    console.log("[CBS] POST foi bem-sucedido com statusCode:", resultInclude.statusCode);
-                } else if (resultInclude.erro) {
-                    // Erro real
-                    throw new Error(`Erro ao incluir novo cenário: ${resultInclude.erro}`);
-                } else if (resultInclude.statusCode && resultInclude.statusCode >= 400) {
-                    // Erro HTTP
-                    throw new Error(`Erro ao incluir (HTTP ${resultInclude.statusCode}): ${resultInclude.message || resultInclude.detalhes || 'Desconhecido'}`);
-                }
-
-                // Se houve erro no DELETE, avisar o usuário
-                if (erroDelete) {
-                    console.warn("[CBS] DELETE falhou mas POST foi bem-sucedido. Erro: " + erroDelete);
+                    if (!resultAlerar.sucesso) {
+                        if (resultAlerar.erro) {
+                            throw new Error(`${resultAlerar.erro}${resultAlerar.detalhes ? '\n\nDetalhes: ' + resultAlerar.detalhes : ''}`);
+                        } else if (resultAlerar.statusCode && resultAlerar.statusCode >= 400) {
+                            throw new Error(`Erro na alteração (HTTP ${resultAlerar.statusCode}): ${resultAlerar.message || resultAlerar.detalhes || 'Desconhecido'}`);
+                        } else {
+                            throw new Error('Erro desconhecido ao alterar cenário');
+                        }
+                    }
+                    console.log("[CBS ALTERAR] Operação executada com sucesso");
                 }
 
                 // PASSO 3: Aguardar um pouco para o backend processar
@@ -2544,53 +2548,57 @@
             document.getElementById('spinnerIbs').classList.remove('hidden');
 
             try {
-                let erroDelete = null;
+                // ✅ LÓGICA CONDICIONAL:
+                // - Se N/A: usar apenas incluir_condicao_cenario
+                // - Se tem cenário anterior: usar alterar_condicao_cenario (transação atômica)
 
-                // PASSO 1: Se havia um cenário anterior (não null e não "N/A"), deletar primeiro
-                if (valorAtualNormalizado) {
-                    console.log("[IBS PASSO 1] Deletando cenário anterior:", valorAtualNormalizado);
-                    const resultDelete = await fetchHibrido('excluir_condicao_cenario', clienteAtualId, {
-                        idCenario: valorAtualNormalizado,
-                        idFamilia: idFamiliaAtual
+                if (!valorAtualNormalizado) {
+                    // CASO 1: N/A → Apenas incluir novo cenário
+                    console.log("[IBS INCLUIR] Adicionando novo cenário (N/A → " + novoValor + ")");
+                    const resultInclude = await fetchHibrido('incluir_condicao_cenario', clienteAtualId, {
+                        idCenario: novoValor,
+                        idFamilia: idFamiliaAtual,
+                        tipoImposto: 'IBS'
                     });
-                    console.log("[IBS DELETE] Resultado:", resultDelete);
+                    console.log("[IBS INCLUIR] Resultado:", resultInclude);
                     
-                    // Verificar erro no DELETE (mas NÃO interromper, apenas registrar)
-                    if (resultDelete.erro) {
-                        erroDelete = `Erro ao excluir vínculo anterior: ${resultDelete.erro}`;
-                        console.warn("[IBS AVISO] " + erroDelete + " - Continuando com POST do novo cenário");
+                    if (!resultInclude.sucesso) {
+                        if (resultInclude.erro) {
+                            throw new Error(`${resultInclude.erro}${resultInclude.detalhes ? '\n\nDetalhes: ' + resultInclude.detalhes : ''}`);
+                        } else if (resultInclude.statusCode && resultInclude.statusCode >= 400) {
+                            throw new Error(`Erro na inclusão (HTTP ${resultInclude.statusCode}): ${resultInclude.message || resultInclude.detalhes || 'Desconhecido'}`);
+                        } else {
+                            throw new Error('Erro desconhecido ao incluir cenário');
+                        }
                     }
-                    if (resultDelete.statusCode && resultDelete.statusCode >= 400) {
-                        erroDelete = `Erro ao excluir (HTTP ${resultDelete.statusCode}): ${resultDelete.message || resultDelete.detalhes || 'Desconhecido'}`;
-                        console.warn("[IBS AVISO] " + erroDelete + " - Continuando com POST do novo cenário");
-                    }
+                    console.log("[IBS INCLUIR] Operação executada com sucesso");
                 } else {
-                    console.log("[IBS PASSO 1] Nenhum cenário anterior para deletar - criando novo");
-                }
+                    // CASO 2: Tem cenário anterior → Usar alteração atômica (valida ANTES de DELETE)
+                    console.log("[IBS ALTERAR] Alterando cenário com validação:", {
+                        idCenarioAntigo: valorAtualNormalizado,
+                        novoIdCenario: novoValor,
+                        idFamilia: idFamiliaAtual,
+                        tipoImposto: 'IBS'
+                    });
+                    
+                    const resultAlerar = await fetchHibrido('alterar_condicao_cenario', clienteAtualId, {
+                        idCenarioAntigo: valorAtualNormalizado,
+                        novoIdCenario: novoValor,
+                        idFamilia: idFamiliaAtual,
+                        tipoImposto: 'IBS'
+                    });
+                    console.log("[IBS ALTERAR] Resultado:", resultAlerar);
 
-                // PASSO 2: SEMPRE incluir no novo cenário (POST), mesmo se DELETE falhou
-                console.log("[IBS PASSO 2] Incluindo no novo cenário:", novoValor);
-                const resultInclude = await fetchHibrido('incluir_condicao_cenario', clienteAtualId, {
-                    idCenario: novoValor,
-                    idFamilia: idFamiliaAtual
-                });
-                console.log("[IBS INCLUDE] Resultado:", resultInclude);
-                
-                // ✅ VERIFICAR: Se sucesso = true, operação foi bem-sucedida
-                if (resultInclude.sucesso) {
-                    // Sucesso! Não fazer nada, continuar o fluxo
-                    console.log("[IBS] POST foi bem-sucedido com statusCode:", resultInclude.statusCode);
-                } else if (resultInclude.erro) {
-                    // Erro real
-                    throw new Error(`Erro ao incluir novo cenário: ${resultInclude.erro}`);
-                } else if (resultInclude.statusCode && resultInclude.statusCode >= 400) {
-                    // Erro HTTP
-                    throw new Error(`Erro ao incluir (HTTP ${resultInclude.statusCode}): ${resultInclude.message || resultInclude.detalhes || 'Desconhecido'}`);
-                }
-
-                // Se houve erro no DELETE, avisar o usuário
-                if (erroDelete) {
-                    console.warn("[IBS] DELETE falhou mas POST foi bem-sucedido. Erro: " + erroDelete);
+                    if (!resultAlerar.sucesso) {
+                        if (resultAlerar.erro) {
+                            throw new Error(`${resultAlerar.erro}${resultAlerar.detalhes ? '\n\nDetalhes: ' + resultAlerar.detalhes : ''}`);
+                        } else if (resultAlerar.statusCode && resultAlerar.statusCode >= 400) {
+                            throw new Error(`Erro na alteração (HTTP ${resultAlerar.statusCode}): ${resultAlerar.message || resultAlerar.detalhes || 'Desconhecido'}`);
+                        } else {
+                            throw new Error('Erro desconhecido ao alterar cenário');
+                        }
+                    }
+                    console.log("[IBS ALTERAR] Operação executada com sucesso");
                 }
 
                 // PASSO 3: Aguardar um pouco para o backend processar
