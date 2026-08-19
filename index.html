@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inspector - Análise Integração C5</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e5e7eb'/><circle cx='50' cy='35' r='18' fill='%239ca3af'/><path d='M 20 25 L 30 15 L 70 15 L 80 25 Z' fill='%236b7280'/><path d='M 25 28 L 75 28 L 72 32 L 28 32 Z' fill='%234b5563'/><rect x='35' y='38' width='6' height='8' fill='%236b7280'/><rect x='59' y='38' width='6' height='8' fill='%236b7280'/><ellipse cx='38' cy='42' rx='2' ry='3' fill='%231f2937'/><ellipse cx='62' cy='42' rx='2' ry='3' fill='%231f2937'/><path d='M 50 50 L 48 55 L 52 55 Z' fill='%239ca3af'/><path d='M 35 60 L 65 60 L 63 75 L 37 75 Z' fill='%236b7280'/><rect x='32' y='65' width='5' height='12' fill='%234b5563'/><rect x='63' y='65' width='5' height='12' fill='%234b5563'/></svg>" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -157,6 +158,7 @@
                 <option value="sku">SKU</option>
                 <option value="ean">EAN</option>
                 <option value="familia">FAMILIA</option>
+                <option value="id_trib">ID TRIB</option>
             </select>
 
             <input type="text" id="inputTermoBusca" placeholder="Digite o SKU (ex: 128453)" 
@@ -506,7 +508,8 @@
                     </div>
                     <div class="bg-slate-900 px-3 py-1.5 rounded border border-slate-700 shadow-xs flex items-center gap-2">
                         <span class="text-xs font-bold text-slate-400 uppercase">UF Empresa:</span>
-                        <span id="modalUfEmpresa" class="font-bold text-white text-sm">RS</span>
+                        <select id="selectUfEmpresa" onchange="renderizarTabelaC5()" class="font-bold text-white text-sm bg-transparent border-none focus:outline-none cursor-pointer">
+                        </select>
                     </div>
                 </div>
                 <button onclick="fecharModal()" class="text-slate-400 hover:text-red-400 text-3xl font-bold leading-none px-2 cursor-pointer">&times;</button>
@@ -593,8 +596,8 @@
     </div>
 
     <!-- MODAL DE FERRAMENTAS MULTIPLAS -->
-    <div id="modalFerramentas" class="fixed inset-0 bg-slate-950 bg-opacity-85 hidden z-50 flex items-center justify-center p-4 backdrop-blur-xs">
-        <div class="bg-slate-900 rounded-xl shadow-2xl w-full max-w-[98vw] md:max-w-5xl max-h-[90vh] flex flex-col border border-slate-700 overflow-hidden text-slate-200">
+    <div id="modalFerramentas" class="fixed inset-0 bg-slate-950 bg-opacity-85 hidden z-50 flex items-center justify-center p-2 backdrop-blur-xs">
+        <div class="bg-slate-900 rounded-xl shadow-2xl w-full max-w-[99vw] max-h-[96vh] flex flex-col border border-slate-700 overflow-hidden text-slate-200">
             
             <div class="bg-slate-950 p-4 border-b border-slate-800 flex items-center justify-between">
                 <h3 class="font-bold text-lg text-white flex items-center gap-2">
@@ -614,6 +617,9 @@
                 <button id="tabRtc" onclick="alternarAbaFerramenta('rtc')" class="tab-btn inactive">
                     3. Implantador de Condições - RTC
                 </button>
+                <button id="tabClientes" onclick="alternarAbaFerramenta('clientes')" class="tab-btn inactive">
+                    4. Adequação Tributária
+                </button>
             </div>
             
             <!-- ABA 1: ATUALIZAÇÃO DE IPI -->
@@ -628,7 +634,7 @@
                     </ul>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">1. Cliente</label>
                         <select id="selectClienteIpi" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
@@ -640,7 +646,11 @@
                         <input type="file" id="inputArquivoIpi" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="w-full p-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-300 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-amber-400 file:text-slate-900 hover:file:bg-amber-500 cursor-pointer">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Defina 0 para velocidade máxima">3. Atraso (ms)</label>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Famílias por lote">3. Qtd/Lote</label>
+                        <input type="number" id="qtdLoteIpi" value="10" min="1" max="100" step="1" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Defina 0 para velocidade máxima">4. Atraso Lote (ms)</label>
                         <input type="number" id="delayIpi" value="200" min="0" step="10" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
                     </div>
                 </div>
@@ -669,7 +679,7 @@
                     </ul>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">1. Cliente</label>
                         <select id="selectClienteAnalise" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
@@ -681,7 +691,11 @@
                         <input type="file" id="inputArquivoAnalise" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="w-full p-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-300 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-emerald-400 file:text-slate-900 hover:file:bg-emerald-500 cursor-pointer">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Atraso aplicado entre cada GET enviado">3. Atraso Lote (ms)</label>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="SKUs por lote">3. Qtd/Lote</label>
+                        <input type="number" id="qtdLoteAnalise" value="20" min="1" max="100" step="1" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Atraso aplicado entre lotes">4. Atraso Lote (ms)</label>
                         <input type="number" id="delayAnalise" value="0" min="0" step="10" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
                     </div>
                 </div>
@@ -781,14 +795,29 @@
 
             </div>
 
+            <!-- ABA 4: ADEQUAÇÃO TRIBUTÁRIA -->
+            <div id="ferramentaClientes" class="p-6 flex-1 overflow-auto flex flex-col gap-6 hidden min-h-0">
+                <div class="bg-blue-950/30 border border-blue-900/50 p-4 rounded-lg">
+                    <h4 class="text-blue-400 font-bold text-sm mb-2">Adequação Tributária - CONSINCO TAX FIX:</h4>
+                    <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
+                        <li>Acesse a ferramenta integrada de adequação tributária da CONSINCO TAX FIX.</li>
+                        <li>Gerencie, adicione ou atualize informações de clientes conforme necessário.</li>
+                        <li>A ferramenta carrega automaticamente no espaço abaixo.</li>
+                    </ul>
+                </div>
+                <div class="flex-1 flex flex-col min-h-[500px] border border-slate-700 rounded-lg overflow-hidden bg-slate-950">
+                    <iframe id="iframeClientes" src="https://consinco-tax-fix.lovable.app/clientes" class="flex-1 w-full h-full border-0" allow="*" title="CONSINCO TAX FIX - Adequação Tributária"></iframe>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbx6rfoo0x7X6gRH4O_xa2WaB57Zc3KMtEwVvEC-5GdNYZuTMkFb-AVd0qhyJsQOWzTrJg/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzupnlY0SE9jH2ujThu7mEzDbQZqWjUwhn3Udl557A7w2wys7yhcBYPCwfKuIR9NQJT/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.5.1"; 
+        const VERSAO_FRONT = "v5.8.0"; 
 
         let idTributacaoAtual = null;
         let clienteAtualId = null;
@@ -870,6 +899,172 @@
             }
         }
 
+        // ==========================================
+        // BATCH LOCAL (VPN): buscar produtos/famílias em série reaproveitando o token
+        // ==========================================
+        async function buscarProdutosLoteLocal(cliente, token, skusCsv) {
+            const skus = String(skusCsv || "").split(',').map(s => s.trim()).filter(Boolean);
+            const resultado = { total: skus.length, processados: 0, qtdSucesso: 0, qtdErros: 0, items: [], erros: [] };
+
+            // ✅ Dispara todas as requisições do lote em paralelo (Promise.all), igual ao fetchAll do backend
+            await Promise.all(skus.map(async (sku) => {
+                const url = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${sku}&Expand=familia.familiaDivisao.tributacao`;
+                try {
+                    const resp = await fetch(url, { method: 'GET', headers: { "Authorization": `Bearer ${token}` } });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.items && data.items.length > 0) {
+                            resultado.items.push(data.items[0]);
+                            resultado.qtdSucesso++;
+                        } else {
+                            resultado.erros.push({ sku: sku, motivo: "Produto não encontrado" });
+                            resultado.qtdErros++;
+                        }
+                    } else {
+                        resultado.erros.push({ sku: sku, motivo: `HTTP ${resp.status}` });
+                        resultado.qtdErros++;
+                    }
+                } catch (ex) {
+                    resultado.erros.push({ sku: sku, motivo: ex.message });
+                    resultado.qtdErros++;
+                }
+                resultado.processados++;
+            }));
+            return resultado;
+        }
+
+        async function buscarFamiliasLoteLocal(cliente, token, familiasCsv) {
+            const familias = String(familiasCsv || "").split(',').map(f => f.trim()).filter(Boolean);
+            const resultado = { total: familias.length, processados: 0, qtdSucesso: 0, qtdErros: 0, items: [], erros: [] };
+
+            // ✅ Dispara todas as requisições do lote em paralelo (Promise.all)
+            await Promise.all(familias.map(async (idFamilia) => {
+                const url = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Familia?idFamilia=${idFamilia}`;
+                try {
+                    const resp = await fetch(url, { method: 'GET', headers: { "Authorization": `Bearer ${token}` } });
+                    if (resp.ok) {
+                        const data = await resp.json();
+                        if (data.items && data.items.length > 0) {
+                            resultado.items.push(data.items[0]);
+                            resultado.qtdSucesso++;
+                        } else {
+                            resultado.erros.push({ familia: idFamilia, motivo: "Família não encontrada" });
+                            resultado.qtdErros++;
+                        }
+                    } else {
+                        resultado.erros.push({ familia: idFamilia, motivo: `HTTP ${resp.status}` });
+                        resultado.qtdErros++;
+                    }
+                } catch (ex) {
+                    resultado.erros.push({ familia: idFamilia, motivo: ex.message });
+                    resultado.qtdErros++;
+                }
+                resultado.processados++;
+            }));
+            return resultado;
+        }
+
+        // ✅ Replica a validação do backend (validarCenarioParaInclusao) para manter paridade Local/Nuvem
+        async function validarCenarioLocal(cliente, token, idCenario, tipoImposto) {
+            const urlListar = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?pagesize=1000`;
+            let dadosLista;
+            try {
+                const resp = await fetch(urlListar, { method: 'GET', headers: { "Authorization": `Bearer ${token}` } });
+                if (!resp.ok) {
+                    return { erro: "Falha ao validar cenário. Não foi possível listar cenários.", detalhes: await resp.text(), statusCode: 400 };
+                }
+                dadosLista = await resp.json();
+            } catch (ex) {
+                return { erro: "Falha ao validar cenário. Erro de conexão.", detalhes: ex.message, statusCode: 400 };
+            }
+
+            const cenarios = Array.isArray(dadosLista) ? dadosLista : (dadosLista.items || []);
+            const cenarioEncontrado = cenarios.find(c => c.idCenario == idCenario);
+
+            if (!cenarioEncontrado) {
+                return { erro: `Cenário com ID ${idCenario} não encontrado.`, statusCode: 400 };
+            }
+
+            if (String(cenarioEncontrado.status || "").toUpperCase() !== "A") {
+                return {
+                    erro: "❌ Cenário Inativo",
+                    detalhes: `O cenário ID ${idCenario} possui status "${cenarioEncontrado.status}" e não pode ser utilizado. Apenas cenários com status "ATIVO" (A) são permitidos.`,
+                    statusCode: 400
+                };
+            }
+
+            const tipoMapeado = (String(tipoImposto).toUpperCase() === "CBS" || tipoImposto === "1") ? 1 :
+                                (String(tipoImposto).toUpperCase() === "IBS" || tipoImposto === "2") ? 2 : null;
+
+            if (tipoMapeado === null) {
+                return { erro: `Tipo de imposto inválido. Use "CBS" (1) ou "IBS" (2).`, statusCode: 400 };
+            }
+
+            const idImpostoReal = cenarioEncontrado.idImposto;
+            if (idImpostoReal != tipoMapeado) {
+                const tipoEsperado = tipoMapeado === 1 ? "CBS" : "IBS";
+                const tipoReal = idImpostoReal === 1 ? "CBS" : "IBS";
+                return {
+                    erro: "❌ Incompatibilidade de Tipo de Imposto",
+                    detalhes: `Você está tentando vincular um cenário ${tipoReal} (ID ${idCenario}) ao grupo ${tipoEsperado}. Cenários CBS devem ser vinculados apenas a produtos CBS, e cenários IBS apenas a produtos IBS.`,
+                    statusCode: 400
+                };
+            }
+
+            return { sucesso: true, cenario: cenarioEncontrado };
+        }
+
+        // ✅ Replica excluirCondicaoCenario + incluirCondicaoCenario do backend (usadas isoladamente e pela alteração)
+        async function excluirCondicaoCenarioLocal(cliente, token, idCenario, idFamilia) {
+            const url = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios/${idCenario}/condicoes`;
+            const payload = [{ idCondicao: 2, identificador: "FAMILIA", valor: String(idFamilia), indTipoEntidade: "N" }];
+            try {
+                const resp = await fetch(url, {
+                    method: 'DELETE',
+                    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                if (resp.ok) return { sucesso: true, statusCode: resp.status };
+                return { erro: "Falha ao excluir condição", detalhes: await resp.text(), statusCode: resp.status };
+            } catch (ex) {
+                return { erro: "Erro de conexão DELETE", detalhes: ex.message, statusCode: 500 };
+            }
+        }
+
+        async function incluirCondicaoCenarioLocal(cliente, token, idCenario, idFamilia, tipoImposto = null) {
+            if (tipoImposto !== null && tipoImposto !== undefined) {
+                const validacao = await validarCenarioLocal(cliente, token, idCenario, tipoImposto);
+                if (validacao.erro) return validacao;
+            }
+            const url = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios/${idCenario}/condicoes`;
+            const payload = [{ idCondicao: 2, identificador: "FAMILIA", valor: String(idFamilia), indTipoEntidade: "N" }];
+            try {
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                if (resp.ok) return { sucesso: true, statusCode: resp.status };
+                return { erro: "Falha ao incluir condição", detalhes: await resp.text(), statusCode: resp.status };
+            } catch (ex) {
+                return { erro: "Erro de conexão POST", detalhes: ex.message, statusCode: 500 };
+            }
+        }
+
+        async function alterarCondicaoCenarioLocal(cliente, token, idCenarioAntigo, novoIdCenario, idFamilia, tipoImposto = null) {
+            if (tipoImposto !== null && tipoImposto !== undefined) {
+                const validacao = await validarCenarioLocal(cliente, token, novoIdCenario, tipoImposto);
+                if (validacao.erro) return validacao;
+            }
+            const resultDelete = await excluirCondicaoCenarioLocal(cliente, token, idCenarioAntigo, idFamilia);
+            if (!resultDelete.sucesso) return { erro: "Exclusão falhou", detalhes: resultDelete.erro || JSON.stringify(resultDelete), statusCode: resultDelete.statusCode || 400 };
+
+            const resultPost = await incluirCondicaoCenarioLocal(cliente, token, novoIdCenario, idFamilia, tipoImposto);
+            if (!resultPost.sucesso) return { erro: "Inclusão falhou", detalhes: resultPost.erro || JSON.stringify(resultPost), statusCode: resultPost.statusCode || 400 };
+
+            return { sucesso: true, mensagem: "Cenário alterado com sucesso" };
+        }
+
         async function fetchHibrido(action, clienteId, parametrosAdicionais = {}, method = 'GET') {
             const cliente = bdClientes[clienteId];
             if (!cliente) throw new Error("Cliente não encontrado na base.");
@@ -892,6 +1087,11 @@
                         urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?CodigoAcesso=${parametrosAdicionais.ean}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
                     } else if (action === 'produto_familia') {
                         urlLocal = `${cliente.urlBase}/SMProdutosAPI/api/v4/produtos/dados-cadastrais?IdFamilia=${parametrosAdicionais.idFamilia}`;
+                    } else if (action === 'produtos_lote_leve') {
+                        // Busca em série no próprio navegador, reaproveitando o token já obtido
+                        return await buscarProdutosLoteLocal(cliente, token, parametrosAdicionais.skus);
+                    } else if (action === 'familias_lote') {
+                        return await buscarFamiliasLoteLocal(cliente, token, parametrosAdicionais.familias);
                     } else if (action === 'tributacao') {
                         urlLocal = `${cliente.urlBase}/CadastrosEstruturaisApi/api/v1/Tributacao/uf?IdTributacao=${parametrosAdicionais.idTributacao}&pageSize=10000`;
                     } else if (action === 'reforma') {
@@ -903,6 +1103,12 @@
                         fetchOptions.method = 'PATCH';
                         fetchOptions.headers["Content-Type"] = "application/json";
                         fetchOptions.body = JSON.stringify([{ "path": "aliquotaIpi", "op": "replace", "value": parametrosAdicionais.valorIpi.replace(',', '.') }]);
+                    } else if (action === 'atualizar_tributacao') {
+                        const { idFamilia, idDivisao, novoIdTributacao } = parametrosAdicionais;
+                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisApi/api/v1/Familia/divisao?idFamilia=${idFamilia}&idDivisao=${idDivisao}`;
+                        fetchOptions.method = 'PATCH';
+                        fetchOptions.headers["Content-Type"] = "application/json";
+                        fetchOptions.body = JSON.stringify([{ "path": "idTributacao", "op": "replace", "value": String(novoIdTributacao) }]);
                     } else if (action === 'vincular_cenarios_lote') {
                         urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios/${parametrosAdicionais.idCenario}/condicoes`;
                         const famArray = parametrosAdicionais.familias.split(',');
@@ -923,17 +1129,12 @@
                         fetchOptions.headers["Content-Type"] = "application/json";
                         fetchOptions.body = JSON.stringify(payload);
                     } else if (action === 'incluir_condicao_cenario') {
-                        const { idCenario, idFamilia } = parametrosAdicionais;
-                        urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios/${idCenario}/condicoes`;
-                        const payload = [{
-                            idCondicao: 2,
-                            identificador: "FAMILIA",
-                            valor: String(idFamilia),
-                            indTipoEntidade: "N"
-                        }];
-                        fetchOptions.method = 'POST';
-                        fetchOptions.headers["Content-Type"] = "application/json";
-                        fetchOptions.body = JSON.stringify(payload);
+                        // ✅ Mantém a mesma validação prévia (status ativo + tipo de imposto) do fluxo Nuvem
+                        const { idCenario, idFamilia, tipoImposto } = parametrosAdicionais;
+                        return await incluirCondicaoCenarioLocal(cliente, token, idCenario, idFamilia, tipoImposto);
+                    } else if (action === 'alterar_condicao_cenario') {
+                        const { idCenarioAntigo, novoIdCenario, idFamilia, tipoImposto } = parametrosAdicionais;
+                        return await alterarCondicaoCenarioLocal(cliente, token, idCenarioAntigo, novoIdCenario, idFamilia, tipoImposto);
                     }
                     
                     console.log(`[LOCAL] Rota: ${urlLocal}`);
@@ -952,9 +1153,9 @@
                     }
 
                     if (action === 'atualizar_ipi' && (response.status === 200 || response.status === 204)) return { sucesso: true, mensagem: "IPI Atualizado (Local)" };
+                    if (action === 'atualizar_tributacao' && (response.status === 200 || response.status === 204)) return { sucesso: true, mensagem: "ID de Tributação atualizado com sucesso.", statusCode: response.status };
                     if (action === 'vincular_cenarios_lote' && response.ok) return { sucesso: true, mensagem: "Vinculado (Local)" };
                     if (action === 'excluir_condicao_cenario' && (response.status === 200 || response.status === 204)) return { sucesso: true, statusCode: response.status };
-                    if (action === 'incluir_condicao_cenario' && (response.status === 200 || response.status === 201)) return { sucesso: true, statusCode: response.status };
 
                     let data = await response.json();
 
@@ -1019,7 +1220,8 @@
                     }
                     
                     // ✅ Fallback: verificar campo "erro" (casos sem statusCode explícito)
-                    if (data.erro || data.error) {
+                    // Só string é mensagem de erro real; number (ex: contador em lotes) não é falha total
+                    if (typeof data.erro === 'string' || typeof data.error === 'string') {
                         console.error(`[CLOUD ERROR] Erro na resposta:`, data);
                         return {
                             erro: data.erro || data.error,
@@ -1063,6 +1265,8 @@
                 input.placeholder = "Digite o EAN (ex: 7891000100103)";
             } else if (tipo === 'familia') {
                 input.placeholder = "Digite o ID Família (ex: 136649)";
+            } else if (tipo === 'id_trib') {
+                input.placeholder = "Digite o ID Tributação (ex: 1234)";
             }
         }
 
@@ -1291,9 +1495,15 @@
             } else if (tipoBusca === 'familia') {
                 action = 'produto_familia';
                 params = { idFamilia: termo };
+            } else if (tipoBusca === 'id_trib') {
+                action = 'tributacao';
+                params = { idTributacao: termo };
             }
 
             document.getElementById('txtGetProduto').innerText = `-> ${bdClientes[clienteId].modoVpn ? '[ROTA VPN]' : '[ROTA NUVEM]'} action=${action}`;
+            if (tipoBusca === 'id_trib') {
+                document.getElementById('txtGetTributacao').innerText = `-> ${bdClientes[clienteId].modoVpn ? '[ROTA VPN]' : '[ROTA NUVEM]'} Consultando Tributação ID=${termo}`;
+            }
 
             try {
                 const data = await fetchHibrido(action, clienteId, params);
@@ -1301,6 +1511,75 @@
                 if (data.erro) return alert("Erro: " + data.erro + (data.detalhes ? `\nDetalhes: ${data.detalhes}` : ''));
 
                 document.getElementById('txtGetProdutoOriginal').innerText = data.endpointOriginal || "N/A";
+
+                // 🔴 TRATAMENTO ESPECIAL PARA ID TRIBUTAÇÃO
+                if (tipoBusca === 'id_trib') {
+                    // Verificar se há itens (linhas de tributação)
+                    if (!data.items || data.items.length === 0) return alert("Nenhuma tributação encontrada com este ID.");
+
+                    // Preencher cabeçalho com o ID da tributação
+                    document.getElementById('headerProduto').innerText = `Tributação ID: ${termo}`;
+
+                    // Limpar/Resetar campos de produto (não há produto nesta consulta)
+                    document.getElementById('idProduto').innerText = "N/A";
+                    document.getElementById('idFamilia').innerText = "N/A";
+                    document.getElementById('descricaoCompleta').innerText = "N/A";
+                    document.getElementById('codigosEan').innerText = "N/A";
+                    document.getElementById('ncm').innerText = "N/A";
+                    document.getElementById('cest').innerText = "N/A";
+                    document.getElementById('pisEntrada').innerText = "N/A";
+                    document.getElementById('cofinsEntrada').innerText = "N/A";
+                    document.getElementById('pisSaida').innerText = "N/A";
+                    document.getElementById('cofinsSaida').innerText = "N/A";
+                    document.getElementById('aliqIpi').innerText = "N/A";
+                    document.getElementById('natRec').innerText = "N/A";
+                    document.getElementById('seqNatRec').innerText = "N/A";
+                    document.getElementById('pUserAlt').innerText = "N/A";
+                    document.getElementById('pDataAlt').innerText = "N/A";
+                    document.getElementById('pDataInc').innerText = "N/A";
+                    document.getElementById('fUserInc').innerText = "N/A";
+                    document.getElementById('fDataInc').innerText = "N/A";
+                    document.getElementById('fUserAlt').innerText = "N/A";
+                    document.getElementById('fDataAlt').innerText = "N/A";
+                    document.getElementById('dUserAlt').innerText = "N/A";
+                    document.getElementById('dDataAlt').innerText = "N/A";
+                    document.getElementById('btnEditarIpi').classList.add('hidden');
+                    document.getElementById('btnEditarTributacao').classList.add('hidden');
+
+                    // Preencher com dados da tributação (primeira linha)
+                    const tribInfo = data.items[0] || {};
+                    document.getElementById('idTributacao').innerText = tribInfo.idTributacao || termo;
+                    document.getElementById('descTributacao').innerText = tribInfo.descricao || "Tributação sem descrição";
+                    document.getElementById('aceitaPauta').innerText = tribInfo.aceitaPauta || "N/A";
+                    document.getElementById('statusTributacao').innerText = tribInfo.status || "N/A";
+                    document.getElementById('idPauta').innerText = tribInfo.idPauta || "N/A";
+                    document.getElementById('nomeFamDiv').innerText = tribInfo.descricao || "N/A";
+
+                    // Não há reforma quando consultando apenas por ID tributação
+                    preencherBlocoReforma('cbs', null, false);
+                    preencherBlocoReforma('ibs', null, false);
+                    document.getElementById('txtGetReformaOriginal').innerText = "N/A (Consulta apenas de Tributação)";
+
+                    // Atualizar JSON com os dados de tributação
+                    document.getElementById('jsonCompleto').innerText = JSON.stringify(data, null, 2);
+                    produtoAtualCompleto = { tributacao: data };
+
+                    // Variáveis globais
+                    skuProdutoAtual = null;
+                    idFamiliaAtual = null;
+                    idDivisaoAtual = null;
+                    idTributacaoAtual = termo;
+                    descTributacaoAtual = tribInfo.descricao || "Tributação sem descrição";
+                    aceitaPautaAtual = tribInfo.aceitaPauta || null;
+                    statusTributacaoAtual = tribInfo.status || null;
+
+                    document.getElementById('btnVerTributacao').classList.remove('hidden');
+                    document.getElementById('resultado').classList.remove('hidden');
+                    document.getElementById('loading').classList.add('hidden');
+                    carregandoReforma = false;
+
+                    return; // Retornar aqui pois não há mais processamento a fazer
+                }
 
                 let produto;
 
@@ -1681,11 +1960,11 @@
         }
 
         function alternarAbaFerramenta(aba) {
-            ['tabIpi', 'tabAnalise', 'tabRtc'].forEach(t => {
+            ['tabIpi', 'tabAnalise', 'tabRtc', 'tabClientes'].forEach(t => {
                 document.getElementById(t).classList.remove('active', 'border-amber-400', 'text-amber-400');
                 document.getElementById(t).classList.add('inactive', 'border-transparent');
             });
-            ['ferramentaIpi', 'ferramentaAnalise', 'ferramentaRtc'].forEach(f => {
+            ['ferramentaIpi', 'ferramentaAnalise', 'ferramentaRtc', 'ferramentaClientes'].forEach(f => {
                 document.getElementById(f).classList.add('hidden');
             });
 
@@ -1701,17 +1980,33 @@
                 document.getElementById('tabRtc').classList.remove('inactive', 'border-transparent');
                 document.getElementById('tabRtc').classList.add('active', 'border-amber-400', 'text-amber-400');
                 document.getElementById('ferramentaRtc').classList.remove('hidden');
+            } else if (aba === 'clientes') {
+                document.getElementById('tabClientes').classList.remove('inactive', 'border-transparent');
+                document.getElementById('tabClientes').classList.add('active', 'border-amber-400', 'text-amber-400');
+                document.getElementById('ferramentaClientes').classList.remove('hidden');
             }
         }
 
         // ==========================================
-        // ABA 1: BATCH IPI
+        // FUNÇÃO HELPER: Dividir array em lotes
+        // ==========================================
+        function dividirEmLotes(array, tamanhoLote) {
+            const lotes = [];
+            for (let i = 0; i < array.length; i += tamanhoLote) {
+                lotes.push(array.slice(i, i + tamanhoLote));
+            }
+            return lotes;
+        }
+
+        // ==========================================
+        // ABA 1: BATCH IPI (Otimizado com Lotes)
         // ==========================================
         async function processarLoteIPI() {
             const clienteId = document.getElementById('selectClienteIpi').value;
             const fileInput = document.getElementById('inputArquivoIpi');
             const logArea = document.getElementById('logFerramentaIpi');
             const btnProcessar = document.getElementById('btnProcessarLote');
+            const qtdPorLote = parseInt(document.getElementById('qtdLoteIpi').value) || 10;
             const delayMs = parseInt(document.getElementById('delayIpi').value) || 0;
             
             if (!clienteId) return alert("Por favor, selecione um cliente na etapa 1.");
@@ -1742,27 +2037,58 @@
                     const total = registros.length;
                     if(total === 0) throw new Error("Nenhum dado válido encontrado.");
 
-                    logArea.innerHTML = `<span class="text-cyan-400">Processando ${total} registros com atraso de ${delayMs}ms...</span>\n\n`;
+                    // Dividir em lotes
+                    const lotes = dividirEmLotes(registros, qtdPorLote);
+                    const totalLotes = lotes.length;
+                    
+                    logArea.innerHTML = `<span class="text-cyan-400">Processando ${total} famílias em ${totalLotes} lotes de ${qtdPorLote}. Atraso entre lotes: ${delayMs}ms</span>\n\n`;
                     let suc = 0, err = 0;
+                    let processados = 0;
 
-                    for (let i = 0; i < total; i++) {
-                        const reg = registros[i];
-                        document.getElementById('contadorLoteIpi').innerText = `${i + 1} / ${total}`;
-                        logArea.innerHTML += `Família <strong class="text-white">${reg.familia}</strong> (IPI: ${reg.ipi}) ... `;
+                    for (let loteIdx = 0; loteIdx < totalLotes; loteIdx++) {
+                        const lote = lotes[loteIdx];
+                        const familias = lote.map(r => r.familia);
+                        
+                        logArea.innerHTML += `<span class="text-blue-400">→ LOTE ${loteIdx + 1}/${totalLotes}</span> Famílias: ${familias.join(', ')} ... `;
                         
                         try {
-                            const dat = await fetchHibrido('atualizar_ipi', clienteId, { idFamilia: reg.familia, valorIpi: reg.ipi });
-                            if (dat.sucesso) { logArea.innerHTML += `<span class="text-emerald-400">SUCESSO</span>\n`; suc++; } 
-                            else { logArea.innerHTML += `<span class="text-red-400">ERRO</span>\n`; err++; }
+                            // Chamar rota batch
+                            const resultado = await fetchHibrido('familias_lote', clienteId, { familias: familias.join(',') });
+                            
+                            if (resultado.items) {
+                                // Famílias que o GET já confirmou como inexistentes não devem ser atualizadas
+                                const naoEncontradas = new Set((resultado.erros || []).map(e => String(e.familia)));
+                                const loteValido = lote.filter(reg => !naoEncontradas.has(String(reg.familia)));
+
+                                // ✅ Atualiza o IPI das famílias válidas do lote EM PARALELO (Promise.all)
+                                const resultadosIpi = await Promise.all(loteValido.map(reg =>
+                                    fetchHibrido('atualizar_ipi', clienteId, { idFamilia: reg.familia, valorIpi: reg.ipi })
+                                        .then(resp => ({ ok: !!resp.sucesso }))
+                                        .catch(() => ({ ok: false }))
+                                ));
+                                processados += lote.length;
+                                document.getElementById('contadorLoteIpi').innerText = `${processados} / ${total}`;
+                                resultadosIpi.forEach(r => { if (r.ok) suc++; else err++; });
+                                err += naoEncontradas.size;
+                                logArea.innerHTML += `<span class="text-emerald-400">SUCESSO (${loteValido.length} famílias)</span>${naoEncontradas.size ? ` <span class="text-amber-400">(${naoEncontradas.size} não encontradas)</span>` : ''}\n`;
+                            } else {
+                                logArea.innerHTML += `<span class="text-red-400">ERRO</span>\n`;
+                                err += lote.length;
+                                processados += lote.length;
+                            }
                         } catch(ex) {
-                            logArea.innerHTML += `<span class="text-red-400">FALHA</span>\n`; err++;
+                            logArea.innerHTML += `<span class="text-red-400">FALHA</span>\n`;
+                            err += lote.length;
+                            processados += lote.length;
                         }
                         logArea.scrollTop = logArea.scrollHeight;
                         
-                        if (delayMs > 0) await new Promise(r => setTimeout(r, delayMs)); 
+                        if (delayMs > 0 && loteIdx < totalLotes - 1) {
+                            await new Promise(r => setTimeout(r, delayMs));
+                        }
                     }
 
-                    logArea.innerHTML += `\n<span class="text-amber-400 font-bold">LOTE FINALIZADO! S: ${suc} | E: ${err}</span>\n`;
+                    logArea.innerHTML += `\n<span class="text-amber-400 font-bold">LOTE FINALIZADO! S: ${suc} | E: ${err} | Lotes: ${totalLotes}</span>\n`;
                 } catch (ex) {
                     logArea.innerHTML = `<span class="text-red-400">Erro: ${ex.message}</span>`;
                 } finally {
@@ -1774,7 +2100,7 @@
         }
 
         // ==========================================
-        // ABA 2: ANÁLISE DE TRIBUTAÇÃO EM LOTE SEQUENCIAL (MODO LEVE)
+        // ABA 2: ANÁLISE DE TRIBUTAÇÃO EM LOTE BATCH (OTIMIZADO)
         // ==========================================
         let isAnaliseRunning = false;
         let dadosAnaliseExcel = [];
@@ -1782,6 +2108,7 @@
         async function processarAnaliseTributacao() {
             const clienteId = document.getElementById('selectClienteAnalise').value;
             const fileInput = document.getElementById('inputArquivoAnalise');
+            const qtdPorLote = parseInt(document.getElementById('qtdLoteAnalise').value) || 20;
             const delayMs = parseInt(document.getElementById('delayAnalise').value) || 0;
             
             if (!clienteId) return alert("Por favor, selecione um cliente na etapa 1.");
@@ -1820,48 +2147,119 @@
                     dadosAnaliseExcel = [];
                     let suc = 0, err = 0;
 
+                    // Dividir em lotes
+                    const lotes = dividirEmLotes(skus, qtdPorLote);
+                    const totalLotes = lotes.length;
+                    
                     valSuc.innerText = "0"; valErr.innerText = "0";
                     pBar.style.width = "0%";
+                    pText.innerText = `Iniciando análise: ${totalLotes} lotes de até ${qtdPorLote} SKUs`;
 
-                    for (let i = 0; i < totalSkus; i++) {
-                        if(!isAnaliseRunning) break; 
+                    let processados = 0;
 
-                        const sku = skus[i];
-                        pText.innerText = `Consultando: ${i+1} / ${totalSkus} (SKU: ${sku})`;
-                        pBar.style.width = `${((i+1)/totalSkus)*100}%`;
+                    for (let loteIdx = 0; loteIdx < totalLotes; loteIdx++) {
+                        if(!isAnaliseRunning) break;
+
+                        const lote = lotes[loteIdx];
+                        const skusBatch = lote.join(',');
+                        
+                        pText.innerText = `Lote ${loteIdx + 1}/${totalLotes} (${lote.length} SKUs) - Total: ${processados}/${totalSkus}`;
 
                         try {
-                            const dat = await fetchHibrido('produto_leve', clienteId, { sku: sku });
+                            // Chamar rota batch
+                            const resultado = await fetchHibrido('produtos_lote_leve', clienteId, { skus: skusBatch });
 
-                            if (dat.items && dat.items.length > 0) {
-                                const prod = dat.items[0];
-                                const divi = prod.familia?.familiaDivisao?.[0] || {};
-                                
-                                dadosAnaliseExcel.push({
-                                    "SKU": prod.idProduto || sku,
-                                    "Descrição Completa": prod.descricaoCompleta || "",
-                                    "EAN": "Omitido (Modo Leve)",
-                                    "ID Tributação": divi.idTributacao || "N/A",
-                                    "Descrição Tributação": divi.tributacao?.descricao || "N/A"
-                                });
-                                suc++;
-                                valSuc.innerText = suc;
-                            } else {
-                                dadosAnaliseExcel.push({ "SKU": sku, "Descrição Completa": "NÃO ENCONTRADO", "EAN": "", "ID Tributação": "", "Descrição Tributação": "" });
-                                err++;
-                                valErr.innerText = err;
+                            // ✅ Processar sucessos
+                            if (resultado.items && resultado.items.length > 0) {
+                                for (const prod of resultado.items) {
+                                    if(!isAnaliseRunning) break;
+                                    
+                                    const divi = prod.familia?.familiaDivisao?.[0] || {};
+                                    
+                                    dadosAnaliseExcel.push({
+                                        "SKU": prod.idProduto || "N/A",
+                                        "Descrição Completa": prod.descricaoCompleta || "N/A",
+                                        "EAN": "Omitido (Modo Leve)",
+                                        "ID Tributação": divi.idTributacao || "N/A",
+                                        "Descrição Tributação": divi.tributacao?.descricao || "N/A"
+                                    });
+                                    suc++;
+                                    processados++;
+                                    valSuc.innerText = suc;
+                                }
                             }
+
+                            // ✅ Processar erros do lote
+                            if (resultado.erros && resultado.erros.length > 0) {
+                                for (const errItem of resultado.erros) {
+                                    dadosAnaliseExcel.push({
+                                        "SKU": errItem.sku || "?",
+                                        "Descrição Completa": "❌ NÃO ENCONTRADO",
+                                        "EAN": "",
+                                        "ID Tributação": "",
+                                        "Descrição Tributação": errItem.motivo || ""
+                                    });
+                                    err++;
+                                    processados++;
+                                    valErr.innerText = err;
+                                }
+                            }
+
+                            // ✅ Verificar se há SKUs que não foram retornados (nem sucesso nem erro)
+                            const skusRetornados = new Set();
+                            if (resultado.items) {
+                                resultado.items.forEach(item => {
+                                    skusRetornados.add(String(item.idProduto));
+                                });
+                            }
+                            if (resultado.erros) {
+                                resultado.erros.forEach(err => {
+                                    skusRetornados.add(String(err.sku));
+                                });
+                            }
+
+                            // Adicionar SKUs do lote que não foram encontrados em nenhuma resposta
+                            for (const sku of lote) {
+                                if (!skusRetornados.has(String(sku))) {
+                                    dadosAnaliseExcel.push({
+                                        "SKU": sku,
+                                        "Descrição Completa": "⚠️ SEM RESPOSTA",
+                                        "EAN": "",
+                                        "ID Tributação": "",
+                                        "Descrição Tributação": "Não retornou na API"
+                                    });
+                                    err++;
+                                    processados++;
+                                    valErr.innerText = err;
+                                }
+                            }
+
                         } catch(ex) {
-                            dadosAnaliseExcel.push({ "SKU": sku, "Descrição Completa": "FALHA DE CONEXÃO", "EAN": "", "ID Tributação": "", "Descrição Tributação": "" });
-                            err++;
+                            // Em caso de falha, marcar todo o lote como erro
+                            for (const sku of lote) {
+                                dadosAnaliseExcel.push({
+                                    "SKU": sku,
+                                    "Descrição Completa": "🔴 FALHA DE CONEXÃO",
+                                    "EAN": "",
+                                    "ID Tributação": "",
+                                    "Descrição Tributação": ex.message || "Erro de conexão"
+                                });
+                                err++;
+                                processados++;
+                            }
                             valErr.innerText = err;
                         }
                         
-                        if (delayMs > 0) await new Promise(r => setTimeout(r, delayMs)); 
+                        // ✅ Atualizar progresso CORRETAMENTE
+                        pBar.style.width = `${(processados / totalSkus) * 100}%`;
+                        
+                        if (delayMs > 0 && loteIdx < totalLotes - 1) {
+                            await new Promise(r => setTimeout(r, delayMs));
+                        }
                     }
 
                     if(isAnaliseRunning) {
-                        pText.innerText = `Consulta Finalizada! Arquivo pronto para download.`;
+                        pText.innerText = `✅ Consulta Finalizada! ${suc} sucesso | ${err} erro em ${totalLotes} lotes`;
                         pBar.style.width = `100%`;
                     }
                     
@@ -1886,11 +2284,24 @@
         }
 
         function baixarExcelAnalise() {
-            if(dadosAnaliseExcel.length === 0) return alert("Nenhum dado para baixar.");
-            const ws = XLSX.utils.json_to_sheet(dadosAnaliseExcel);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Tributacao_Inspector");
-            XLSX.writeFile(wb, "C5_Analise_Tributacao.xlsx");
+            console.log("Tentando baixar... Dados no array:", dadosAnaliseExcel.length);
+            
+            if(dadosAnaliseExcel.length === 0) {
+                alert("❌ Nenhum dado para baixar. Execute a consulta primeiro!");
+                return;
+            }
+            
+            try {
+                const ws = XLSX.utils.json_to_sheet(dadosAnaliseExcel);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Tributacao_Inspector");
+                XLSX.writeFile(wb, `C5_Analise_Tributacao_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                console.log("✅ Arquivo baixado com sucesso!");
+                alert(`✅ Planilha baixada com ${dadosAnaliseExcel.length} registros!`);
+            } catch (ex) {
+                alert("❌ Erro ao baixar arquivo: " + ex.message);
+                console.error(ex);
+            }
         }
 
         // ==========================================
@@ -2125,11 +2536,26 @@
                 regimesPresentes.forEach(regId => {
                     const opt = document.createElement('option');
                     opt.value = regId;
-                    opt.innerText = MAPA_REGIMES[regId] !== undefined ? MAPA_REGIMES[regId] : `${regId} - Regime ${regId}`;
+                    opt.innerText = regId;
                     selectRegime.appendChild(opt);
                 });
                 if (regimesPresentes.length > 0) {
                     selectRegime.value = regimesPresentes[0];
+                }
+
+                // ✅ Filtro de UF Empresa: identifica os valores distintos de "ufEmpresa" retornados pela API
+                const ufsEmpresaPresentes = [...new Set(regrasGlobais.map(r => r.ufEmpresa || 'N/A'))].sort();
+
+                const selectUfEmpresa = document.getElementById('selectUfEmpresa');
+                selectUfEmpresa.innerHTML = '';
+                ufsEmpresaPresentes.forEach(uf => {
+                    const opt = document.createElement('option');
+                    opt.value = uf;
+                    opt.innerText = uf;
+                    selectUfEmpresa.appendChild(opt);
+                });
+                if (ufsEmpresaPresentes.length > 0) {
+                    selectUfEmpresa.value = ufsEmpresaPresentes[0];
                 }
 
                 const tiposPresentes = [...new Set(regrasGlobais.map(r => r.tipo))];
@@ -2187,11 +2613,13 @@
 
         function renderizarTabelaC5() {
             const regimeSelecionado = document.getElementById('selectRegime').value;
+            const ufEmpresaSelecionada = document.getElementById('selectUfEmpresa').value;
 
             regrasExibidasAtualmente = regrasGlobais.filter(r => {
                 const regItem = (r.idRegTributacao !== undefined && r.idRegTributacao !== null) ? String(r.idRegTributacao) : "0";
                 const tipoItem = r.tipo || "GERAL";
-                return tipoItem === tipoAtivoAtual && regItem === String(regimeSelecionado);
+                const ufEmpresaItem = r.ufEmpresa || 'N/A';
+                return tipoItem === tipoAtivoAtual && regItem === String(regimeSelecionado) && ufEmpresaItem === ufEmpresaSelecionada;
             });
             
             document.getElementById('totalLinhasC5').innerText = `Registros na aba [${tipoAtivoAtual}] (Regime ${regimeSelecionado}): ${regrasExibidasAtualmente.length} (Total geral: ${regrasGlobais.length})`;
