@@ -73,6 +73,58 @@
         .tab-btn.inactive:hover {
             color: #f8fafc;
         }
+
+        /* Sidebar de navegação lateral (Ferramentas/Minha Conta/Administração) */
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #cbd5e1;
+            cursor: pointer;
+            transition: all 0.15s;
+            width: 100%;
+            text-align: left;
+        }
+        .sidebar-link:hover {
+            background: #1e293b;
+            color: #f8fafc;
+        }
+        .sidebar-link.active {
+            background: #ffc107;
+            color: #13161f;
+        }
+        .sidebar-group-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            padding: 0.5rem 0.75rem 0.25rem;
+        }
+        .sidebar-sublink {
+            display: block;
+            padding: 0.5rem 0.75rem 0.5rem 1.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.15s;
+            width: 100%;
+            text-align: left;
+        }
+        .sidebar-sublink:hover {
+            background: #1e293b;
+            color: #f8fafc;
+        }
+        .sidebar-sublink.active {
+            background: #334155;
+            color: #fbbf24;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
@@ -114,8 +166,47 @@
         </div>
     </div>
 
+    <!-- LAYOUT LOGADO: sidebar à esquerda + página ativa à direita (flex real, sem position:fixed) -->
+    <div id="appLayout" class="hidden w-full max-w-[1500px] mx-auto flex flex-col lg:flex-row gap-4 items-start">
+
+        <!-- SIDEBAR DE NAVEGAÇÃO (Ferramentas / Minha Conta / Administração) -->
+        <nav id="sidebarNav" class="w-full lg:w-64 shrink-0 flex flex-col imendes-card p-3 gap-1">
+            <button onclick="alternarSidebar()" id="btnToggleSidebar" title="Minimizar menu" class="self-end text-slate-400 hover:text-amber-400 text-sm font-bold px-2 py-1 rounded cursor-pointer">«</button>
+
+            <div id="sidebarConteudo" class="flex flex-col gap-1">
+                <button id="navHome" onclick="mostrarView('home')" class="sidebar-link active">
+                    Início
+                </button>
+
+                <div class="sidebar-group-label mt-2">Ferramentas</div>
+                <button onclick="abrirFerramentaViaSidebar('ipi')" class="sidebar-sublink">Atualização IPI</button>
+                <button onclick="abrirFerramentaViaSidebar('analise')" class="sidebar-sublink">Análise de Tributação por Produto</button>
+                <button onclick="abrirFerramentaViaSidebar('rtc')" class="sidebar-sublink">Implantador de Condições - RTC</button>
+                <button onclick="abrirFerramentaViaSidebar('clientes')" class="sidebar-sublink">Adequação Tributária</button>
+
+                <button id="navMinhaConta" onclick="abrirModalMeuPerfil()" class="sidebar-link mt-2">
+                    Minha Conta
+                </button>
+
+                <div id="grupoAdminSidebar" class="hidden">
+                    <div class="sidebar-group-label mt-2">Administração</div>
+                    <button onclick="abrirAdminViaSidebar('usuarios')" class="sidebar-sublink">Usuários</button>
+                    <button onclick="abrirAdminViaSidebar('clientes')" class="sidebar-sublink">Clientes</button>
+                    <button onclick="abrirAdminViaSidebar('sessoes')" class="sidebar-sublink">Usuários Logados</button>
+                    <button onclick="abrirAdminViaSidebar('logs')" class="sidebar-sublink">Histórico de Logs</button>
+                </div>
+
+                <button onclick="fazerLogout()" class="sidebar-link mt-2" style="color: #fca5a5;">
+                    Sair
+                </button>
+            </div>
+        </nav>
+
+        <!-- ÁREA DE CONTEÚDO: apenas 1 destas fica visível por vez (controlado por mostrarView) -->
+        <div id="viewContainer" class="flex-1 min-w-0 w-full flex flex-col gap-4">
+
     <!-- PAINEL PRINCIPAL -->
-    <div id="painelPrincipal" class="hidden w-full max-w-7xl mx-auto imendes-card p-6 md:p-8">
+    <div id="painelPrincipal" class="hidden w-full mx-auto imendes-card p-6 md:p-8">
         
         <!-- Cabeçalho -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 border-b border-slate-800 pb-4">
@@ -137,14 +228,6 @@
                     <span class="text-slate-600">•</span>
                     <span id="versaoBackHeader" class="text-cyan-400">BACK: Carregando...</span>
                 </div>
-                
-                <button onclick="abrirModalFerramentas()" class="bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5">
-                    <span>🔧</span> Ferramentas
-                </button>
-
-                <button onclick="fazerLogout()" class="bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer">
-                    Sair
-                </button>
             </div>
         </div>
         
@@ -596,32 +679,16 @@
     </div>
 
     <!-- MODAL DE FERRAMENTAS MULTIPLAS -->
-    <div id="modalFerramentas" class="fixed inset-0 bg-slate-950 bg-opacity-85 hidden z-50 flex items-center justify-center p-2 backdrop-blur-xs">
-        <div class="bg-slate-900 rounded-xl shadow-2xl w-full max-w-[99vw] max-h-[96vh] flex flex-col border border-slate-700 overflow-hidden text-slate-200">
+    <div id="modalFerramentas" class="hidden w-full max-w-7xl mx-auto">
+        <div class="bg-slate-900 rounded-xl shadow-2xl w-full flex flex-col border border-slate-700 overflow-hidden text-slate-200">
             
             <div class="bg-slate-950 p-4 border-b border-slate-800 flex items-center justify-between">
                 <h3 class="font-bold text-lg text-white flex items-center gap-2">
-                    <span>🔧</span> Central de Ferramentas em Lote
+                    Central de Ferramentas em Lote
                 </h3>
-                <button onclick="fecharModalFerramentas()" class="text-slate-400 hover:text-red-400 text-3xl font-bold leading-none px-2 cursor-pointer transition-colors">&times;</button>
+                <button onclick="fecharModalFerramentas()" class="text-slate-400 hover:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 hover:border-amber-400 cursor-pointer transition-colors">← Voltar ao Início</button>
             </div>
 
-            <!-- MENU DAS ABAS -->
-            <div class="flex gap-2 border-b border-slate-800 px-6 pt-4 bg-slate-950 shrink-0 overflow-x-auto">
-                <button id="tabIpi" onclick="alternarAbaFerramenta('ipi')" class="tab-btn active">
-                    1. Atualização IPI
-                </button>
-                <button id="tabAnalise" onclick="alternarAbaFerramenta('analise')" class="tab-btn inactive">
-                    2. Análise de Tributação por Produto
-                </button>
-                <button id="tabRtc" onclick="alternarAbaFerramenta('rtc')" class="tab-btn inactive">
-                    3. Implantador de Condições - RTC
-                </button>
-                <button id="tabClientes" onclick="alternarAbaFerramenta('clientes')" class="tab-btn inactive">
-                    4. Adequação Tributária
-                </button>
-            </div>
-            
             <!-- ABA 1: ATUALIZAÇÃO DE IPI -->
             <div id="ferramentaIpi" class="p-6 flex-1 overflow-auto flex flex-col gap-6 min-h-0">
                 <div class="bg-indigo-950/30 border border-indigo-900/50 p-4 rounded-lg">
@@ -813,11 +880,262 @@
         </div>
     </div>
 
+    <!-- MODAL DE ADMINISTRAÇÃO (USUÁRIOS E CLIENTES) - Somente perfil "admin" -->
+    <div id="modalAdmin" class="hidden w-full max-w-7xl mx-auto">
+        <div class="bg-slate-900 rounded-xl shadow-2xl w-full flex flex-col border border-slate-700 overflow-hidden text-slate-200">
+
+            <div class="bg-slate-950 p-4 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                    Administração - Usuários, Clientes e Logs
+                </h3>
+                <button onclick="fecharModalAdmin()" class="text-slate-400 hover:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 hover:border-amber-400 cursor-pointer transition-colors">← Voltar ao Início</button>
+            </div>
+
+            <!-- ABA USUÁRIOS -->
+            <div id="adminUsuarios" class="p-6 flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-bold text-white">Usuários com acesso ao Inspector</h4>
+                    <button onclick="abrirFormUsuario(null)" class="imendes-btn px-4 py-2 rounded-lg text-xs cursor-pointer">+ Novo Usuário</button>
+                </div>
+                <div class="overflow-x-auto border border-slate-800 rounded bg-slate-950">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-slate-900 text-slate-300 uppercase font-bold text-xs">
+                            <tr>
+                                <th class="p-3 border-r border-b border-slate-800">E-mail</th>
+                                <th class="p-3 border-r border-b border-slate-800">Perfil</th>
+                                <th class="p-3 border-r border-b border-slate-800">Status</th>
+                                <th class="p-3 border-r border-b border-slate-800">Token Session</th>
+                                <th class="p-3 border-b border-slate-800 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyUsuariosAdmin" class="divide-y divide-slate-800 text-slate-300">
+                            <tr><td colspan="5" class="p-4 text-center text-slate-500">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- FORM USUÁRIO (inline) -->
+                <div id="formUsuarioAdmin" class="hidden border-t border-slate-800 pt-4 flex flex-col gap-4">
+                    <h4 id="tituloFormUsuario" class="text-sm font-bold text-white">Novo Usuário</h4>
+                    <input type="hidden" id="emailOriginalUsuario">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">E-mail</label>
+                            <input type="email" id="inputEmailUsuario" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Senha</label>
+                            <input type="password" id="inputSenhaUsuario" placeholder="Deixe em branco para não alterar" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Perfil</label>
+                            <select id="inputPerfilUsuario" class="w-full p-2.5 border rounded-lg text-sm imendes-input cursor-pointer">
+                                <option value="user">Usuário</option>
+                                <option value="suporte">Suporte</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Status</label>
+                            <select id="inputStatusUsuario" class="w-full p-2.5 border rounded-lg text-sm imendes-input cursor-pointer">
+                                <option value="ativo">Ativo</option>
+                                <option value="inativo">Inativo</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Token Session</label>
+                            <input type="text" id="inputTokenSessaoUsuario" placeholder="Token de sessão TOTVS (opcional)" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="fecharFormUsuario()" class="w-full bg-slate-700 hover:bg-slate-600 text-white py-2.5 rounded-lg cursor-pointer font-bold text-sm">Cancelar</button>
+                        <button onclick="salvarUsuarioAdmin()" class="w-full imendes-btn py-2.5 rounded-lg cursor-pointer font-bold text-sm">Salvar Usuário</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA CLIENTES -->
+            <div id="adminClientes" class="p-6 flex flex-col gap-4 hidden">
+                <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-sm font-bold text-white">Clientes cadastrados</h4>
+                    <button onclick="abrirFormCliente(null)" class="imendes-btn px-4 py-2 rounded-lg text-xs cursor-pointer">+ Novo Cliente</button>
+                </div>
+                <div class="overflow-x-auto border border-slate-800 rounded bg-slate-950">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-slate-900 text-slate-300 uppercase font-bold text-xs">
+                            <tr>
+                                <th class="p-3 border-r border-b border-slate-800">ID</th>
+                                <th class="p-3 border-r border-b border-slate-800">Nome</th>
+                                <th class="p-3 border-r border-b border-slate-800">URL Base</th>
+                                <th class="p-3 border-r border-b border-slate-800 text-center">Modo VPN</th>
+                                <th class="p-3 border-b border-slate-800 text-center">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyClientesAdmin" class="divide-y divide-slate-800 text-slate-300">
+                            <tr><td colspan="5" class="p-4 text-center text-slate-500">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- FORM CLIENTE (inline) -->
+                <div id="formClienteAdmin" class="hidden border-t border-slate-800 pt-4 flex flex-col gap-4">
+                    <h4 id="tituloFormCliente" class="text-sm font-bold text-white">Novo Cliente</h4>
+                    <input type="hidden" id="idOriginalCliente">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">ID do Cliente</label>
+                            <input type="text" id="inputIdCliente" class="w-full p-2.5 border rounded-lg text-sm imendes-input disabled:opacity-60 disabled:cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Nome</label>
+                            <input type="text" id="inputNomeCliente" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
+                        </div>
+                        <div class="flex items-center gap-2 mt-6">
+                            <input type="checkbox" id="inputModoVpnCliente" class="w-4 h-4 cursor-pointer">
+                            <label for="inputModoVpnCliente" class="text-xs font-bold text-slate-400 uppercase cursor-pointer">Modo VPN (acesso direto/local)</label>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">URL Base (TOTVS)</label>
+                            <input type="text" id="inputUrlBaseCliente" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Company</label>
+                            <input type="text" id="inputCompanyCliente" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Username</label>
+                            <input type="text" id="inputUsernameCliente" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Password</label>
+                            <input type="password" id="inputPasswordCliente" placeholder="Deixe em branco para não alterar" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="fecharFormCliente()" class="w-full bg-slate-700 hover:bg-slate-600 text-white py-2.5 rounded-lg cursor-pointer font-bold text-sm">Cancelar</button>
+                        <button onclick="salvarClienteAdmin()" class="w-full imendes-btn py-2.5 rounded-lg cursor-pointer font-bold text-sm">Salvar Cliente</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA USUÁRIOS LOGADOS -->
+            <div id="adminSessoes" class="p-6 flex flex-col gap-4 hidden">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-bold text-white">Usuários logados agora</h4>
+                    <button onclick="carregarSessoesAtivas()" class="bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer">↻ Atualizar</button>
+                </div>
+                <div class="overflow-x-auto border border-slate-800 rounded bg-slate-950">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-slate-900 text-slate-300 uppercase font-bold text-xs">
+                            <tr>
+                                <th class="p-3 border-r border-b border-slate-800">E-mail</th>
+                                <th class="p-3 border-b border-slate-800">Último login</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodySessoesAtivas" class="divide-y divide-slate-800 text-slate-300">
+                            <tr><td colspan="2" class="p-4 text-center text-slate-500">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ABA HISTÓRICO DE LOGS -->
+            <div id="adminLogs" class="p-6 flex flex-col gap-4 hidden">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-sm font-bold text-white">Histórico de ações (últimas 24 horas)</h4>
+                    <div class="flex gap-2">
+                        <button onclick="exportarLogsTxt()" class="bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer">⬇ Exportar (.txt)</button>
+                        <button id="btnExportar30Dias" onclick="exportarLogs30DiasTxt()" class="bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border border-emerald-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer">⬇ Exportar 30 dias (.txt)</button>
+                        <button onclick="carregarLogsAdmin()" class="bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer">↻ Atualizar</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto border border-slate-800 rounded bg-slate-950">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-slate-900 text-slate-300 uppercase font-bold text-xs">
+                            <tr>
+                                <th class="p-3 border-r border-b border-slate-800">Data/Hora</th>
+                                <th class="p-3 border-r border-b border-slate-800">Usuário</th>
+                                <th class="p-3 border-r border-b border-slate-800">Ação</th>
+                                <th class="p-3 border-r border-b border-slate-800">Cliente</th>
+                                <th class="p-3 border-r border-b border-slate-800">Detalhes</th>
+                                <th class="p-3 border-b border-slate-800 text-center">Resultado</th>
+                            </tr>
+                            <tr class="normal-case font-normal">
+                                <th class="p-1.5 border-r border-b border-slate-800"><input type="text" id="filtroLogData" oninput="aplicarFiltrosLogs()" placeholder="Filtrar..." class="w-full p-1.5 border rounded text-xs imendes-input"></th>
+                                <th class="p-1.5 border-r border-b border-slate-800"><input type="text" id="filtroLogUsuario" oninput="aplicarFiltrosLogs()" placeholder="Filtrar..." class="w-full p-1.5 border rounded text-xs imendes-input"></th>
+                                <th class="p-1.5 border-r border-b border-slate-800"><input type="text" id="filtroLogAcao" oninput="aplicarFiltrosLogs()" placeholder="Filtrar..." class="w-full p-1.5 border rounded text-xs imendes-input"></th>
+                                <th class="p-1.5 border-r border-b border-slate-800"><input type="text" id="filtroLogCliente" oninput="aplicarFiltrosLogs()" placeholder="Filtrar..." class="w-full p-1.5 border rounded text-xs imendes-input"></th>
+                                <th class="p-1.5 border-r border-b border-slate-800"><input type="text" id="filtroLogDetalhes" oninput="aplicarFiltrosLogs()" placeholder="Filtrar..." class="w-full p-1.5 border rounded text-xs imendes-input"></th>
+                                <th class="p-1.5 border-b border-slate-800">
+                                    <select id="filtroLogResultado" onchange="aplicarFiltrosLogs()" class="w-full p-1.5 border rounded text-xs imendes-input cursor-pointer">
+                                        <option value="">Todos</option>
+                                        <option value="sucesso">Sucesso</option>
+                                        <option value="erro">Erro</option>
+                                    </select>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyLogsAdmin" class="divide-y divide-slate-800 text-slate-300">
+                            <tr><td colspan="6" class="p-4 text-center text-slate-500">Carregando...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex items-center justify-between text-xs text-slate-400">
+                    <span id="paginacaoLogsInfo">-</span>
+                    <div class="flex gap-2">
+                        <button id="btnLogsAnterior" onclick="mudarPaginaLogs(-1)" class="bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer">← Anterior</button>
+                        <button id="btnLogsProxima" onclick="mudarPaginaLogs(1)" class="bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-300 border border-slate-700 px-3 py-1.5 rounded-lg text-xs font-bold cursor-pointer">Próxima →</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL MINHA CONTA (trocar a própria senha / token session) - Qualquer usuário logado -->
+    <div id="modalMeuPerfil" class="hidden w-full max-w-md mx-auto">
+        <div class="bg-slate-900 rounded-xl shadow-2xl w-full flex flex-col border border-slate-700 overflow-hidden text-slate-200">
+            <div class="bg-slate-950 p-4 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                    Minha Conta
+                </h3>
+                <button onclick="fecharModalMeuPerfil()" class="text-slate-400 hover:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 hover:border-amber-400 cursor-pointer transition-colors">← Voltar</button>
+            </div>
+            <div class="p-6 flex flex-col gap-4">
+                <p class="text-xs text-slate-400">Confirme sua senha atual para alterar a senha e/ou o token session. Deixe os demais campos em branco para não alterá-los.</p>
+                <div id="msgErroMeuPerfil" class="hidden bg-red-950/50 border border-red-800 text-red-300 text-xs rounded p-2.5"></div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Senha Atual</label>
+                    <input type="password" id="inputSenhaAtualMeuPerfil" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Nova Senha</label>
+                    <input type="password" id="inputNovaSenhaMeuPerfil" placeholder="Deixe em branco para não alterar" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Confirmar Nova Senha</label>
+                    <input type="password" id="inputConfirmarSenhaMeuPerfil" placeholder="Repita a nova senha" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Token Session</label>
+                    <input type="text" id="inputTokenSessaoMeuPerfil" placeholder="Deixe em branco para não alterar" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
+                </div>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <button onclick="fecharModalMeuPerfil()" class="w-full bg-slate-700 hover:bg-slate-600 text-white py-2.5 rounded-lg cursor-pointer font-bold text-sm">Cancelar</button>
+                    <button onclick="salvarMeuPerfil()" class="w-full imendes-btn py-2.5 rounded-lg cursor-pointer font-bold text-sm">Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        </div> <!-- fecha viewContainer -->
+    </div> <!-- fecha appLayout -->
+
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzupnlY0SE9jH2ujThu7mEzDbQZqWjUwhn3Udl557A7w2wys7yhcBYPCwfKuIR9NQJT/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwUtzhOaqcE2LQ3otu217H8kOgfq_wwx-PfyEsbJLOnhth21ae6xygT5swHAV8dyhaBWw/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.8.0"; 
+        const VERSAO_FRONT = "v5.26.0"; 
 
         let idTributacaoAtual = null;
         let clienteAtualId = null;
@@ -860,13 +1178,103 @@
         window.onload = function() {
             carregarVersoes();
             const usuarioSalvo = localStorage.getItem('imendes_usuario');
+            const perfilSalvo = localStorage.getItem('imendes_perfil');
+            const tokenSalvo = localStorage.getItem('imendes_token');
+            // Sessão salva antes do authToken existir (ou sem perfil) -> força novo login para migrar
+            if (usuarioSalvo && (perfilSalvo === null || !tokenSalvo)) {
+                fazerLogout();
+                return;
+            }
             if (usuarioSalvo) {
                 document.getElementById('telaLogin').classList.add('hidden');
-                document.getElementById('painelPrincipal').classList.remove('hidden');
+                document.getElementById('appLayout').classList.remove('hidden');
                 document.getElementById('labelUsuarioLogado').innerText = usuarioSalvo;
+                atualizarVisibilidadeAdmin();
+                mostrarView('home');
                 carregarClientes();
             }
         };
+
+        // Controla qual "página" fica visível: home (painel principal), ferramentas, admin ou minhaconta.
+        // Sempre chamada em vez de esconder/mostrar os elementos direto, pra manter a sidebar sincronizada.
+        function mostrarView(nome) {
+            document.getElementById('painelPrincipal').classList.add('hidden');
+            document.getElementById('modalFerramentas').classList.add('hidden');
+            document.getElementById('modalAdmin').classList.add('hidden');
+            document.getElementById('modalMeuPerfil').classList.add('hidden');
+
+            const idPorView = { home: 'painelPrincipal', ferramentas: 'modalFerramentas', admin: 'modalAdmin', minhaconta: 'modalMeuPerfil' };
+            const idAlvo = idPorView[nome] || 'painelPrincipal';
+            document.getElementById(idAlvo).classList.remove('hidden');
+
+            document.querySelectorAll('#sidebarNav .sidebar-link, #sidebarNav .sidebar-sublink').forEach(el => el.classList.remove('active'));
+            if (nome === 'home' && document.getElementById('navHome')) document.getElementById('navHome').classList.add('active');
+            if (nome === 'minhaconta' && document.getElementById('navMinhaConta')) document.getElementById('navMinhaConta').classList.add('active');
+        }
+
+        // Minimiza a sidebar (vira uma faixa estreita só com o botão de expandir),
+        // liberando a largura pro conteúdo. Estado não persiste entre recarregamentos.
+        let sidebarColapsada = false;
+        function alternarSidebar() {
+            sidebarColapsada = !sidebarColapsada;
+            const nav = document.getElementById('sidebarNav');
+            const conteudo = document.getElementById('sidebarConteudo');
+            const btn = document.getElementById('btnToggleSidebar');
+            if (sidebarColapsada) {
+                nav.classList.remove('lg:w-64');
+                nav.classList.add('lg:w-10');
+                conteudo.classList.add('hidden');
+                btn.innerText = '»';
+                btn.title = 'Expandir menu';
+            } else {
+                nav.classList.remove('lg:w-10');
+                nav.classList.add('lg:w-64');
+                conteudo.classList.remove('hidden');
+                btn.innerText = '«';
+                btn.title = 'Minimizar menu';
+            }
+        }
+
+        function abrirFerramentaViaSidebar(aba) {
+            abrirModalFerramentas();
+            if (!document.getElementById('modalFerramentas').classList.contains('hidden')) alternarAbaFerramenta(aba);
+        }
+
+        function abrirAdminViaSidebar(aba) {
+            abrirModalAdmin();
+            alternarAbaAdmin(aba);
+        }
+
+        function atualizarVisibilidadeAdmin() {
+            const perfil = (localStorage.getItem('imendes_perfil') || '').toLowerCase();
+            document.getElementById('grupoAdminSidebar').classList.toggle('hidden', perfil !== 'admin');
+            aplicarRestricoesPerfil();
+        }
+
+        // Perfil "suporte" tem acesso apenas de visualização: desabilita todos os botões que alteram dados
+        function aplicarRestricoesPerfil() {
+            const somenteLeitura = perfilEhSomenteLeitura();
+            const idsAcoesEscrita = [
+                'btnEditarIpi', 'btnSalvarIpi', 'btnEditarTributacao', 'btnSalvarTributacao',
+                'btnEditarCbs', 'btnExcluirCbs', 'btnSalvarCbs',
+                'btnEditarIbs', 'btnExcluirIbs', 'btnSalvarIbs',
+                'btnProcessarLote', 'btnImplantarRtc'
+            ];
+            idsAcoesEscrita.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.disabled = somenteLeitura;
+                el.classList.toggle('opacity-40', somenteLeitura);
+                el.classList.toggle('pointer-events-none', somenteLeitura);
+                el.title = somenteLeitura ? 'Seu perfil (suporte) tem acesso apenas de visualização.' : '';
+            });
+        }
+
+        function escapeHtml(valor) {
+            return String(valor === undefined || valor === null ? '' : valor)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
 
         // ==========================================
         // NOVO NÚCLEO HÍBRIDO (ROTEADOR DE REQUESTS)
@@ -1065,7 +1473,23 @@
             return { sucesso: true, mensagem: "Cenário alterado com sucesso" };
         }
 
+        // Ações que alteram dados no ERP/planilha - proibidas para o perfil "suporte" (somente leitura)
+        const ACOES_SOMENTE_ESCRITA = new Set([
+            'atualizar_ipi', 'atualizar_tributacao', 'incluir_condicao_cenario',
+            'alterar_condicao_cenario', 'excluir_condicao_cenario', 'vincular_cenarios_lote'
+        ]);
+
+        function perfilEhSomenteLeitura() {
+            return (localStorage.getItem('imendes_perfil') || '').toLowerCase() === 'suporte';
+        }
+
         async function fetchHibrido(action, clienteId, parametrosAdicionais = {}, method = 'GET') {
+            if (ACOES_SOMENTE_ESCRITA.has(action) && perfilEhSomenteLeitura()) {
+                return { erro: "Acesso negado: seu perfil (suporte) tem permissão apenas de visualização.", statusCode: 403 };
+            }
+            // Backend valida novamente o perfil antes de qualquer escrita na nuvem (nunca confiar só no front-end)
+            parametrosAdicionais = { ...parametrosAdicionais, authToken: localStorage.getItem('imendes_token') || '' };
+
             const cliente = bdClientes[clienteId];
             if (!cliente) throw new Error("Cliente não encontrado na base.");
 
@@ -1337,9 +1761,13 @@
 
                 if (data.sucesso) {
                     localStorage.setItem('imendes_usuario', data.email);
+                    localStorage.setItem('imendes_perfil', data.perfil || 'user');
+                    localStorage.setItem('imendes_token', data.authToken || '');
                     document.getElementById('telaLogin').classList.add('hidden');
-                    document.getElementById('painelPrincipal').classList.remove('hidden');
+                    document.getElementById('appLayout').classList.remove('hidden');
                     document.getElementById('labelUsuarioLogado').innerText = data.email;
+                    atualizarVisibilidadeAdmin();
+                    mostrarView('home');
                     carregarClientes();
                 }
             } catch (error) {
@@ -1353,8 +1781,19 @@
         }
 
         function fazerLogout() {
+            const authTokenAtual = localStorage.getItem('imendes_token');
+            if (authTokenAtual) {
+                // Best-effort: avisa o backend pra remover a sessão da lista de "logados agora"
+                fetch(`${WEB_APP_URL}?action=logout&authToken=${encodeURIComponent(authTokenAtual)}`).catch(() => {});
+            }
             localStorage.removeItem('imendes_usuario');
+            localStorage.removeItem('imendes_perfil');
+            localStorage.removeItem('imendes_token');
             document.getElementById('painelPrincipal').classList.add('hidden');
+            document.getElementById('modalFerramentas').classList.add('hidden');
+            document.getElementById('modalAdmin').classList.add('hidden');
+            document.getElementById('modalMeuPerfil').classList.add('hidden');
+            document.getElementById('appLayout').classList.add('hidden');
             document.getElementById('telaLogin').classList.remove('hidden');
             document.getElementById('loginEmail').value = '';
             document.getElementById('loginSenha').value = '';
@@ -1793,7 +2232,8 @@
             if (!skuProdutoAtual) return alert("Nenhum produto selecionado.");
 
             const emailUsuario = localStorage.getItem('imendes_usuario');
-            if (!emailUsuario) return alert("Usuário não identificado. Por favor, faça login novamente.");
+            const authToken = localStorage.getItem('imendes_token');
+            if (!emailUsuario || !authToken) return alert("Usuário não identificado. Por favor, faça login novamente.");
 
             const aviso = "Aviso: verifique se você está logado no portal IMendes na tela do cliente TOTVS.\n\nDeseja adequar CGO?";
             const adequarCgo = confirm(aviso);
@@ -1806,7 +2246,7 @@
             txtBtn.innerText = "Enviando...";
             spinner.classList.remove('hidden');
 
-            const url = `${WEB_APP_URL}?action=saneamento_tributario&email=${encodeURIComponent(emailUsuario)}&sku=${encodeURIComponent(skuProdutoAtual)}&adequarCgo=${adequarCgo}`;
+            const url = `${WEB_APP_URL}?action=saneamento_tributario&authToken=${encodeURIComponent(authToken)}&sku=${encodeURIComponent(skuProdutoAtual)}&adequarCgo=${adequarCgo}`;
 
             try {
                 const response = await fetch(url);
@@ -1946,44 +2386,514 @@
         // GERENCIAMENTO DE ABAS - FERRAMENTAS
         // ==========================================
         function abrirModalFerramentas() {
+            if (perfilEhSomenteLeitura()) {
+                alert("Não é possível acessar a Central de Ferramentas: seu perfil é Suporte (somente leitura).");
+                return;
+            }
             const clienteMain = document.getElementById('selectCliente').value;
             if (clienteMain) {
                 document.getElementById('selectClienteIpi').value = clienteMain;
                 document.getElementById('selectClienteAnalise').value = clienteMain;
                 document.getElementById('selectClienteRtc').value = clienteMain;
             }
-            document.getElementById('modalFerramentas').classList.remove('hidden');
+            mostrarView('ferramentas');
         }
 
         function fecharModalFerramentas() {
-            document.getElementById('modalFerramentas').classList.add('hidden');
+            mostrarView('home');
         }
 
         function alternarAbaFerramenta(aba) {
-            ['tabIpi', 'tabAnalise', 'tabRtc', 'tabClientes'].forEach(t => {
-                document.getElementById(t).classList.remove('active', 'border-amber-400', 'text-amber-400');
-                document.getElementById(t).classList.add('inactive', 'border-transparent');
-            });
             ['ferramentaIpi', 'ferramentaAnalise', 'ferramentaRtc', 'ferramentaClientes'].forEach(f => {
                 document.getElementById(f).classList.add('hidden');
             });
 
             if (aba === 'ipi') {
-                document.getElementById('tabIpi').classList.remove('inactive', 'border-transparent');
-                document.getElementById('tabIpi').classList.add('active', 'border-amber-400', 'text-amber-400');
                 document.getElementById('ferramentaIpi').classList.remove('hidden');
             } else if (aba === 'analise') {
-                document.getElementById('tabAnalise').classList.remove('inactive', 'border-transparent');
-                document.getElementById('tabAnalise').classList.add('active', 'border-amber-400', 'text-amber-400');
                 document.getElementById('ferramentaAnalise').classList.remove('hidden');
             } else if (aba === 'rtc') {
-                document.getElementById('tabRtc').classList.remove('inactive', 'border-transparent');
-                document.getElementById('tabRtc').classList.add('active', 'border-amber-400', 'text-amber-400');
                 document.getElementById('ferramentaRtc').classList.remove('hidden');
             } else if (aba === 'clientes') {
-                document.getElementById('tabClientes').classList.remove('inactive', 'border-transparent');
-                document.getElementById('tabClientes').classList.add('active', 'border-amber-400', 'text-amber-400');
                 document.getElementById('ferramentaClientes').classList.remove('hidden');
+            }
+        }
+
+        // ==========================================
+        // ADMINISTRAÇÃO - USUÁRIOS E CLIENTES (perfil "admin")
+        // ==========================================
+        let usuariosAdminCache = [];
+        let clientesAdminCache = [];
+
+        async function chamarBackendAdmin(action, params = {}) {
+            const authToken = localStorage.getItem('imendes_token') || "";
+            let url = `${WEB_APP_URL}?action=${action}&authToken=${encodeURIComponent(authToken)}`;
+            for (const chave in params) {
+                url += `&${chave}=${encodeURIComponent(params[chave] ?? "")}`;
+            }
+            const response = await fetch(url);
+            const textoResposta = await response.text();
+            try {
+                return JSON.parse(textoResposta);
+            } catch (erroParse) {
+                // Apps Script às vezes devolve uma página HTML (erro/redirecionamento) em vez de JSON
+                console.error(`[ADMIN] Resposta não-JSON de "${action}":`, textoResposta.substring(0, 500));
+                return { erro: `O servidor não retornou uma resposta válida (possível instabilidade do Google Apps Script). Tente novamente em instantes.` };
+            }
+        }
+
+        function abrirModalAdmin() {
+            mostrarView('admin');
+            alternarAbaAdmin('usuarios');
+            carregarUsuariosAdmin();
+            carregarClientesAdmin();
+        }
+
+        function fecharModalAdmin() {
+            mostrarView('home');
+            fecharFormUsuario();
+            fecharFormCliente();
+        }
+
+        function alternarAbaAdmin(aba) {
+            document.getElementById('adminUsuarios').classList.add('hidden');
+            document.getElementById('adminClientes').classList.add('hidden');
+            document.getElementById('adminSessoes').classList.add('hidden');
+            document.getElementById('adminLogs').classList.add('hidden');
+
+            if (aba === 'usuarios') {
+                document.getElementById('adminUsuarios').classList.remove('hidden');
+            } else if (aba === 'clientes') {
+                document.getElementById('adminClientes').classList.remove('hidden');
+            } else if (aba === 'sessoes') {
+                document.getElementById('adminSessoes').classList.remove('hidden');
+                carregarSessoesAtivas();
+            } else if (aba === 'logs') {
+                document.getElementById('adminLogs').classList.remove('hidden');
+                carregarLogsAdmin();
+            }
+        }
+
+        // ---- USUÁRIOS ----
+        async function carregarUsuariosAdmin() {
+            const tbody = document.getElementById('tbodyUsuariosAdmin');
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">Carregando...</td></tr>`;
+            try {
+                const data = await chamarBackendAdmin('listar_usuarios');
+                if (data.erro) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-400">${escapeHtml(data.erro)}</td></tr>`;
+                    return;
+                }
+                usuariosAdminCache = data.usuarios || [];
+                if (usuariosAdminCache.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">Nenhum usuário cadastrado.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = usuariosAdminCache.map(u => `
+                    <tr>
+                        <td class="p-3 border-r border-slate-800">${escapeHtml(u.email)}</td>
+                        <td class="p-3 border-r border-slate-800">${escapeHtml(u.perfil)}</td>
+                        <td class="p-3 border-r border-slate-800">${escapeHtml(u.status)}</td>
+                        <td class="p-3 border-r border-slate-800 font-mono text-xs max-w-[220px] truncate" title="${escapeHtml(u.tokenSessao)}">${escapeHtml(u.tokenSessao) || '—'}</td>
+                        <td class="p-3 text-center flex gap-2 justify-center">
+                            <button onclick="abrirFormUsuario('${escapeHtml(u.email)}')" class="bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer">Editar</button>
+                            <button onclick="excluirUsuarioAdmin('${escapeHtml(u.email)}')" class="bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer">Excluir</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-400">Erro ao carregar usuários: ${escapeHtml(e.message)}</td></tr>`;
+            }
+        }
+
+        function abrirFormUsuario(email) {
+            const usuario = email ? usuariosAdminCache.find(u => u.email === email) : null;
+            document.getElementById('tituloFormUsuario').innerText = usuario ? `Editar Usuário: ${usuario.email}` : 'Novo Usuário';
+            document.getElementById('emailOriginalUsuario').value = usuario ? usuario.email : '';
+            document.getElementById('inputEmailUsuario').value = usuario ? usuario.email : '';
+            document.getElementById('inputSenhaUsuario').value = '';
+            document.getElementById('inputPerfilUsuario').value = usuario ? usuario.perfil : 'user';
+            document.getElementById('inputStatusUsuario').value = usuario ? usuario.status : 'ativo';
+            document.getElementById('inputTokenSessaoUsuario').value = usuario ? usuario.tokenSessao : '';
+            document.getElementById('formUsuarioAdmin').classList.remove('hidden');
+        }
+
+        function fecharFormUsuario() {
+            document.getElementById('formUsuarioAdmin').classList.add('hidden');
+        }
+
+        async function salvarUsuarioAdmin() {
+            const emailOriginal = document.getElementById('emailOriginalUsuario').value;
+            const email = document.getElementById('inputEmailUsuario').value.trim();
+            const senha = document.getElementById('inputSenhaUsuario').value;
+            const perfil = document.getElementById('inputPerfilUsuario').value;
+            const status = document.getElementById('inputStatusUsuario').value;
+            const tokenSessao = document.getElementById('inputTokenSessaoUsuario').value.trim();
+
+            if (!email) { alert('Informe o e-mail do usuário.'); return; }
+            if (!emailOriginal && !senha) { alert('Informe uma senha para o novo usuário.'); return; }
+
+            try {
+                const data = await chamarBackendAdmin('salvar_usuario', { emailOriginal, email, senha, perfil, status, tokenSessao });
+                if (data.erro) { alert('Erro: ' + data.erro); return; }
+                fecharFormUsuario();
+                carregarUsuariosAdmin();
+            } catch (e) {
+                alert('Erro de conexão ao salvar usuário: ' + e.message);
+            }
+        }
+
+        async function excluirUsuarioAdmin(email) {
+            if (!confirm(`Excluir o usuário "${email}"? Esta ação não pode ser desfeita.`)) return;
+            try {
+                const data = await chamarBackendAdmin('excluir_usuario', { emailAlvo: email });
+                if (data.erro) { alert('Erro: ' + data.erro); return; }
+                carregarUsuariosAdmin();
+            } catch (e) {
+                alert('Erro de conexão ao excluir usuário: ' + e.message);
+            }
+        }
+
+        // ---- CLIENTES ----
+        async function carregarClientesAdmin() {
+            const tbody = document.getElementById('tbodyClientesAdmin');
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">Carregando...</td></tr>`;
+            try {
+                const data = await chamarBackendAdmin('listar_clientes_admin');
+                if (data.erro) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-400">${escapeHtml(data.erro)}</td></tr>`;
+                    return;
+                }
+                clientesAdminCache = data.clientes || [];
+                if (clientesAdminCache.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">Nenhum cliente cadastrado.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = clientesAdminCache.map(c => `
+                    <tr>
+                        <td class="p-3 border-r border-slate-800">${escapeHtml(c.id)}</td>
+                        <td class="p-3 border-r border-slate-800">${escapeHtml(c.nome)}</td>
+                        <td class="p-3 border-r border-slate-800">${escapeHtml(c.urlBase)}</td>
+                        <td class="p-3 border-r border-slate-800 text-center">${c.modoVpn ? '✅' : '—'}</td>
+                        <td class="p-3 text-center flex gap-2 justify-center">
+                            <button onclick="abrirFormCliente('${escapeHtml(c.id)}')" class="bg-indigo-950/60 hover:bg-indigo-900 text-indigo-300 border border-indigo-800 px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer">Editar</button>
+                            <button onclick="excluirClienteAdmin('${escapeHtml(c.id)}')" class="bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-800 px-2.5 py-1 rounded text-[11px] font-bold cursor-pointer">Excluir</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-400">Erro ao carregar clientes: ${escapeHtml(e.message)}</td></tr>`;
+            }
+        }
+
+        async function abrirFormCliente(id) {
+            const cliente = id ? clientesAdminCache.find(c => c.id === id) : null;
+            document.getElementById('tituloFormCliente').innerText = cliente ? `Editar Cliente: ${cliente.nome || cliente.id}` : 'Novo Cliente';
+            document.getElementById('idOriginalCliente').value = cliente ? cliente.id : '';
+            document.getElementById('inputNomeCliente').value = cliente ? cliente.nome : '';
+            document.getElementById('inputUrlBaseCliente').value = cliente ? cliente.urlBase : '';
+            document.getElementById('inputCompanyCliente').value = cliente ? cliente.company : '';
+            document.getElementById('inputUsernameCliente').value = cliente ? cliente.username : '';
+            document.getElementById('inputPasswordCliente').value = '';
+            document.getElementById('inputModoVpnCliente').checked = cliente ? !!cliente.modoVpn : false;
+            document.getElementById('formClienteAdmin').classList.remove('hidden');
+
+            const inputId = document.getElementById('inputIdCliente');
+            if (cliente) {
+                // Edição: ID permanece editável (permite renomear um cliente existente)
+                inputId.disabled = false;
+                inputId.value = cliente.id;
+            } else {
+                // Novo cliente: ID é calculado pelo backend (último ID + 1) e travado pra edição manual,
+                // evitando digitar um ID já usado por engano
+                inputId.disabled = true;
+                inputId.value = 'Calculando...';
+                try {
+                    const data = await chamarBackendAdmin('proximo_id_cliente');
+                    inputId.value = data.erro ? '' : data.proximoId;
+                    if (data.erro) alert('Erro ao calcular o próximo ID: ' + data.erro);
+                } catch (e) {
+                    inputId.value = '';
+                    alert('Erro de conexão ao calcular o próximo ID: ' + e.message);
+                }
+            }
+        }
+
+        function fecharFormCliente() {
+            document.getElementById('formClienteAdmin').classList.add('hidden');
+        }
+
+        async function salvarClienteAdmin() {
+            const idOriginal = document.getElementById('idOriginalCliente').value;
+            const id = document.getElementById('inputIdCliente').value.trim();
+            const nome = document.getElementById('inputNomeCliente').value.trim();
+            const urlBase = document.getElementById('inputUrlBaseCliente').value.trim();
+            const company = document.getElementById('inputCompanyCliente').value.trim();
+            const username = document.getElementById('inputUsernameCliente').value.trim();
+            const password = document.getElementById('inputPasswordCliente').value;
+            const modoVpn = document.getElementById('inputModoVpnCliente').checked ? 'SIM' : 'NAO';
+
+            if (!id) { alert('Informe o ID do cliente.'); return; }
+
+            // Ao editar, mantém a senha atual se o campo for deixado em branco
+            const clienteExistente = idOriginal ? clientesAdminCache.find(c => c.id === idOriginal) : null;
+            const passwordFinal = password || (clienteExistente ? clienteExistente.password : '');
+
+            try {
+                const data = await chamarBackendAdmin('salvar_cliente', { idOriginal, id, nome, urlBase, company, username, password: passwordFinal, modoVpn });
+                if (data.erro) { alert('Erro: ' + data.erro); return; }
+                fecharFormCliente();
+                carregarClientesAdmin();
+                carregarClientes(); // Atualiza os selects de cliente do painel principal
+            } catch (e) {
+                alert('Erro de conexão ao salvar cliente: ' + e.message);
+            }
+        }
+
+        async function excluirClienteAdmin(id) {
+            if (!confirm(`Excluir o cliente "${id}"? Esta ação não pode ser desfeita.`)) return;
+            try {
+                const data = await chamarBackendAdmin('excluir_cliente', { id });
+                if (data.erro) { alert('Erro: ' + data.erro); return; }
+                carregarClientesAdmin();
+                carregarClientes();
+            } catch (e) {
+                alert('Erro de conexão ao excluir cliente: ' + e.message);
+            }
+        }
+
+        // ---- LOGS (usuários logados agora + histórico de ações) ----
+        function formatarDataHoraLog(isoString) {
+            if (!isoString) return '-';
+            try {
+                return new Date(isoString).toLocaleString('pt-BR');
+            } catch (e) {
+                return isoString;
+            }
+        }
+
+        async function carregarSessoesAtivas() {
+            const tbody = document.getElementById('tbodySessoesAtivas');
+            tbody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-slate-500">Carregando...</td></tr>`;
+            try {
+                const data = await chamarBackendAdmin('listar_sessoes_ativas');
+                if (data.erro) {
+                    tbody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-red-400">${escapeHtml(data.erro)}</td></tr>`;
+                    return;
+                }
+                const sessoes = data.sessoes || [];
+                if (sessoes.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-slate-500">Nenhum usuário logado no momento.</td></tr>`;
+                    return;
+                }
+                tbody.innerHTML = sessoes.map(s => `
+                    <tr>
+                        <td class="p-3 border-r border-slate-800">${escapeHtml(s.email)}</td>
+                        <td class="p-3">${formatarDataHoraLog(s.ultimoLogin)}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-red-400">Erro ao carregar sessões: ${escapeHtml(e.message)}</td></tr>`;
+            }
+        }
+
+        let logsAdminCache = [];
+        let logsFiltradosAtual = [];
+        let paginaAtualLogs = 1;
+        const LOGS_POR_PAGINA = 100;
+
+        async function carregarLogsAdmin() {
+            const tbody = document.getElementById('tbodyLogsAdmin');
+            tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Carregando...</td></tr>`;
+            try {
+                const data = await chamarBackendAdmin('listar_logs', { dias: 1 });
+                if (data.erro) {
+                    tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-400">${escapeHtml(data.erro)}</td></tr>`;
+                    return;
+                }
+                logsAdminCache = data.logs || [];
+                aplicarFiltrosLogs();
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-400">Erro ao carregar logs: ${escapeHtml(e.message)}</td></tr>`;
+            }
+        }
+
+        // Filtra o cache já carregado (client-side, sem nova chamada ao backend) e renderiza
+        function aplicarFiltrosLogs() {
+            const filtroData = document.getElementById('filtroLogData').value.trim().toLowerCase();
+            const filtroUsuario = document.getElementById('filtroLogUsuario').value.trim().toLowerCase();
+            const filtroAcao = document.getElementById('filtroLogAcao').value.trim().toLowerCase();
+            const filtroCliente = document.getElementById('filtroLogCliente').value.trim().toLowerCase();
+            const filtroDetalhes = document.getElementById('filtroLogDetalhes').value.trim().toLowerCase();
+            const filtroResultado = document.getElementById('filtroLogResultado').value;
+
+            logsFiltradosAtual = logsAdminCache.filter(l => {
+                if (filtroData && !formatarDataHoraLog(l.dataHora).toLowerCase().includes(filtroData)) return false;
+                if (filtroUsuario && !(l.email || '').toLowerCase().includes(filtroUsuario)) return false;
+                if (filtroAcao && !(l.acao || '').toLowerCase().includes(filtroAcao)) return false;
+                if (filtroCliente && !(l.cliente || '').toLowerCase().includes(filtroCliente)) return false;
+                if (filtroDetalhes && !(l.detalhes || '').toLowerCase().includes(filtroDetalhes)) return false;
+                if (filtroResultado && l.resultado !== filtroResultado) return false;
+                return true;
+            });
+
+            paginaAtualLogs = 1; // todo novo filtro volta pra primeira página
+            renderizarPaginaLogs();
+        }
+
+        function mudarPaginaLogs(delta) {
+            const totalPaginas = Math.max(1, Math.ceil(logsFiltradosAtual.length / LOGS_POR_PAGINA));
+            paginaAtualLogs = Math.min(Math.max(1, paginaAtualLogs + delta), totalPaginas);
+            renderizarPaginaLogs();
+        }
+
+        function renderizarPaginaLogs() {
+            const total = logsFiltradosAtual.length;
+            const totalPaginas = Math.max(1, Math.ceil(total / LOGS_POR_PAGINA));
+            paginaAtualLogs = Math.min(Math.max(1, paginaAtualLogs), totalPaginas);
+
+            const inicio = (paginaAtualLogs - 1) * LOGS_POR_PAGINA;
+            const pagina = logsFiltradosAtual.slice(inicio, inicio + LOGS_POR_PAGINA);
+            renderizarTabelaLogs(pagina);
+
+            const info = document.getElementById('paginacaoLogsInfo');
+            info.innerText = total === 0
+                ? 'Nenhum registro'
+                : `Página ${paginaAtualLogs} de ${totalPaginas} (${total} registro${total === 1 ? '' : 's'})`;
+            document.getElementById('btnLogsAnterior').disabled = paginaAtualLogs <= 1;
+            document.getElementById('btnLogsProxima').disabled = paginaAtualLogs >= totalPaginas;
+        }
+
+        function renderizarTabelaLogs(logs) {
+            const tbody = document.getElementById('tbodyLogsAdmin');
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Nenhum log encontrado para o filtro atual.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = logs.map(l => `
+                <tr>
+                    <td class="p-3 border-r border-slate-800 whitespace-nowrap">${formatarDataHoraLog(l.dataHora)}</td>
+                    <td class="p-3 border-r border-slate-800">${escapeHtml(l.email)}</td>
+                    <td class="p-3 border-r border-slate-800">${escapeHtml(l.acao)}</td>
+                    <td class="p-3 border-r border-slate-800">${escapeHtml(l.cliente)}</td>
+                    <td class="p-3 border-r border-slate-800 font-mono text-xs max-w-[420px] truncate" title="${escapeHtml(l.detalhes)}">${escapeHtml(l.detalhes)}</td>
+                    <td class="p-3 text-center ${l.resultado === 'erro' ? 'text-red-400' : 'text-emerald-400'}">${escapeHtml(l.resultado)}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Exporta exatamente o que está filtrado/visível na tela, não o cache inteiro
+        function exportarLogsTxt() {
+            const filtroData = document.getElementById('filtroLogData').value.trim().toLowerCase();
+            const filtroUsuario = document.getElementById('filtroLogUsuario').value.trim().toLowerCase();
+            const filtroAcao = document.getElementById('filtroLogAcao').value.trim().toLowerCase();
+            const filtroCliente = document.getElementById('filtroLogCliente').value.trim().toLowerCase();
+            const filtroDetalhes = document.getElementById('filtroLogDetalhes').value.trim().toLowerCase();
+            const filtroResultado = document.getElementById('filtroLogResultado').value;
+
+            const logsFiltrados = logsAdminCache.filter(l => {
+                if (filtroData && !formatarDataHoraLog(l.dataHora).toLowerCase().includes(filtroData)) return false;
+                if (filtroUsuario && !(l.email || '').toLowerCase().includes(filtroUsuario)) return false;
+                if (filtroAcao && !(l.acao || '').toLowerCase().includes(filtroAcao)) return false;
+                if (filtroCliente && !(l.cliente || '').toLowerCase().includes(filtroCliente)) return false;
+                if (filtroDetalhes && !(l.detalhes || '').toLowerCase().includes(filtroDetalhes)) return false;
+                if (filtroResultado && l.resultado !== filtroResultado) return false;
+                return true;
+            });
+
+            if (logsFiltrados.length === 0) { alert('Nenhum log para exportar com o filtro atual.'); return; }
+            baixarLogsComoTxt(logsFiltrados, 'inspector-logs');
+        }
+
+        // Busca direto na planilha (ignora o cache de 24h e qualquer filtro na tela) e baixa tudo
+        async function exportarLogs30DiasTxt() {
+            const btn = document.getElementById('btnExportar30Dias');
+            if (!confirm('Isso busca até 30 dias de logs direto da planilha e pode levar alguns segundos. Continuar?')) return;
+            btn.disabled = true;
+            btn.innerText = '⏳ Buscando...';
+            try {
+                const data = await chamarBackendAdmin('listar_logs', { dias: 30 });
+                if (data.erro) { alert('Erro ao buscar logs: ' + data.erro); return; }
+                const logs = data.logs || [];
+                if (logs.length === 0) { alert('Nenhum log encontrado nos últimos 30 dias.'); return; }
+                baixarLogsComoTxt(logs, 'inspector-logs-30dias');
+            } catch (e) {
+                alert('Erro de conexão ao exportar logs: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = '⬇ Exportar 30 dias (.txt)';
+            }
+        }
+
+        function baixarLogsComoTxt(logs, prefixoArquivo) {
+            const cabecalho = 'Data/Hora\tUsuário\tAção\tCliente\tDetalhes\tResultado';
+            const linhas = logs.map(l =>
+                [formatarDataHoraLog(l.dataHora), l.email, l.acao, l.cliente, l.detalhes, l.resultado].join('\t')
+            );
+            const conteudo = [cabecalho, ...linhas].join('\n');
+
+            const blob = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            a.href = url;
+            a.download = `${prefixoArquivo}-${timestamp}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // ==========================================
+        // MINHA CONTA - qualquer usuário logado pode trocar a própria senha/token session
+        // ==========================================
+        function abrirModalMeuPerfil() {
+            document.getElementById('inputSenhaAtualMeuPerfil').value = '';
+            document.getElementById('inputNovaSenhaMeuPerfil').value = '';
+            document.getElementById('inputConfirmarSenhaMeuPerfil').value = '';
+            document.getElementById('inputTokenSessaoMeuPerfil').value = '';
+            document.getElementById('msgErroMeuPerfil').classList.add('hidden');
+            mostrarView('minhaconta');
+        }
+
+        function fecharModalMeuPerfil() {
+            mostrarView('home');
+        }
+
+        async function salvarMeuPerfil() {
+            const email = localStorage.getItem('imendes_usuario') || '';
+            const senhaAtual = document.getElementById('inputSenhaAtualMeuPerfil').value;
+            const novaSenha = document.getElementById('inputNovaSenhaMeuPerfil').value;
+            const confirmarSenha = document.getElementById('inputConfirmarSenhaMeuPerfil').value;
+            const tokenSessao = document.getElementById('inputTokenSessaoMeuPerfil').value.trim();
+            const divErro = document.getElementById('msgErroMeuPerfil');
+            divErro.classList.add('hidden');
+
+            if (!senhaAtual) {
+                divErro.innerText = 'Informe sua senha atual.';
+                divErro.classList.remove('hidden');
+                return;
+            }
+            if (novaSenha && novaSenha !== confirmarSenha) {
+                divErro.innerText = 'A confirmação da nova senha não confere.';
+                divErro.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const url = `${WEB_APP_URL}?action=atualizar_meu_perfil&email=${encodeURIComponent(email)}&senhaAtual=${encodeURIComponent(senhaAtual)}&novaSenha=${encodeURIComponent(novaSenha)}&tokenSessao=${encodeURIComponent(tokenSessao)}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                if (data.erro) {
+                    divErro.innerText = data.erro;
+                    divErro.classList.remove('hidden');
+                    return;
+                }
+                alert('Dados atualizados com sucesso!');
+                fecharModalMeuPerfil();
+            } catch (e) {
+                divErro.innerText = 'Erro de conexão: ' + e.message;
+                divErro.classList.remove('hidden');
             }
         }
 
