@@ -1182,10 +1182,10 @@
     </div> <!-- fecha appLayout -->
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKEORRTNz-Mtyng9RP3R-6_1v1Tsr9YOwFAm3XUcLFwv0nfgom1KVrHWmxYeR5JNMcQA/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzpznS4vSM4Dmq0hfvbSxCarrQM9dQbuGbE0FT0awaZz7SD2ZciXSCJZcVIA413niBVhQ/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.30.4"; 
+        const VERSAO_FRONT = "v5.30.5"; 
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
         let idTributacaoAtual = null;
@@ -1535,6 +1535,14 @@
             return (localStorage.getItem('imendes_perfil') || '').toLowerCase() === 'suporte';
         }
 
+        // Backend sinaliza authToken expirado/inválido via "sessaoExpirada" -> desconecta o usuário na hora, forçando novo login (novo authToken)
+        function tratarSessaoExpirada(data) {
+            if (!data || !data.sessaoExpirada) return false;
+            fazerLogout();
+            alert("Sua sessão expirou. Faça login novamente.");
+            return true;
+        }
+
         async function fetchHibrido(action, clienteId, parametrosAdicionais = {}, method = 'GET') {
             if (ACOES_SOMENTE_ESCRITA.has(action) && perfilEhSomenteLeitura()) {
                 return { erro: "Acesso negado: seu perfil (suporte) tem permissão apenas de visualização.", statusCode: 403 };
@@ -1670,7 +1678,9 @@
                     }
                     
                     const data = await response.json();
-                    
+
+                    if (tratarSessaoExpirada(data)) return { erro: data.erro, statusCode: 401 };
+
                     // ✅ VERIFICAR STATUSCODE PRIMEIRO (prioritário sobre campo "erro")
                     if (data.statusCode && data.statusCode >= 400) {
                         // É um erro real baseado no HTTP status
@@ -2486,7 +2496,9 @@
             const response = await fetch(url);
             const textoResposta = await response.text();
             try {
-                return JSON.parse(textoResposta);
+                const data = JSON.parse(textoResposta);
+                if (tratarSessaoExpirada(data)) return data;
+                return data;
             } catch (erroParse) {
                 // Apps Script às vezes devolve uma página HTML (erro/redirecionamento) em vez de JSON
                 console.error(`[ADMIN] Resposta não-JSON de "${action}":`, textoResposta.substring(0, 500));
