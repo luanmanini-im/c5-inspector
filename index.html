@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
     <style>
         body { 
             background-color: #13161f; 
@@ -183,6 +185,9 @@
                 <button onclick="abrirFerramentaViaSidebar('analise')" class="sidebar-sublink">Análise de Tributação por Produto</button>
                 <button onclick="abrirFerramentaViaSidebar('rtc')" class="sidebar-sublink">Implantador de Condições - RTC</button>
                 <button onclick="abrirFerramentaViaSidebar('clientes')" class="sidebar-sublink">Adequação Tributária</button>
+
+                <div class="sidebar-group-label mt-2">Utilitários</div>
+                <button onclick="abrirConversorPdf()" class="sidebar-sublink">Conversor pdf -> xlsx - Inconsistências</button>
 
                 <button id="navMinhaConta" onclick="abrirModalMeuPerfil()" class="sidebar-link mt-2">
                     Minha Conta
@@ -1128,14 +1133,60 @@
         </div>
     </div>
 
+    <!-- UTILITÁRIO: CONVERSOR PDF -> XLSX - INCONSISTÊNCIAS (disponível para User, Admin e Suporte) -->
+    <div id="modalConversorPdf" class="hidden w-full max-w-4xl mx-auto">
+        <div class="bg-slate-900 rounded-xl shadow-2xl w-full flex flex-col border border-slate-700 overflow-hidden text-slate-200">
+            <div class="bg-slate-950 p-4 border-b border-slate-800 flex items-center justify-between">
+                <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                    Conversor pdf -> xlsx - Inconsistências
+                </h3>
+                <button onclick="fecharConversorPdf()" class="text-slate-400 hover:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 hover:border-amber-400 cursor-pointer transition-colors">← Voltar ao Início</button>
+            </div>
+            <div class="p-6 flex flex-col gap-6">
+                <div class="bg-cyan-950/30 border border-cyan-900/50 p-4 rounded-lg">
+                    <h4 class="text-cyan-400 font-bold text-sm mb-2">Como funciona:</h4>
+                    <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
+                        <li>Anexe o relatório em <strong class="text-white">PDF</strong> exportado do sistema do cliente.</li>
+                        <li>O sistema identifica automaticamente <strong class="text-white">Erros</strong>, <strong class="text-white">Notas Fiscais</strong> e <strong class="text-white">Produtos</strong> e vincula tudo em uma única planilha.</li>
+                        <li>O processamento acontece inteiramente no seu navegador — o PDF não é enviado a nenhum servidor.</li>
+                        <li>Ao finalizar, o arquivo <strong class="text-white">.xlsx</strong> é baixado automaticamente.</li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Anexe o PDF</label>
+                        <input type="file" id="inputArquivoPdfExcel" accept=".pdf,application/pdf" class="w-full p-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-300 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-cyan-400 file:text-slate-900 hover:file:bg-cyan-500 cursor-pointer">
+                    </div>
+                    <button id="btnConverterPdfExcel" onclick="converterPdfParaExcel()" class="w-full bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white py-2.5 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
+                        <span>▶ Converter para Excel</span>
+                    </button>
+                </div>
+
+                <div id="blocoFallbackOcr" class="hidden bg-amber-950/30 border border-amber-800/50 p-4 rounded-lg flex flex-col gap-3">
+                    <p class="text-xs text-amber-300">Este PDF não tem camada de texto (provavelmente foi gerado com o texto convertido em curvas/vetores). É possível tentar reconhecer o conteúdo via <strong>OCR</strong>, mas o processo é bem mais lento (pode levar vários minutos) e <strong>menos preciso</strong> — revise os códigos e valores antes de usar a planilha.</p>
+                    <button id="btnTentarOcr" onclick="converterPdfViaOcr()" class="w-full bg-amber-600 hover:bg-amber-500 disabled:opacity-60 text-white py-2.5 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
+                        <span>🔎 Tentar via OCR (mais lento, revisar resultado)</span>
+                    </button>
+                </div>
+
+                <div class="flex-1 flex flex-col min-h-[220px]">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">Console de Execução</h4>
+                    <pre id="logConversorPdf" class="flex-1 bg-black border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-slate-300 overflow-y-auto log-scroll whitespace-pre-wrap">Aguardando arquivo...</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
         </div> <!-- fecha viewContainer -->
     </div> <!-- fecha appLayout -->
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwUtzhOaqcE2LQ3otu217H8kOgfq_wwx-PfyEsbJLOnhth21ae6xygT5swHAV8dyhaBWw/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzKEORRTNz-Mtyng9RP3R-6_1v1Tsr9YOwFAm3XUcLFwv0nfgom1KVrHWmxYeR5JNMcQA/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.26.0"; 
+        const VERSAO_FRONT = "v5.30.4"; 
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
         let idTributacaoAtual = null;
         let clienteAtualId = null;
@@ -1202,8 +1253,9 @@
             document.getElementById('modalFerramentas').classList.add('hidden');
             document.getElementById('modalAdmin').classList.add('hidden');
             document.getElementById('modalMeuPerfil').classList.add('hidden');
+            document.getElementById('modalConversorPdf').classList.add('hidden');
 
-            const idPorView = { home: 'painelPrincipal', ferramentas: 'modalFerramentas', admin: 'modalAdmin', minhaconta: 'modalMeuPerfil' };
+            const idPorView = { home: 'painelPrincipal', ferramentas: 'modalFerramentas', admin: 'modalAdmin', minhaconta: 'modalMeuPerfil', pdfexcel: 'modalConversorPdf' };
             const idAlvo = idPorView[nome] || 'painelPrincipal';
             document.getElementById(idAlvo).classList.remove('hidden');
 
@@ -2858,6 +2910,360 @@
 
         function fecharModalMeuPerfil() {
             mostrarView('home');
+        }
+
+        // ==========================================
+        // CONVERSOR PDF -> XLSX - INCONSISTÊNCIAS (disponível para User, Admin e Suporte)
+        // Todo o processamento é local (browser), via pdf.js + SheetJS.
+        // ==========================================
+        function abrirConversorPdf() {
+            document.getElementById('inputArquivoPdfExcel').value = '';
+            document.getElementById('logConversorPdf').innerText = 'Aguardando arquivo...';
+            document.getElementById('blocoFallbackOcr').classList.add('hidden');
+            mostrarView('pdfexcel');
+        }
+
+        function fecharConversorPdf() {
+            mostrarView('home');
+        }
+
+        // Reconstitui as linhas de texto de uma página do PDF agrupando os itens por proximidade vertical (y),
+        // já ordenados da esquerda pra direita — equivalente ao extract_text() do pdfplumber usado no script Python original.
+        // Recebe itens já normalizados ({str, x, y, width} em espaço VISUAL, pós-rotação da página).
+        function agruparLinhasPdf(items) {
+            const TOLERANCIA_Y = 2;
+            // Sort PURO por Y (decrescente, topo primeiro), sem tolerância dentro do comparador. Um comparador
+            // com tolerância (como havia antes) não é transitivo — A~B e B~C não implica A~C — e isso quebra
+            // o algoritmo de sort do JS de forma imprevisível em arrays grandes (centenas de itens por página).
+            const ordenadosPorY = items.slice().sort((a, b) => b.y - a.y);
+
+            const linhas = [];
+            let linhaAtual = null;
+            let yAtual = null;
+            ordenadosPorY.forEach(item => {
+                if (yAtual === null || Math.abs(item.y - yAtual) > TOLERANCIA_Y) {
+                    linhaAtual = [];
+                    linhas.push(linhaAtual);
+                    yAtual = item.y;
+                }
+                linhaAtual.push(item);
+            });
+
+            // O pdf.js frequentemente devolve um número/palavra dividido em vários itens (por kerning) —
+            // juntar tudo com espaço fixo (como antes) quebrava qualquer \d+ que caísse na fronteira entre
+            // 2 itens. Só insere espaço quando o vão horizontal entre o fim de um item e o início do
+            // próximo é grande o suficiente pra ser mesmo uma separação visual de palavras.
+            return linhas.map(itensLinha => {
+                // Dentro de cada linha já agrupada por Y, ordena por X (esquerda pra direita) — outro sort
+                // simples e transitivo, separado do agrupamento por Y acima.
+                const itensOrdenadosX = itensLinha.slice().sort((a, b) => a.x - b.x);
+                let texto = '';
+                let fimAnterior = null;
+                itensOrdenadosX.forEach(item => {
+                    if (fimAnterior !== null && (item.x - fimAnterior) > 1) {
+                        texto += ' ';
+                    }
+                    texto += item.str;
+                    fimAnterior = item.x + (item.width || 0);
+                });
+                return texto.replace(/\s+/g, ' ').trim();
+            }).filter(Boolean);
+        }
+
+        async function extrairLinhasPdf(arrayBuffer, aoProgredir) {
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let linhas = [];
+            for (let numPagina = 1; numPagina <= pdf.numPages; numPagina++) {
+                const pagina = await pdf.getPage(numPagina);
+                // getViewport já aplica a rotação /Rotate da própria página (padrão quando "rotation" não é
+                // informado) — combinar com item.transform é OBRIGATÓRIO em páginas rotacionadas (comuns em
+                // relatórios largos), senão X e Y do texto saem trocados/rotacionados e o agrupamento por
+                // linha vira agrupamento por coluna (era exatamente o bug: PDF de 218 páginas com /Rotate 90).
+                const viewport = pagina.getViewport({ scale: 1 });
+                const conteudo = await pagina.getTextContent();
+                const itensVisuais = conteudo.items.map(item => {
+                    // item.width já está no MESMO espaço (pré-viewport) que item.transform[4]/[5] — transformar
+                    // o ponto final ([x+width, y]) pela viewport (em vez de multiplicar width por t[0]) evita
+                    // aplicar a escala do item duas vezes, que inflava a largura e "engolia" os espaços entre
+                    // colunas (sintoma: "UN1,000" e "1,0008,47" colados sem espaço nenhum).
+                    const inicioVisual = pdfjsLib.Util.applyTransform([item.transform[4], item.transform[5]], viewport.transform);
+                    const fimVisual = pdfjsLib.Util.applyTransform([item.transform[4] + item.width, item.transform[5]], viewport.transform);
+                    return {
+                        str: item.str,
+                        x: inicioVisual[0],
+                        y: inicioVisual[1],
+                        width: Math.hypot(fimVisual[0] - inicioVisual[0], fimVisual[1] - inicioVisual[1])
+                    };
+                });
+                const linhasPagina = agruparLinhasPdf(itensVisuais);
+                linhas = linhas.concat(linhasPagina);
+                if (aoProgredir) aoProgredir(numPagina, pdf.numPages, linhasPagina);
+            }
+            return linhas;
+        }
+
+        // Mesmos 3 padrões (Produto / Nota Fiscal / Erro) e mesma lógica hierárquica do script Python original
+        const PADRAO_PRODUTO_PDF = /^\s*(\d+)\s+(\d+)\s+-\s+(.+?)\s+(\d+)\s+([\d,.]+)\s+([a-zA-Z]+)\s+([\d,.]+)\s+([\d,.]+)\s*$/;
+        const PADRAO_NOTA_PDF = /^\s*(\d+)\s+([ES])\s+\d+\s+-\s+(.+?)\s+(\d+)\s+(\d{2}\/\d{2}\/\d{4})\s+([\d,.]+)\s*$/;
+        const PADRAO_ERRO_PDF = /^\s*(\d+)\s+([A-Za-z].*?)(?:\s+Qtde\s+\d+)?$/;
+
+        // Versão tolerante a ruído de OCR do padrão de Nota Fiscal: bordas de tabela mal lidas costumam virar
+        // um "-" espúrio entre o Nro. Nota e o S/E, e um travessão (—) antes do código da empresa (ex.:
+        // "32772 - E —1056-MONECO..." em vez de "32772 E 1056-MONECO..."). Sem essa tolerância, 100% das
+        // linhas de Nota Fiscal caem no fallback de Erro e todo produto fica com "Nota Desconhecida".
+        // NÃO exige mais Emp./Dta. Lancto./Valor no final: no layout real esses campos ficam isolados bem
+        // à direita, com um vão enorme (~40% da largura da página) até o resto da linha — o que faz o
+        // Tesseract com frequência não juntar esse pedaço na mesma linha reconstruída. Como nenhum desses
+        // 3 campos é usado na planilha final (só o Nro. Nota é), não há motivo pra exigi-los no match.
+        const PADRAO_NOTA_OCR = /^\s*(\d+)\s*-?\s*([ES])\s+[—–-]?(\d+)-(.+)$/;
+
+        // Versão tolerante do padrão de Produto: o Tesseract costuma confundir dígitos com letras parecidas
+        // (5↔S, 0↔O, 1↔I/l, 8↔B, 2↔Z) nos campos "Item" e "Código do Produto", que no dado real são só
+        // números — sem essa tolerância, a linha inteira falha o match e vaza pro fallback de Erro.
+        // Traço entre código e descrição SEM espaço obrigatório (`\s*-\s*`, não `\s+-\s+`): no texto real do
+        // Tesseract pra esse relatório sai "183-LINGUICA..." sem espaço nenhum ao redor do traço — era o
+        // principal motivo de quase nenhum produto bater (o padrão nativo, com espaço, nunca combinava).
+        const PADRAO_PRODUTO_OCR = /^\s*([0-9SsOoIlZzBb]+)\s+([0-9SsOoIlZzBb]+)\s*-\s*(.+?)\s+(\d+)\s+([\d,.]+)\s+([a-zA-Z]+)\s+([\d,.]+)\s+([\d,.]+)\s*$/;
+
+        // Corrige a confusão de OCR letra↔dígito em campos que só podem ser numéricos (Item, Código do Produto)
+        function normalizarDigitosOcr(valor) {
+            return valor.replace(/[SsOoIlZzBb]/g, c => ({ S: '5', s: '5', O: '0', o: '0', I: '1', l: '1', Z: '2', z: '2', B: '8', b: '8' }[c]));
+        }
+
+        function processarLinhasPdf(linhas) {
+            const dados = [];
+            let erroAtual = "Erro Desconhecido";
+            let notaAtual = "Nota Desconhecida";
+
+            for (const linhaBruta of linhas) {
+                const linha = linhaBruta.trim();
+                if (!linha || linha.includes("Nro. Nota") || linha.includes("Nro. Item") || linha.includes("Relatório de") || linha.includes("Tipo: **")) {
+                    continue;
+                }
+
+                const mProduto = linha.match(PADRAO_PRODUTO_PDF);
+                if (mProduto) {
+                    dados.push([erroAtual, notaAtual, mProduto[1], mProduto[2], mProduto[3], mProduto[4], mProduto[5], mProduto[6], mProduto[7], mProduto[8]]);
+                    continue;
+                }
+
+                const mNota = linha.match(PADRAO_NOTA_PDF);
+                if (mNota) {
+                    notaAtual = mNota[1];
+                    continue;
+                }
+
+                const mErro = linha.match(PADRAO_ERRO_PDF);
+                if (mErro) {
+                    const codigoErro = mErro[1];
+                    const descricaoErro = mErro[2].trim();
+                    if (!descricaoErro.includes("TOTVS Varejo") && !descricaoErro.includes("Página")) {
+                        erroAtual = `${codigoErro} - ${descricaoErro}`;
+                    }
+                    continue;
+                }
+            }
+            return dados;
+        }
+
+        async function converterPdfParaExcel() {
+            const fileInput = document.getElementById('inputArquivoPdfExcel');
+            const btn = document.getElementById('btnConverterPdfExcel');
+            const log = document.getElementById('logConversorPdf');
+
+            if (!fileInput.files.length) {
+                alert("Selecione um arquivo PDF primeiro.");
+                return;
+            }
+            const file = fileInput.files[0];
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                alert("Selecione um arquivo com extensão .pdf");
+                return;
+            }
+
+            btn.disabled = true;
+            log.innerText = `Lendo o arquivo "${file.name}"...\n`;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                let linhasPagina1 = null;
+                const linhas = await extrairLinhasPdf(arrayBuffer, (pagina, total, linhasDaPagina) => {
+                    log.innerText = `Lendo página ${pagina} de ${total}...\n`;
+                    if (pagina === 1) linhasPagina1 = linhasDaPagina;
+                });
+
+                log.innerText += `\n${linhas.length} linhas de texto extraídas. Vinculando Erros e Notas aos Produtos...\n`;
+
+                const dados = processarLinhasPdf(linhas);
+
+                if (dados.length === 0) {
+                    log.innerText += "\n❌ Não conseguimos identificar nenhuma linha de produto neste PDF (PDF sem camada de texto, ou com um layout diferente do esperado).";
+                    // Linhas reconstruídas da página 1 — cole esse trecho pra depuração se o resultado vier estranho
+                    if (linhasPagina1) {
+                        log.innerText += `\n--- Linhas reconstruídas (página 1, completo) ---\n${linhasPagina1.join('\n')}\n--- Fim das linhas ---\n`;
+                    }
+                    document.getElementById('blocoFallbackOcr').classList.remove('hidden');
+                    alert("Não foi possível identificar nenhuma linha de produto neste PDF. Você pode tentar o fallback via OCR (mais lento e menos preciso) logo abaixo do botão de conversão.");
+                    return;
+                }
+
+                document.getElementById('blocoFallbackOcr').classList.add('hidden');
+                const colunas = ["Erro Detectado", "Nro. Nota", "Item", "Código do Produto", "Descrição", "Vrs.", "Qtde", "Un. Qtde.", "Emb.", "Vlr. Item"];
+                const ws = XLSX.utils.aoa_to_sheet([colunas, ...dados]);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Resultado");
+                const nomeArquivo = `resultado_com_notas_${file.name.replace(/\.pdf$/i, '')}.xlsx`;
+                XLSX.writeFile(wb, nomeArquivo);
+
+                log.innerText += `\n🎉 Sucesso! ${dados.length} linhas de produto convertidas. Arquivo "${nomeArquivo}" baixado.`;
+
+                // Auditoria best-effort (não bloqueia o download em caso de falha de rede)
+                chamarBackendAdmin('log_conversao_pdf', { arquivo: file.name, linhas: dados.length }).catch(() => {});
+            } catch (ex) {
+                console.error(ex);
+                log.innerText += `\n❌ Erro ao processar o PDF: ${ex.message}`;
+                alert("Erro ao processar o PDF: " + ex.message);
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        // Renderiza cada página como imagem (via pdf.js) e roda OCR (Tesseract.js) em cima —
+        // funciona mesmo quando o texto do PDF foi convertido em curvas/vetores (sem camada de texto real).
+        // Usa direto o `data.text` do Tesseract (já vem quebrado em linhas corretamente, na ordem visual da
+        // página) em vez de reagrupar palavra por palavra pela posição — um agrupamento manual por Y chegou
+        // a ser tentado e reconstruía as linhas PIOR que o próprio Tesseract (uma linha larga de Nota Fiscal
+        // saía cortada em 2 pedaços, por exemplo). A confiança é por página (`data.confidence`), não por
+        // linha — mais simples e já reflete bem a qualidade geral do reconhecimento daquela página.
+        async function extrairLinhasPdfViaOcr(arrayBuffer, aoProgredir) {
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const worker = await Tesseract.createWorker('por');
+            // PSM 6 = "bloco único e uniforme de texto": o modo padrão (auto, PSM 3) tenta detectar colunas/
+            // parágrafos separados, o que se confunde MUITO num relatório tabular denso e largo como este
+            // (blocos de Nota Fiscal repetidos, muitos números pequenos) — causava reconhecimento de só uma
+            // fração mínima das linhas da página. PSM 6 lê tudo em sequência normal, sem essa segmentação.
+            await worker.setParameters({ tessedit_pageseg_mode: '6' });
+            let linhas = [];
+            try {
+                for (let numPagina = 1; numPagina <= pdf.numPages; numPagina++) {
+                    const pagina = await pdf.getPage(numPagina);
+                    // scale 3 (~216 DPI): não é só nitidez pro olho humano — 12 dos ~28 produtos esperados
+                    // sumiam por completo do texto reconhecido (nem apareciam garbled), sinal de que o
+                    // Tesseract não estava DETECTANDO a linha, não só errando a transcrição. Custo: OCR mais lento.
+                    const viewport = pagina.getViewport({ scale: 3 });
+                    const canvas = document.createElement('canvas');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    await pagina.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+                    const { data } = await worker.recognize(canvas);
+                    const confiancaPagina = data.confidence || 0;
+                    const linhasPagina = (data.text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean)
+                        .map(texto => ({ texto, confianca: confiancaPagina }));
+                    linhas = linhas.concat(linhasPagina);
+                    if (aoProgredir) aoProgredir(numPagina, pdf.numPages, linhasPagina.length, data.text || '');
+                }
+            } finally {
+                await worker.terminate();
+            }
+            return linhas;
+        }
+
+        // Mesma lógica hierárquica de processarLinhasPdf, mas carregando a confiança média do OCR por linha de produto
+        // (duplicado propositalmente em vez de compartilhar função com processarLinhasPdf, pra manter os dois fluxos
+        // — extração nativa e OCR — independentes e simples de acompanhar).
+        function processarLinhasPdfOcr(linhasComConfianca) {
+            const dados = [];
+            let erroAtual = "Erro Desconhecido";
+            let notaAtual = "Nota Desconhecida";
+
+            for (const { texto: linhaBruta, confianca } of linhasComConfianca) {
+                const linha = linhaBruta.trim();
+                // "Nro. Item" às vezes sai corrompido pelo OCR (ex.: "Nro. ltem" com "l" minúsculo) — "Produto"
+                // é a palavra do cabeçalho que mais se mantém legível, então serve de rede de segurança extra.
+                if (!linha || linha.includes("Nro. Nota") || linha.includes("Nro. Item") || linha.includes("Produto") || linha.includes("Relatório de") || linha.includes("Tipo: **")) {
+                    continue;
+                }
+
+                const mProduto = linha.match(PADRAO_PRODUTO_OCR);
+                if (mProduto) {
+                    dados.push([erroAtual, notaAtual, normalizarDigitosOcr(mProduto[1]), normalizarDigitosOcr(mProduto[2]), mProduto[3], mProduto[4], mProduto[5], mProduto[6], mProduto[7], mProduto[8], `${confianca.toFixed(0)}%`]);
+                    continue;
+                }
+
+                const mNota = linha.match(PADRAO_NOTA_OCR);
+                if (mNota) {
+                    notaAtual = mNota[1];
+                    continue;
+                }
+
+                const mErro = linha.match(PADRAO_ERRO_PDF);
+                if (mErro) {
+                    const codigoErro = mErro[1];
+                    const descricaoErro = mErro[2].trim();
+                    if (!descricaoErro.includes("TOTVS Varejo") && !descricaoErro.includes("Página")) {
+                        erroAtual = `${codigoErro} - ${descricaoErro}`;
+                    }
+                    continue;
+                }
+            }
+            return dados;
+        }
+
+        async function converterPdfViaOcr() {
+            const fileInput = document.getElementById('inputArquivoPdfExcel');
+            const btnNormal = document.getElementById('btnConverterPdfExcel');
+            const btnOcr = document.getElementById('btnTentarOcr');
+            const log = document.getElementById('logConversorPdf');
+
+            if (!fileInput.files.length) {
+                alert("Selecione um arquivo PDF primeiro.");
+                return;
+            }
+            const file = fileInput.files[0];
+
+            btnNormal.disabled = true;
+            btnOcr.disabled = true;
+            log.innerText = `Iniciando OCR de "${file.name}"... isso pode levar vários minutos, aguarde.\n`;
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const linhas = await extrairLinhasPdfViaOcr(arrayBuffer, (pagina, total, qtdLinhas, textoBruto) => {
+                    log.innerText += `OCR na página ${pagina} de ${total}: ${qtdLinhas} linhas reconhecidas.\n`;
+                    // Texto bruto completo do Tesseract (só na 1ª página) — cole esse trecho pra depuração se o resultado vier estranho
+                    if (pagina === 1) {
+                        log.innerText += `--- Texto bruto reconhecido (página 1, completo) ---\n${textoBruto}\n--- Fim do texto ---\n\n`;
+                    }
+                });
+
+                log.innerText += `\n${linhas.length} linhas reconhecidas via OCR. Vinculando Erros e Notas aos Produtos...\n`;
+
+                const dados = processarLinhasPdfOcr(linhas);
+
+                if (dados.length === 0) {
+                    log.innerText += "\n❌ Mesmo com OCR não conseguimos identificar nenhuma linha de produto neste PDF.";
+                    alert("Mesmo com OCR não foi possível identificar nenhuma linha de produto neste PDF.");
+                    return;
+                }
+
+                const colunas = ["Erro Detectado", "Nro. Nota", "Item", "Código do Produto", "Descrição", "Vrs.", "Qtde", "Un. Qtde.", "Emb.", "Vlr. Item", "Confiança OCR (%)"];
+                const ws = XLSX.utils.aoa_to_sheet([colunas, ...dados]);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Resultado (OCR)");
+                const nomeArquivo = `resultado_com_notas_OCR_${file.name.replace(/\.pdf$/i, '')}.xlsx`;
+                XLSX.writeFile(wb, nomeArquivo);
+
+                log.innerText += `\n🎉 Concluído via OCR! ${dados.length} linhas de produto convertidas. Arquivo "${nomeArquivo}" baixado.\n⚠️ Revise manualmente os códigos e valores — OCR pode confundir dígitos (0/O, 1/l, 5/S etc.).`;
+
+                chamarBackendAdmin('log_conversao_pdf', { arquivo: file.name + ' (OCR)', linhas: dados.length }).catch(() => {});
+            } catch (ex) {
+                console.error(ex);
+                log.innerText += `\n❌ Erro ao processar o PDF via OCR: ${ex.message}`;
+                alert("Erro ao processar o PDF via OCR: " + ex.message);
+            } finally {
+                btnNormal.disabled = false;
+                btnOcr.disabled = false;
+            }
         }
 
         async function salvarMeuPerfil() {
