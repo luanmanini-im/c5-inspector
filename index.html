@@ -185,6 +185,7 @@
                 <button onclick="abrirFerramentaViaSidebar('analise')" class="sidebar-sublink">Análise de Tributação por Produto</button>
                 <button onclick="abrirFerramentaViaSidebar('rtc')" class="sidebar-sublink">Implantador de Condições - RTC</button>
                 <button onclick="abrirFerramentaViaSidebar('clientes')" class="sidebar-sublink">Adequação Tributária</button>
+                <button onclick="abrirFerramentaViaSidebar('regimes')" class="sidebar-sublink">Validador de Regimes/Divisões</button>
 
                 <div class="sidebar-group-label mt-2">Utilitários</div>
                 <button onclick="abrirConversorPdf()" class="sidebar-sublink">Conversor pdf -> xlsx - Inconsistências</button>
@@ -882,6 +883,86 @@
                 </div>
             </div>
 
+            <!-- ABA 5: VALIDADOR DE REGIMES/DIVISÕES -->
+            <div id="ferramentaValidador" class="p-6 flex-1 overflow-auto flex flex-col gap-6 hidden">
+                <div class="bg-amber-950/30 border border-amber-900/50 p-4 rounded-lg">
+                    <h4 class="text-amber-400 font-bold text-sm mb-2">Validador de Regimes/Divisões:</h4>
+                    <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
+                        <li>Selecione o cliente e clique em "Consultar Regimes e Divisões" para buscar os dados no ERP.</li>
+                        <li>Marque em cada linha se o Regime/Divisão é <strong class="text-white">utilizado ativamente</strong> pelo cliente (SIM/NÃO). O valor inicial vem do que já foi salvo anteriormente.</li>
+                        <li>Clique em "Salvar Alterações" para persistir as marcações na planilha de controle.</li>
+                    </ul>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">1. Cliente</label>
+                        <select id="selectClienteRegimes" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+                    <button id="btnConsultarRegimes" onclick="consultarRegimesDivisoes()" class="w-full imendes-btn py-2.5 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
+                        <span id="txtBtnConsultarRegimes">▶ Consultar Regimes e Divisões</span>
+                        <div id="spinnerConsultarRegimes" class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-slate-950"></div>
+                    </button>
+                </div>
+
+                <div id="blocoResultadoRegimes" class="hidden flex flex-col gap-6 flex-1">
+
+                    <!-- TABELA DE REGIMES -->
+                    <div class="flex flex-col gap-2">
+                        <h4 class="text-sm font-bold text-white border-b border-slate-800 pb-2">Regimes de Tributação</h4>
+                        <div class="overflow-auto border border-slate-800 rounded bg-slate-950 max-h-[320px]">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="bg-slate-900 text-slate-300 uppercase font-bold sticky top-0 shadow-xs">
+                                    <tr>
+                                        <th class="p-3 border-r border-b border-slate-800">ID</th>
+                                        <th class="p-3 border-r border-b border-slate-800">Descrição</th>
+                                        <th class="p-3 border-r border-b border-slate-800 text-center">Status</th>
+                                        <th class="p-3 border-r border-b border-slate-800 text-center">Base Cálc. ICMS Antecip.</th>
+                                        <th class="p-3 border-r border-b border-slate-800 text-center">Calc. Dif. Alíq.</th>
+                                        <th class="p-3 border-b border-slate-800 text-center">Utilizado Ativamente</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyRegimes" class="divide-y divide-slate-800 text-slate-300">
+                                    <tr><td colspan="6" class="p-4 text-center text-slate-500">Aguardando consulta...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- TABELA DE DIVISÕES -->
+                    <div class="flex flex-col gap-2">
+                        <h4 class="text-sm font-bold text-white border-b border-slate-800 pb-2">Divisões</h4>
+                        <div class="overflow-auto border border-slate-800 rounded bg-slate-950 max-h-[320px]">
+                            <table class="w-full text-left border-collapse text-xs">
+                                <thead class="bg-slate-900 text-slate-300 uppercase font-bold sticky top-0 shadow-xs">
+                                    <tr>
+                                        <th class="p-3 border-r border-b border-slate-800">ID</th>
+                                        <th class="p-3 border-r border-b border-slate-800">Nome</th>
+                                        <th class="p-3 border-r border-b border-slate-800">Tipo</th>
+                                        <th class="p-3 border-b border-slate-800 text-center">Utilizado Ativamente</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyDivisoes" class="divide-y divide-slate-800 text-slate-300">
+                                    <tr><td colspan="4" class="p-4 text-center text-slate-500">Aguardando consulta...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <button id="btnSalvarRegimes" onclick="salvarAlteracoesRegimesDivisoes()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
+                        <span id="txtBtnSalvarRegimes">💾 Salvar Alterações</span>
+                        <div id="spinnerSalvarRegimes" class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    </button>
+
+                    <div class="flex flex-col h-32">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">Console</h4>
+                        <pre id="logRegimesDivisoes" class="flex-1 bg-black border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-slate-300 overflow-y-auto log-scroll whitespace-pre-wrap">Aguardando consulta...</pre>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -1182,10 +1263,10 @@
     </div> <!-- fecha appLayout -->
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzpznS4vSM4Dmq0hfvbSxCarrQM9dQbuGbE0FT0awaZz7SD2ZciXSCJZcVIA413niBVhQ/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbznETx5TfuMo0yIn_HAtZe-Oo8LyEGyj5MEpm2VYSYrIQKQWWtJO94rJ9jk2u1X-cQB1w/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.30.5"; 
+        const VERSAO_FRONT = "v5.31.1"; 
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
         let idTributacaoAtual = null;
@@ -1528,8 +1609,13 @@
         // Ações que alteram dados no ERP/planilha - proibidas para o perfil "suporte" (somente leitura)
         const ACOES_SOMENTE_ESCRITA = new Set([
             'atualizar_ipi', 'atualizar_tributacao', 'incluir_condicao_cenario',
-            'alterar_condicao_cenario', 'excluir_condicao_cenario', 'vincular_cenarios_lote'
+            'alterar_condicao_cenario', 'excluir_condicao_cenario', 'vincular_cenarios_lote',
+            'salvar_status_regimes_divisoes'
         ]);
+
+        // Ações que só mexem na planilha de controle (nunca falam com a API TOTVS do cliente) -
+        // sempre vão pra nuvem (GAS), mesmo para clientes em Modo VPN (mesmo padrão do painel admin)
+        const ACOES_SEMPRE_NUVEM = new Set(['get_status_salvos', 'salvar_status_regimes_divisoes']);
 
         function perfilEhSomenteLeitura() {
             return (localStorage.getItem('imendes_perfil') || '').toLowerCase() === 'suporte';
@@ -1554,7 +1640,7 @@
             if (!cliente) throw new Error("Cliente não encontrado na base.");
 
             // ==== FLUXO LOCAL (DIRETO PARA TOTVS) ====
-            if (cliente.modoVpn) {
+            if (cliente.modoVpn && !ACOES_SEMPRE_NUVEM.has(action)) {
                 try {
                     const token = await autenticarLocal(cliente);
                     let urlLocal = "";
@@ -1582,6 +1668,10 @@
                         urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?Familia=${parametrosAdicionais.idFamilia}&status=A&orderby=id`;
                     } else if (action === 'listar_cenarios') {
                         urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?pagesize=1000`;
+                    } else if (action === 'get_regimes_erp') {
+                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/RegimeTributacao?PageSize=100000`;
+                    } else if (action === 'get_divisoes_erp') {
+                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Divisao`;
                     } else if (action === 'atualizar_ipi') {
                         urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Familia?idFamilia=${parametrosAdicionais.idFamilia}`;
                         fetchOptions.method = 'PATCH';
@@ -1767,11 +1857,13 @@
                 const selectIpi = document.getElementById('selectClienteIpi');
                 const selectAnalise = document.getElementById('selectClienteAnalise');
                 const selectRtc = document.getElementById('selectClienteRtc');
+                const selectRegimes = document.getElementById('selectClienteRegimes');
                 
                 selectMain.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 selectIpi.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 selectAnalise.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 selectRtc.innerHTML = '<option value="">Selecione o Cliente...</option>';
+                selectRegimes.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 
                 if (data.clientes && Array.isArray(data.clientes)) {
                     data.clientes.forEach(c => {
@@ -1781,11 +1873,13 @@
                         let optIpi = new Option(c.nome + tagLocal, c.id);
                         let optAnalise = new Option(c.nome + tagLocal, c.id);
                         let optRtc = new Option(c.nome + tagLocal, c.id);
+                        let optRegimes = new Option(c.nome + tagLocal, c.id);
                         
                         selectMain.appendChild(optMain);
                         selectIpi.appendChild(optIpi);
                         selectAnalise.appendChild(optAnalise);
                         selectRtc.appendChild(optRtc);
+                        selectRegimes.appendChild(optRegimes);
                     });
                 }
             } catch (error) {
@@ -2459,6 +2553,7 @@
                 document.getElementById('selectClienteIpi').value = clienteMain;
                 document.getElementById('selectClienteAnalise').value = clienteMain;
                 document.getElementById('selectClienteRtc').value = clienteMain;
+                document.getElementById('selectClienteRegimes').value = clienteMain;
             }
             mostrarView('ferramentas');
         }
@@ -2468,7 +2563,7 @@
         }
 
         function alternarAbaFerramenta(aba) {
-            ['ferramentaIpi', 'ferramentaAnalise', 'ferramentaRtc', 'ferramentaClientes'].forEach(f => {
+            ['ferramentaIpi', 'ferramentaAnalise', 'ferramentaRtc', 'ferramentaClientes', 'ferramentaValidador'].forEach(f => {
                 document.getElementById(f).classList.add('hidden');
             });
 
@@ -2480,6 +2575,171 @@
                 document.getElementById('ferramentaRtc').classList.remove('hidden');
             } else if (aba === 'clientes') {
                 document.getElementById('ferramentaClientes').classList.remove('hidden');
+            } else if (aba === 'regimes') {
+                document.getElementById('ferramentaValidador').classList.remove('hidden');
+            }
+        }
+
+        // ==========================================
+        // VALIDADOR DE REGIMES/DIVISÕES (perfil "user" ou "admin")
+        // ==========================================
+        let regimesConsultadosCache = [];
+        let divisoesConsultadasCache = [];
+
+        function classeBotaoToggleUtilizado(utilizado) {
+            return utilizado === 'SIM'
+                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                : 'bg-slate-700 hover:bg-slate-600 text-slate-300';
+        }
+
+        async function consultarRegimesDivisoes() {
+            const clienteId = document.getElementById('selectClienteRegimes').value;
+            if (!clienteId) { alert('Selecione um cliente.'); return; }
+
+            const btn = document.getElementById('btnConsultarRegimes');
+            const txt = document.getElementById('txtBtnConsultarRegimes');
+            const spinner = document.getElementById('spinnerConsultarRegimes');
+            const log = document.getElementById('logRegimesDivisoes');
+
+            btn.disabled = true;
+            txt.innerText = 'Consultando...';
+            spinner.classList.remove('hidden');
+            log.innerHTML = '<span class="text-cyan-400">Consultando Regimes, Divisões e status salvo...</span>\n';
+            document.getElementById('blocoResultadoRegimes').classList.add('hidden');
+
+            try {
+                const [respRegimes, respDivisoes, respStatus] = await Promise.all([
+                    fetchHibrido('get_regimes_erp', clienteId),
+                    fetchHibrido('get_divisoes_erp', clienteId),
+                    fetchHibrido('get_status_salvos', clienteId)
+                ]);
+
+                if (respRegimes.erro) { log.innerHTML += `<span class="text-red-400">Erro ao buscar Regimes: ${escapeHtml(respRegimes.erro)}</span>\n`; return; }
+                if (respDivisoes.erro) { log.innerHTML += `<span class="text-red-400">Erro ao buscar Divisões: ${escapeHtml(respDivisoes.erro)}</span>\n`; return; }
+                if (respStatus.erro) { log.innerHTML += `<span class="text-amber-400">Aviso: não foi possível carregar o status salvo (${escapeHtml(respStatus.erro)}). Todos os itens iniciam como "NÃO".</span>\n`; }
+
+                const statusSalvo = (respStatus && respStatus.status) || {};
+
+                regimesConsultadosCache = (respRegimes.items || []).map(r => ({
+                    idRegTributacao: r.idRegTributacao,
+                    descricao: r.descricao,
+                    status: r.status,
+                    indBaseCalcIcmsAntecip: r.indBaseCalcIcmsAntecip,
+                    indCalcDifAliq: r.indCalcDifAliq,
+                    utilizado: statusSalvo[`${clienteId}_REG_${r.idRegTributacao}`] === 'SIM' ? 'SIM' : 'NAO'
+                }));
+
+                divisoesConsultadasCache = (respDivisoes.items || []).map(d => ({
+                    idDivisao: d.idDivisao,
+                    nomeDivisao: d.nomeDivisao,
+                    tipoDivisao: d.tipoDivisao,
+                    utilizado: statusSalvo[`${clienteId}_DIV_${d.idDivisao}`] === 'SIM' ? 'SIM' : 'NAO'
+                }));
+
+                renderizarTabelaRegimes();
+                renderizarTabelaDivisoes();
+                document.getElementById('blocoResultadoRegimes').classList.remove('hidden');
+                log.innerHTML += `<span class="text-emerald-400">Consulta concluída: ${regimesConsultadosCache.length} regime(s), ${divisoesConsultadasCache.length} divisão(ões).</span>\n`;
+            } catch (e) {
+                log.innerHTML += `<span class="text-red-400">Falha na consulta: ${escapeHtml(e.message)}</span>\n`;
+            } finally {
+                btn.disabled = false;
+                txt.innerText = '▶ Consultar Regimes e Divisões';
+                spinner.classList.add('hidden');
+                log.scrollTop = log.scrollHeight;
+            }
+        }
+
+        function renderizarTabelaRegimes() {
+            const tbody = document.getElementById('tbodyRegimes');
+            if (regimesConsultadosCache.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Nenhum regime de tributação encontrado.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = regimesConsultadosCache.map((r, idx) => `
+                <tr>
+                    <td class="p-3 border-r border-slate-800">${escapeHtml(r.idRegTributacao)}</td>
+                    <td class="p-3 border-r border-slate-800">${escapeHtml(r.descricao)}</td>
+                    <td class="p-3 border-r border-slate-800 text-center">${escapeHtml(r.status)}</td>
+                    <td class="p-3 border-r border-slate-800 text-center">${escapeHtml(r.indBaseCalcIcmsAntecip)}</td>
+                    <td class="p-3 border-r border-slate-800 text-center">${escapeHtml(r.indCalcDifAliq)}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="alternarToggleUtilizado('regime', ${idx})" id="toggleRegime_${idx}" class="${classeBotaoToggleUtilizado(r.utilizado)} px-3 py-1 rounded text-[11px] font-bold cursor-pointer transition-all">
+                            ${r.utilizado === 'SIM' ? 'SIM' : 'NÃO'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderizarTabelaDivisoes() {
+            const tbody = document.getElementById('tbodyDivisoes');
+            if (divisoesConsultadasCache.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">Nenhuma divisão encontrada.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = divisoesConsultadasCache.map((d, idx) => `
+                <tr>
+                    <td class="p-3 border-r border-slate-800">${escapeHtml(d.idDivisao)}</td>
+                    <td class="p-3 border-r border-slate-800">${escapeHtml(d.nomeDivisao)}</td>
+                    <td class="p-3 border-r border-slate-800">${escapeHtml(d.tipoDivisao)}</td>
+                    <td class="p-3 text-center">
+                        <button onclick="alternarToggleUtilizado('divisao', ${idx})" id="toggleDivisao_${idx}" class="${classeBotaoToggleUtilizado(d.utilizado)} px-3 py-1 rounded text-[11px] font-bold cursor-pointer transition-all">
+                            ${d.utilizado === 'SIM' ? 'SIM' : 'NÃO'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function alternarToggleUtilizado(tipo, idx) {
+            const cache = tipo === 'regime' ? regimesConsultadosCache : divisoesConsultadasCache;
+            const item = cache[idx];
+            item.utilizado = item.utilizado === 'SIM' ? 'NAO' : 'SIM';
+            const btn = document.getElementById(`toggle${tipo === 'regime' ? 'Regime' : 'Divisao'}_${idx}`);
+            btn.className = `${classeBotaoToggleUtilizado(item.utilizado)} px-3 py-1 rounded text-[11px] font-bold cursor-pointer transition-all`;
+            btn.innerText = item.utilizado === 'SIM' ? 'SIM' : 'NÃO';
+        }
+
+        async function salvarAlteracoesRegimesDivisoes() {
+            const clienteId = document.getElementById('selectClienteRegimes').value;
+            if (!clienteId) { alert('Selecione um cliente.'); return; }
+            if (regimesConsultadosCache.length === 0 && divisoesConsultadasCache.length === 0) {
+                alert('Nada para salvar. Consulte os Regimes e Divisões primeiro.');
+                return;
+            }
+
+            const itens = [
+                ...regimesConsultadosCache.map(r => ({ tipo: 'REGIME', idOrigem: r.idRegTributacao, descricao: r.descricao, utilizado: r.utilizado })),
+                ...divisoesConsultadasCache.map(d => ({ tipo: 'DIVISAO', idOrigem: d.idDivisao, descricao: d.nomeDivisao, utilizado: d.utilizado }))
+            ];
+
+            const btn = document.getElementById('btnSalvarRegimes');
+            const txt = document.getElementById('txtBtnSalvarRegimes');
+            const spinner = document.getElementById('spinnerSalvarRegimes');
+            const log = document.getElementById('logRegimesDivisoes');
+
+            btn.disabled = true;
+            txt.innerText = 'Salvando...';
+            spinner.classList.remove('hidden');
+
+            try {
+                const data = await fetchHibrido('salvar_status_regimes_divisoes', clienteId, { itens: JSON.stringify(itens) });
+                if (data.sucesso) {
+                    log.innerHTML += `<span class="text-emerald-400">${escapeHtml(data.mensagem || 'Alterações salvas com sucesso.')}</span>\n`;
+                    alert(data.mensagem || 'Alterações salvas com sucesso.');
+                } else {
+                    log.innerHTML += `<span class="text-red-400">Erro ao salvar: ${escapeHtml(data.erro || JSON.stringify(data))}</span>\n`;
+                    alert('Erro ao salvar: ' + (data.erro || JSON.stringify(data)));
+                }
+            } catch (e) {
+                log.innerHTML += `<span class="text-red-400">Falha de conexão ao salvar: ${escapeHtml(e.message)}</span>\n`;
+                alert('Falha de conexão ao salvar: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                txt.innerText = '💾 Salvar Alterações';
+                spinner.classList.add('hidden');
+                log.scrollTop = log.scrollHeight;
             }
         }
 
