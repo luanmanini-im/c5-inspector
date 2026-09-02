@@ -1758,8 +1758,10 @@
 
         async function carregarClientes() {
             try {
-                const response = await fetch(`${WEB_APP_URL}?action=listar_clientes`);
+                const authToken = localStorage.getItem('imendes_token') || '';
+                const response = await fetch(`${WEB_APP_URL}?action=listar_clientes&authToken=${encodeURIComponent(authToken)}`);
                 const data = await response.json();
+                if (tratarSessaoExpirada(data)) return;
                 
                 const selectMain = document.getElementById('selectCliente');
                 const selectIpi = document.getElementById('selectClienteIpi');
