@@ -1265,10 +1265,10 @@
     </div> <!-- fecha appLayout -->
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbypwHlihKkh2t1Zix_9maVzcDXXzjOhGy5K-kPgm9nF3vzvl87ip8R93CRWUZFhYIDQ2w/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzFOtwEZZCngDJaVu4JK7Uw4iCBaccoYsrr4-rBtHaIx74SUkxWxxQEYo4HS5HkmFoUkA/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.33.0"; 
+        const VERSAO_FRONT = "v5.34.0"; 
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
         let idTributacaoAtual = null;
@@ -1451,7 +1451,7 @@
 
             // ✅ Dispara todas as requisições do lote em paralelo (Promise.all), igual ao fetchAll do backend
             await Promise.all(skus.map(async (sku) => {
-                const url = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${sku}&Expand=familia.familiaDivisao.tributacao`;
+                const url = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${sku}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
                 try {
                     const resp = await fetch(url, { method: 'GET', headers: { "Authorization": `Bearer ${token}` } });
                     if (resp.ok) {
@@ -3834,11 +3834,12 @@
                                     if(!isAnaliseRunning) break;
                                     
                                     const divi = prod.familia?.familiaDivisao?.[0] || {};
+                                    const eans = (prod.produtoCodigo || []).filter(cod => cod.tipoCodigo === 'E').map(cod => cod.codigoAcesso);
                                     
                                     dadosAnaliseExcel.push({
                                         "SKU": prod.idProduto || "N/A",
                                         "Descrição Completa": prod.descricaoCompleta || "N/A",
-                                        "EAN": "Omitido (Modo Leve)",
+                                        "_eans": eans,
                                         "ID Tributação": divi.idTributacao || "N/A",
                                         "Descrição Tributação": divi.tributacao?.descricao || "N/A",
                                         "NCM (codNbmsh)": prod.familia?.codNbmsh || "N/A"
@@ -3855,7 +3856,7 @@
                                     dadosAnaliseExcel.push({
                                         "SKU": errItem.sku || "?",
                                         "Descrição Completa": "❌ NÃO ENCONTRADO",
-                                        "EAN": "",
+                                        "_eans": [],
                                         "ID Tributação": "",
                                         "Descrição Tributação": errItem.motivo || "",
                                         "NCM (codNbmsh)": ""
@@ -3885,7 +3886,7 @@
                                     dadosAnaliseExcel.push({
                                         "SKU": sku,
                                         "Descrição Completa": "⚠️ SEM RESPOSTA",
-                                        "EAN": "",
+                                        "_eans": [],
                                         "ID Tributação": "",
                                         "Descrição Tributação": "Não retornou na API",
                                         "NCM (codNbmsh)": ""
@@ -3902,7 +3903,7 @@
                                 dadosAnaliseExcel.push({
                                     "SKU": sku,
                                     "Descrição Completa": "🔴 FALHA DE CONEXÃO",
-                                    "EAN": "",
+                                    "_eans": [],
                                     "ID Tributação": "",
                                     "Descrição Tributação": ex.message || "Erro de conexão",
                                     "NCM (codNbmsh)": ""
@@ -3955,7 +3956,23 @@
             }
             
             try {
-                const ws = XLSX.utils.json_to_sheet(dadosAnaliseExcel);
+                // Cada produto pode ter uma quantidade diferente de EANs - descobre o máximo
+                // pra criar colunas "EAN 1", "EAN 2", ... suficientes pra cobrir todo mundo
+                const maxEans = Math.max(1, ...dadosAnaliseExcel.map(d => (d._eans || []).length));
+                const colunasEan = Array.from({ length: maxEans }, (_, i) => `EAN ${i + 1}`);
+                const header = ["SKU", "Descrição Completa", ...colunasEan, "ID Tributação", "Descrição Tributação", "NCM (codNbmsh)"];
+
+                const linhasFinais = dadosAnaliseExcel.map(d => {
+                    const linha = { "SKU": d["SKU"], "Descrição Completa": d["Descrição Completa"] };
+                    const eans = d._eans || [];
+                    colunasEan.forEach((col, i) => { linha[col] = eans[i] || ""; });
+                    linha["ID Tributação"] = d["ID Tributação"];
+                    linha["Descrição Tributação"] = d["Descrição Tributação"];
+                    linha["NCM (codNbmsh)"] = d["NCM (codNbmsh)"];
+                    return linha;
+                });
+
+                const ws = XLSX.utils.json_to_sheet(linhasFinais, { header: header });
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Tributacao_Inspector");
                 XLSX.writeFile(wb, `C5_Analise_Tributacao_${new Date().toISOString().slice(0, 10)}.xlsx`);
