@@ -921,11 +921,12 @@
                                         <th class="p-3 border-r border-b border-slate-800 text-center">Status</th>
                                         <th class="p-3 border-r border-b border-slate-800 text-center">Base Cálc. ICMS Antecip.</th>
                                         <th class="p-3 border-r border-b border-slate-800 text-center">Calc. Dif. Alíq.</th>
-                                        <th class="p-3 border-b border-slate-800 text-center">Utilizado Ativamente</th>
+                                        <th class="p-3 border-r border-b border-slate-800 text-center">Utilizado Ativamente</th>
+                                        <th class="p-3 border-b border-slate-800">Observação</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbodyRegimes" class="divide-y divide-slate-800 text-slate-300">
-                                    <tr><td colspan="6" class="p-4 text-center text-slate-500">Aguardando consulta...</td></tr>
+                                    <tr><td colspan="7" class="p-4 text-center text-slate-500">Aguardando consulta...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -941,11 +942,12 @@
                                         <th class="p-3 border-r border-b border-slate-800">ID</th>
                                         <th class="p-3 border-r border-b border-slate-800">Nome</th>
                                         <th class="p-3 border-r border-b border-slate-800">Tipo</th>
-                                        <th class="p-3 border-b border-slate-800 text-center">Utilizado Ativamente</th>
+                                        <th class="p-3 border-r border-b border-slate-800 text-center">Utilizado Ativamente</th>
+                                        <th class="p-3 border-b border-slate-800">Observação</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbodyDivisoes" class="divide-y divide-slate-800 text-slate-300">
-                                    <tr><td colspan="4" class="p-4 text-center text-slate-500">Aguardando consulta...</td></tr>
+                                    <tr><td colspan="5" class="p-4 text-center text-slate-500">Aguardando consulta...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1263,10 +1265,10 @@
     </div> <!-- fecha appLayout -->
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbznETx5TfuMo0yIn_HAtZe-Oo8LyEGyj5MEpm2VYSYrIQKQWWtJO94rJ9jk2u1X-cQB1w/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbypwHlihKkh2t1Zix_9maVzcDXXzjOhGy5K-kPgm9nF3vzvl87ip8R93CRWUZFhYIDQ2w/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.31.1"; 
+        const VERSAO_FRONT = "v5.33.0"; 
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
         let idTributacaoAtual = null;
@@ -1610,12 +1612,12 @@
         const ACOES_SOMENTE_ESCRITA = new Set([
             'atualizar_ipi', 'atualizar_tributacao', 'incluir_condicao_cenario',
             'alterar_condicao_cenario', 'excluir_condicao_cenario', 'vincular_cenarios_lote',
-            'salvar_status_regimes_divisoes'
+            'salvar_status_regimes_divisoes', 'salvar_observacao_regime_divisao'
         ]);
 
         // Ações que só mexem na planilha de controle (nunca falam com a API TOTVS do cliente) -
         // sempre vão pra nuvem (GAS), mesmo para clientes em Modo VPN (mesmo padrão do painel admin)
-        const ACOES_SEMPRE_NUVEM = new Set(['get_status_salvos', 'salvar_status_regimes_divisoes']);
+        const ACOES_SEMPRE_NUVEM = new Set(['get_status_salvos', 'salvar_status_regimes_divisoes', 'salvar_observacao_regime_divisao']);
 
         function perfilEhSomenteLeitura() {
             return (localStorage.getItem('imendes_perfil') || '').toLowerCase() === 'suporte';
@@ -2620,21 +2622,31 @@
 
                 const statusSalvo = (respStatus && respStatus.status) || {};
 
-                regimesConsultadosCache = (respRegimes.items || []).map(r => ({
-                    idRegTributacao: r.idRegTributacao,
-                    descricao: r.descricao,
-                    status: r.status,
-                    indBaseCalcIcmsAntecip: r.indBaseCalcIcmsAntecip,
-                    indCalcDifAliq: r.indCalcDifAliq,
-                    utilizado: statusSalvo[`${clienteId}_REG_${r.idRegTributacao}`] === 'SIM' ? 'SIM' : 'NAO'
-                }));
+                regimesConsultadosCache = (respRegimes.items || []).map(r => {
+                    const salvo = statusSalvo[`${clienteId}_REG_${r.idRegTributacao}`] || {};
+                    return {
+                        idRegTributacao: r.idRegTributacao,
+                        descricao: r.descricao,
+                        status: r.status,
+                        indBaseCalcIcmsAntecip: r.indBaseCalcIcmsAntecip,
+                        indCalcDifAliq: r.indCalcDifAliq,
+                        utilizado: salvo.utilizado === 'SIM' ? 'SIM' : 'NAO',
+                        observacao: salvo.observacao || '',
+                        observacaoLog: salvo.observacaoLog || ''
+                    };
+                });
 
-                divisoesConsultadasCache = (respDivisoes.items || []).map(d => ({
-                    idDivisao: d.idDivisao,
-                    nomeDivisao: d.nomeDivisao,
-                    tipoDivisao: d.tipoDivisao,
-                    utilizado: statusSalvo[`${clienteId}_DIV_${d.idDivisao}`] === 'SIM' ? 'SIM' : 'NAO'
-                }));
+                divisoesConsultadasCache = (respDivisoes.items || []).map(d => {
+                    const salvo = statusSalvo[`${clienteId}_DIV_${d.idDivisao}`] || {};
+                    return {
+                        idDivisao: d.idDivisao,
+                        nomeDivisao: d.nomeDivisao,
+                        tipoDivisao: d.tipoDivisao,
+                        utilizado: salvo.utilizado === 'SIM' ? 'SIM' : 'NAO',
+                        observacao: salvo.observacao || '',
+                        observacaoLog: salvo.observacaoLog || ''
+                    };
+                });
 
                 renderizarTabelaRegimes();
                 renderizarTabelaDivisoes();
@@ -2653,7 +2665,7 @@
         function renderizarTabelaRegimes() {
             const tbody = document.getElementById('tbodyRegimes');
             if (regimesConsultadosCache.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-500">Nenhum regime de tributação encontrado.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-slate-500">Nenhum regime de tributação encontrado.</td></tr>`;
                 return;
             }
             tbody.innerHTML = regimesConsultadosCache.map((r, idx) => `
@@ -2663,10 +2675,19 @@
                     <td class="p-3 border-r border-slate-800 text-center">${escapeHtml(r.status)}</td>
                     <td class="p-3 border-r border-slate-800 text-center">${escapeHtml(r.indBaseCalcIcmsAntecip)}</td>
                     <td class="p-3 border-r border-slate-800 text-center">${escapeHtml(r.indCalcDifAliq)}</td>
-                    <td class="p-3 text-center">
+                    <td class="p-3 border-r border-slate-800 text-center">
                         <button onclick="alternarToggleUtilizado('regime', ${idx})" id="toggleRegime_${idx}" class="${classeBotaoToggleUtilizado(r.utilizado)} px-3 py-1 rounded text-[11px] font-bold cursor-pointer transition-all">
                             ${r.utilizado === 'SIM' ? 'SIM' : 'NÃO'}
                         </button>
+                    </td>
+                    <td class="p-3">
+                        <div class="flex flex-col gap-1 min-w-[180px]">
+                            <div class="flex gap-1">
+                                <input type="text" id="obsRegime_${idx}" value="${escapeHtml(r.observacao)}" placeholder="Observação..." class="flex-1 p-1.5 rounded imendes-input text-[11px]">
+                                <button onclick="salvarObservacaoLinha('regime', ${idx})" id="btnObsRegime_${idx}" title="Salvar observação" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2 rounded text-[11px] font-bold cursor-pointer">💾</button>
+                            </div>
+                            <span id="obsLogRegime_${idx}" class="text-[9px] text-slate-500 truncate block" title="${escapeHtml(r.observacaoLog)}">${escapeHtml(r.observacaoLog)}</span>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -2675,7 +2696,7 @@
         function renderizarTabelaDivisoes() {
             const tbody = document.getElementById('tbodyDivisoes');
             if (divisoesConsultadasCache.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-500">Nenhuma divisão encontrada.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">Nenhuma divisão encontrada.</td></tr>`;
                 return;
             }
             tbody.innerHTML = divisoesConsultadasCache.map((d, idx) => `
@@ -2683,10 +2704,19 @@
                     <td class="p-3 border-r border-slate-800">${escapeHtml(d.idDivisao)}</td>
                     <td class="p-3 border-r border-slate-800">${escapeHtml(d.nomeDivisao)}</td>
                     <td class="p-3 border-r border-slate-800">${escapeHtml(d.tipoDivisao)}</td>
-                    <td class="p-3 text-center">
+                    <td class="p-3 border-r border-slate-800 text-center">
                         <button onclick="alternarToggleUtilizado('divisao', ${idx})" id="toggleDivisao_${idx}" class="${classeBotaoToggleUtilizado(d.utilizado)} px-3 py-1 rounded text-[11px] font-bold cursor-pointer transition-all">
                             ${d.utilizado === 'SIM' ? 'SIM' : 'NÃO'}
                         </button>
+                    </td>
+                    <td class="p-3">
+                        <div class="flex flex-col gap-1 min-w-[180px]">
+                            <div class="flex gap-1">
+                                <input type="text" id="obsDivisao_${idx}" value="${escapeHtml(d.observacao)}" placeholder="Observação..." class="flex-1 p-1.5 rounded imendes-input text-[11px]">
+                                <button onclick="salvarObservacaoLinha('divisao', ${idx})" id="btnObsDivisao_${idx}" title="Salvar observação" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2 rounded text-[11px] font-bold cursor-pointer">💾</button>
+                            </div>
+                            <span id="obsLogDivisao_${idx}" class="text-[9px] text-slate-500 truncate block" title="${escapeHtml(d.observacaoLog)}">${escapeHtml(d.observacaoLog)}</span>
+                        </div>
                     </td>
                 </tr>
             `).join('');
@@ -2699,6 +2729,45 @@
             const btn = document.getElementById(`toggle${tipo === 'regime' ? 'Regime' : 'Divisao'}_${idx}`);
             btn.className = `${classeBotaoToggleUtilizado(item.utilizado)} px-3 py-1 rounded text-[11px] font-bold cursor-pointer transition-all`;
             btn.innerText = item.utilizado === 'SIM' ? 'SIM' : 'NÃO';
+        }
+
+        // Observação é salva por linha (ação própria no backend) pra gerar uma entrada isolada
+        // no Histórico de Logs (auditoria de quem criou/editou/excluiu o comentário)
+        async function salvarObservacaoLinha(tipo, idx) {
+            const clienteId = document.getElementById('selectClienteRegimes').value;
+            if (!clienteId) { alert('Selecione um cliente.'); return; }
+
+            const cache = tipo === 'regime' ? regimesConsultadosCache : divisoesConsultadasCache;
+            const item = cache[idx];
+            const sufixo = tipo === 'regime' ? 'Regime' : 'Divisao';
+            const idOrigem = tipo === 'regime' ? item.idRegTributacao : item.idDivisao;
+            const descricao = tipo === 'regime' ? item.descricao : item.nomeDivisao;
+            const input = document.getElementById(`obs${sufixo}_${idx}`);
+            const observacao = input.value;
+            const btn = document.getElementById(`btnObs${sufixo}_${idx}`);
+
+            btn.disabled = true;
+            try {
+                const data = await fetchHibrido('salvar_observacao_regime_divisao', clienteId, {
+                    tipo: tipo === 'regime' ? 'REGIME' : 'DIVISAO',
+                    idOrigem: idOrigem,
+                    descricao: descricao,
+                    observacao: observacao
+                });
+                if (data.sucesso) {
+                    item.observacao = observacao;
+                    item.observacaoLog = data.observacaoLog || '';
+                    const spanLog = document.getElementById(`obsLog${sufixo}_${idx}`);
+                    spanLog.innerText = item.observacaoLog;
+                    spanLog.title = item.observacaoLog;
+                } else {
+                    alert('Erro ao salvar observação: ' + (data.erro || JSON.stringify(data)));
+                }
+            } catch (e) {
+                alert('Falha de conexão ao salvar observação: ' + e.message);
+            } finally {
+                btn.disabled = false;
+            }
         }
 
         async function salvarAlteracoesRegimesDivisoes() {
@@ -3771,7 +3840,8 @@
                                         "Descrição Completa": prod.descricaoCompleta || "N/A",
                                         "EAN": "Omitido (Modo Leve)",
                                         "ID Tributação": divi.idTributacao || "N/A",
-                                        "Descrição Tributação": divi.tributacao?.descricao || "N/A"
+                                        "Descrição Tributação": divi.tributacao?.descricao || "N/A",
+                                        "NCM (codNbmsh)": prod.familia?.codNbmsh || "N/A"
                                     });
                                     suc++;
                                     processados++;
@@ -3787,7 +3857,8 @@
                                         "Descrição Completa": "❌ NÃO ENCONTRADO",
                                         "EAN": "",
                                         "ID Tributação": "",
-                                        "Descrição Tributação": errItem.motivo || ""
+                                        "Descrição Tributação": errItem.motivo || "",
+                                        "NCM (codNbmsh)": ""
                                     });
                                     err++;
                                     processados++;
@@ -3816,7 +3887,8 @@
                                         "Descrição Completa": "⚠️ SEM RESPOSTA",
                                         "EAN": "",
                                         "ID Tributação": "",
-                                        "Descrição Tributação": "Não retornou na API"
+                                        "Descrição Tributação": "Não retornou na API",
+                                        "NCM (codNbmsh)": ""
                                     });
                                     err++;
                                     processados++;
@@ -3832,7 +3904,8 @@
                                     "Descrição Completa": "🔴 FALHA DE CONEXÃO",
                                     "EAN": "",
                                     "ID Tributação": "",
-                                    "Descrição Tributação": ex.message || "Erro de conexão"
+                                    "Descrição Tributação": ex.message || "Erro de conexão",
+                                    "NCM (codNbmsh)": ""
                                 });
                                 err++;
                                 processados++;
