@@ -31,6 +31,19 @@ if errorlevel 1 (
 )
 del "%ZIP_TEMP%" >nul 2>&1
 
+REM Busca o Q.A.html recursivamente dentro da pasta extraida - resiliente ao caso do
+REM Front.zip ter sido compactado com uma pasta "Front" por dentro (arquivos ficam em
+REM ...\Front\Front\Q.A.html em vez de ...\Front\Q.A.html).
+set "ARQUIVO_HTML="
+for /f "usebackq delims=" %%F in (`powershell -NoProfile -Command "(Get-ChildItem -Path '%PASTA_DESTINO%' -Filter 'Q.A.html' -Recurse -File -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName)"`) do set "ARQUIVO_HTML=%%F"
+
+if "%ARQUIVO_HTML%"=="" (
+    echo.
+    echo Nao foi possivel localizar o Q.A.html dentro do pacote extraido.
+    pause
+    exit /b 1
+)
+
 echo Iniciando o Inspector C5...
-start "" chrome.exe --disable-web-security --user-data-dir="C:\ChromeDev" "%PASTA_DESTINO%\Q.A.html"
+start "" chrome.exe --disable-web-security --user-data-dir="C:\ChromeDev" "%ARQUIVO_HTML%"
 exit
