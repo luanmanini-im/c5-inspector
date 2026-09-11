@@ -189,6 +189,7 @@
 
                 <div class="sidebar-group-label mt-2">Utilitários</div>
                 <button onclick="abrirConversorPdf()" class="sidebar-sublink">Conversor pdf -> xlsx - Inconsistências</button>
+                <button id="btnBaixarLauncher" onclick="baixarLauncherLocal()" class="sidebar-sublink">Baixar Launcher Local (.bat)</button>
 
                 <button id="navMinhaConta" onclick="abrirModalMeuPerfil()" class="sidebar-link mt-2">
                     Minha Conta
@@ -1268,7 +1269,9 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzFOtwEZZCngDJaVu4JK7Uw4iCBaccoYsrr4-rBtHaIx74SUkxWxxQEYo4HS5HkmFoUkA/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.34.0"; 
+        const VERSAO_FRONT = "v5.35.0"; 
+        // Launcher local (.bat) hospedado no GitHub - sempre baixa/atualiza o Front.zip sozinho e já abre o Chrome configurado
+        const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
 
         let idTributacaoAtual = null;
@@ -3268,6 +3271,37 @@
 
         function fecharConversorPdf() {
             mostrarView('home');
+        }
+
+        // ==========================================
+        // BAIXAR LAUNCHER LOCAL (.bat) - hospedado no GitHub
+        // ==========================================
+        // fetch()+blob (em vez de <a href> direto) pra forçar o download mesmo sendo cross-origin -
+        // o atributo "download" do <a> é ignorado pelos navegadores em links cross-origin sem isso.
+        async function baixarLauncherLocal() {
+            const botao = document.getElementById('btnBaixarLauncher');
+            const textoOriginal = botao.innerText;
+            botao.disabled = true;
+            botao.innerText = 'Baixando...';
+            try {
+                const resp = await fetch(URL_LAUNCHER_BAT);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'Inspector_Launcher.bat';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+                alert('Download iniciado!\n\nColoque o arquivo numa pasta vazia (ex.: Área de Trabalho) e dê duplo-clique nele sempre que for abrir o Inspector localmente - ele baixa a versão mais recente sozinho e já abre o Chrome configurado.');
+            } catch (erro) {
+                alert('Erro ao baixar o launcher: ' + erro.message + '\n\nVocê também pode baixar manualmente pelo link:\n' + URL_LAUNCHER_BAT);
+            } finally {
+                botao.disabled = false;
+                botao.innerText = textoOriginal;
+            }
         }
 
         // Reconstitui as linhas de texto de uma página do PDF agrupando os itens por proximidade vertical (y),
