@@ -239,25 +239,32 @@
         </div>
         
         <!-- Área de Pesquisa -->
-        <div class="flex flex-col md:flex-row gap-4 mb-8">
-            <select id="selectCliente" class="w-full md:w-64 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input cursor-pointer">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_12rem_minmax(0,1fr)_auto] gap-4 mb-8">
+            <select id="selectCliente" onchange="limparBuscaTributacaoTitulo()" class="w-full min-w-0 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input cursor-pointer">
                 <option value="">Carregando empresas...</option>
             </select>
             
-            <select id="selectTipoBusca" onchange="atualizarPlaceholderBusca()" class="w-full md:w-40 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input cursor-pointer">
+            <select id="selectTipoBusca" onchange="atualizarPlaceholderBusca()" class="w-full min-w-0 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input cursor-pointer">
                 <option value="sku">SKU</option>
                 <option value="ean">EAN</option>
                 <option value="familia">FAMILIA</option>
-                <option value="id_trib">ID TRIB</option>
+                <option value="id_trib">Tributação</option>
+                <option value="titulo_trib">Título Tributação</option>
             </select>
 
-            <input type="text" id="inputTermoBusca" placeholder="Digite o SKU (ex: 128453)" 
-                   class="flex-1 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input">
+            <input type="text" id="inputTermoBusca" placeholder="Digite o SKU (ex: 128453)" oninput="limparBuscaTributacaoTitulo()"
+                   class="w-full min-w-0 p-3.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 font-medium text-base imendes-input">
             
             <button onclick="buscarDados()" 
                     class="imendes-btn px-8 py-3.5 rounded-lg transition-all shadow-md cursor-pointer">
                 Analisar
             </button>
+        </div>
+
+        <div id="resultadoBuscaTitulo" class="hidden mb-6 border-t border-slate-800 pt-4">
+            <h3 id="tituloResultadosTributacao" class="text-sm font-bold text-white mb-2">Tributações por título</h3>
+            <p id="statusBuscaTitulo" role="status" aria-live="polite" class="text-sm text-slate-400"></p>
+            <div id="listaTributacoesTitulo" role="radiogroup" aria-labelledby="tituloResultadosTributacao" class="mt-3 max-h-[420px] overflow-y-auto"></div>
         </div>
 
         <div id="loading" class="hidden flex items-center justify-center py-8">
@@ -1266,10 +1273,10 @@
     </div> <!-- fecha appLayout -->
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzFOtwEZZCngDJaVu4JK7Uw4iCBaccoYsrr4-rBtHaIx74SUkxWxxQEYo4HS5HkmFoUkA/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5Ce6LTRGsIwzDWa6Ev-A2PP7EMaV-in5UIw9kd0cZvyDaXNfiiX_KNTsbI_sOZQP8Sw/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.35.0"; 
+        const VERSAO_FRONT = "v5.36.0"; 
         // Launcher local (.bat) hospedado no GitHub - sempre baixa/atualiza o Front.zip sozinho e já abre o Chrome configurado
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -1667,6 +1674,10 @@
                         return await buscarProdutosLoteLocal(cliente, token, parametrosAdicionais.skus);
                     } else if (action === 'familias_lote') {
                         return await buscarFamiliasLoteLocal(cliente, token, parametrosAdicionais.familias);
+                    } else if (action === 'tributacao_titulo') {
+                        const titulo = String(parametrosAdicionais.titulo ?? '').trim();
+                        if (!titulo) return { erro: "Informe o título da tributação." };
+                        urlLocal = `${cliente.urlBase}/SMProdutosAPI/api/v4/produtos/tributacao?TituloTributacao=${encodeURIComponent(titulo)}`;
                     } else if (action === 'tributacao') {
                         urlLocal = `${cliente.urlBase}/CadastrosEstruturaisApi/api/v1/Tributacao/uf?IdTributacao=${parametrosAdicionais.idTributacao}&pageSize=10000`;
                     } else if (action === 'reforma') {
@@ -1738,7 +1749,11 @@
 
                     let data = await response.json();
 
-                    if (action === 'tributacao' && Array.isArray(data)) data = { items: data };
+                    if (action === 'tributacao_titulo') {
+                        const items = Array.isArray(data) ? data : data && data.items;
+                        if (!Array.isArray(items)) return { erro: "Resposta inválida ao consultar o título da tributação." };
+                        data = { items: items };
+                    } else if (action === 'tributacao' && Array.isArray(data)) data = { items: data };
                     else if (action === 'produto_familia' && Array.isArray(data)) data = { items: data };
                     else if (action === 'listar_cenarios') data = { sucesso: true, dados: data };
 
@@ -1838,6 +1853,7 @@
         }
 
         function atualizarPlaceholderBusca() {
+            limparBuscaTributacaoTitulo();
             const tipo = document.getElementById('selectTipoBusca').value;
             const input = document.getElementById('inputTermoBusca');
             if (tipo === 'sku') {
@@ -1848,7 +1864,78 @@
                 input.placeholder = "Digite o ID Família (ex: 136649)";
             } else if (tipo === 'id_trib') {
                 input.placeholder = "Digite o ID Tributação (ex: 1234)";
+            } else if (tipo === 'titulo_trib') {
+                input.placeholder = "Digite o título (ex: IM100)";
             }
+        }
+
+        let tributacoesTituloCache = [];
+        let clienteBuscaTitulo = null;
+        let sequenciaBuscaTitulo = 0;
+
+        function limparBuscaTributacaoTitulo() {
+            sequenciaBuscaTitulo++;
+            tributacoesTituloCache = [];
+            clienteBuscaTitulo = null;
+            document.getElementById('resultadoBuscaTitulo').classList.add('hidden');
+            document.getElementById('listaTributacoesTitulo').innerHTML = '';
+            document.getElementById('statusBuscaTitulo').innerText = '';
+        }
+
+        async function buscarTributacoesPorTitulo(clienteId, titulo) {
+            limparBuscaTributacaoTitulo();
+            const sequenciaAtual = sequenciaBuscaTitulo;
+            const status = document.getElementById('statusBuscaTitulo');
+            const lista = document.getElementById('listaTributacoesTitulo');
+            document.getElementById('resultado').classList.add('hidden');
+            document.getElementById('resultadoBuscaTitulo').classList.remove('hidden');
+            status.className = 'text-sm text-slate-400';
+            status.innerText = 'Consultando tributações...';
+
+            try {
+                const data = await fetchHibrido('tributacao_titulo', clienteId, { titulo: titulo });
+                if (sequenciaAtual !== sequenciaBuscaTitulo) return;
+                if (data.erro) throw new Error(data.erro + (data.detalhes ? `\n${data.detalhes}` : ''));
+                if (!Array.isArray(data.items)) throw new Error('Resposta inválida ao consultar o título da tributação.');
+
+                tributacoesTituloCache = data.items.filter(tributacao => tributacao && String(tributacao.NumeroTributacao ?? '').trim() !== '');
+                clienteBuscaTitulo = clienteId;
+                status.innerText = tributacoesTituloCache.length === 0
+                    ? 'Nenhuma tributação encontrada para este título.'
+                    : `${tributacoesTituloCache.length} tributação(ões) encontrada(s).`;
+                if (tributacoesTituloCache.length === 0) return;
+
+                lista.innerHTML = `
+                    <div aria-hidden="true" class="grid grid-cols-[1.25rem_3.5rem_minmax(0,1fr)] gap-3 px-3 py-2 border-b border-slate-700 text-xs font-bold text-slate-400">
+                        <span></span><span>ID</span><span>Descrição</span>
+                    </div>
+                ` + tributacoesTituloCache.map((tributacao, indice) => `
+                    <label class="grid grid-cols-[1.25rem_3.5rem_minmax(0,1fr)] items-start gap-3 px-3 py-3 border-b border-slate-800 hover:bg-slate-800 focus-within:bg-slate-800 text-sm cursor-pointer">
+                        <input type="radio" name="tributacaoPorTitulo" value="${indice}" onchange="selecionarTributacaoPorTitulo(${indice})"
+                               aria-label="Consultar tributação ${escapeHtml(tributacao.NumeroTributacao)}: ${escapeHtml(tributacao.TituloTributacao)}" class="mt-1 h-4 w-4 accent-amber-400">
+                        <span class="font-mono text-amber-400 break-all">${escapeHtml(tributacao.NumeroTributacao)}</span>
+                        <span class="min-w-0 break-words text-slate-200">${escapeHtml(tributacao.TituloTributacao || '-')}</span>
+                    </label>
+                `).join('');
+            } catch (error) {
+                if (sequenciaAtual !== sequenciaBuscaTitulo) return;
+                status.className = 'text-sm text-red-400 whitespace-pre-wrap break-words';
+                status.innerText = 'Erro ao consultar tributações: ' + error.message;
+            }
+        }
+
+        async function selecionarTributacaoPorTitulo(indice) {
+            const tributacao = tributacoesTituloCache[indice];
+            if (!tributacao) return;
+            if (clienteBuscaTitulo !== document.getElementById('selectCliente').value) {
+                limparBuscaTributacaoTitulo();
+                return;
+            }
+
+            document.getElementById('selectTipoBusca').value = 'id_trib';
+            document.getElementById('inputTermoBusca').value = String(tributacao.NumeroTributacao).trim();
+            atualizarPlaceholderBusca();
+            await buscarDados();
         }
 
         async function carregarClientes() {
@@ -1944,6 +2031,7 @@
         }
 
         function fazerLogout() {
+            limparBuscaTributacaoTitulo();
             const authTokenAtual = localStorage.getItem('imendes_token');
             if (authTokenAtual) {
                 // Best-effort: avisa o backend pra remover a sessão da lista de "logados agora"
@@ -2073,6 +2161,8 @@
             if (!clienteId) return alert("Por favor, selecione um cliente.");
             if (!termo) return alert("Por favor, digite o valor da busca.");
 
+            if (tipoBusca === 'titulo_trib') return buscarTributacoesPorTitulo(clienteId, termo);
+            limparBuscaTributacaoTitulo();
             clienteAtualId = clienteId;
 
             document.getElementById('loading').classList.remove('hidden');
