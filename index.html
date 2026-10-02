@@ -188,6 +188,7 @@
                 <button onclick="abrirFerramentaViaSidebar('regimes')" class="sidebar-sublink">Validador de Regimes/Divisões</button>
 
                 <div class="sidebar-group-label mt-2">Utilitários</div>
+                <button onclick="abrirFerramentaViaSidebar('agendamentos')" class="sidebar-sublink">Consulta de Agendamentos</button>
                 <button onclick="abrirConversorPdf()" class="sidebar-sublink">Conversor pdf -> xlsx - Inconsistências</button>
                 <button id="btnBaixarLauncher" onclick="baixarLauncherLocal()" class="sidebar-sublink">Baixar Launcher Local (.bat)</button>
 
@@ -973,6 +974,100 @@
                 </div>
             </div>
 
+            <!-- CONSULTA DE AGENDAMENTOS -->
+            <div id="ferramentaAgendamentos" class="p-6 flex-1 overflow-auto flex flex-col gap-6 hidden min-h-0">
+                <div class="bg-cyan-950/30 border border-cyan-900/50 p-4 rounded-lg">
+                    <h4 class="text-cyan-400 font-bold text-sm mb-2">Consulta de Agendamentos:</h4>
+                    <p class="text-xs text-slate-300">Consulte os agendamentos de atualização de dados fiscais por cliente. Os filtros de data de início da vigência e status são opcionais.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label for="selectClienteAgendamentos" class="block text-xs font-bold text-slate-400 uppercase mb-1">Cliente</label>
+                        <select id="selectClienteAgendamentos" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="inputDataInicioAgendamentos" class="block text-xs font-bold text-slate-400 uppercase mb-1">Data inicial da vigência (opcional)</label>
+                        <input type="date" id="inputDataInicioAgendamentos" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
+                    </div>
+                    <div>
+                        <label for="selectStatusAgendamentos" class="block text-xs font-bold text-slate-400 uppercase mb-1">Status (opcional)</label>
+                        <select id="selectStatusAgendamentos" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
+                            <option value="">Todos os status</option>
+                            <option value="1">1 - Agendada</option>
+                            <option value="2">2 - Aplicada</option>
+                            <option value="3">3 - Cancelada</option>
+                            <option value="4">4 - Pendente</option>
+                        </select>
+                    </div>
+                    <button id="btnConsultarAgendamentos" onclick="consultarAgendamentos()" class="w-full imendes-btn py-2.5 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
+                        <span id="txtBtnConsultarAgendamentos">▶ Consultar Agendamentos</span>
+                        <div id="spinnerConsultarAgendamentos" class="hidden animate-spin rounded-full h-4 w-4 border-b-2 border-slate-950"></div>
+                    </button>
+                </div>
+
+                <p id="statusConsultaAgendamentos" role="status" aria-live="polite" class="text-sm text-slate-400">Aguardando consulta...</p>
+                <div id="resultadoAgendamentos" class="hidden flex flex-col gap-3">
+                    <div class="bg-slate-950 border border-slate-800 p-4 rounded-lg flex flex-col gap-3">
+                        <h4 class="text-sm font-bold text-white">Filtros locais do resultado</h4>
+                        <p class="text-xs text-slate-400">Os campos preenchidos devem corresponder exatamente ao mesmo registro de dadosFiscaisFamiliaDivisao. Campos vazios não filtram. Não é feita uma nova consulta ao ERP.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <div>
+                                <label for="filtroAgendamentoSeqFamilia" class="block text-xs text-slate-400 mb-1">seqFamilia</label>
+                                <input id="filtroAgendamentoSeqFamilia" type="text" inputmode="numeric" class="w-full p-2 border rounded text-sm imendes-input">
+                            </div>
+                            <div>
+                                <label for="filtroAgendamentoNroTributacao" class="block text-xs text-slate-400 mb-1">nroTributacao</label>
+                                <input id="filtroAgendamentoNroTributacao" type="text" inputmode="numeric" class="w-full p-2 border rounded text-sm imendes-input">
+                            </div>
+                            <div>
+                                <label for="filtroAgendamentoSeqPauta" class="block text-xs text-slate-400 mb-1">seqPauta</label>
+                                <input id="filtroAgendamentoSeqPauta" type="text" inputmode="numeric" class="w-full p-2 border rounded text-sm imendes-input">
+                            </div>
+                            <div>
+                                <label for="filtroAgendamentoSeqPautaICMS" class="block text-xs text-slate-400 mb-1">seqPautaICMS</label>
+                                <input id="filtroAgendamentoSeqPautaICMS" type="text" inputmode="numeric" class="w-full p-2 border rounded text-sm imendes-input">
+                            </div>
+                            <div>
+                                <label for="filtroAgendamentoSeqPautaICMSAntec" class="block text-xs text-slate-400 mb-1">seqPautaICMSAntec</label>
+                                <input id="filtroAgendamentoSeqPautaICMSAntec" type="text" inputmode="numeric" class="w-full p-2 border rounded text-sm imendes-input">
+                            </div>
+                            <div>
+                                <label for="filtroAgendamentoUsuarioAlteracao" class="block text-xs text-slate-400 mb-1">usuarioAlteracao</label>
+                                <input id="filtroAgendamentoUsuarioAlteracao" type="text" class="w-full p-2 border rounded text-sm imendes-input">
+                            </div>
+                            <div>
+                                <label for="filtroAgendamentoNroDivisao" class="block text-xs text-slate-400 mb-1">nroDivisao</label>
+                                <input id="filtroAgendamentoNroDivisao" type="text" inputmode="numeric" class="w-full p-2 border rounded text-sm imendes-input">
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-3">
+                            <button onclick="aplicarFiltrosLocaisAgendamentos()" class="imendes-btn px-4 py-2 rounded text-xs cursor-pointer">Aplicar filtros locais</button>
+                            <button onclick="limparFiltrosLocaisAgendamentos()" class="px-4 py-2 rounded text-xs border border-slate-700 hover:border-amber-400 cursor-pointer">Limpar filtros locais</button>
+                            <button id="btnExportarAgendamentos" onclick="baixarExcelAgendamentos()" disabled class="px-4 py-2 rounded text-xs bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer">Baixar Excel — todas as páginas filtradas</button>
+                        </div>
+                        <p class="text-xs text-slate-400">O Excel contém todas as linhas do filtro aplicado, independentemente da página exibida, com as mesmas colunas da tabela.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <h4 id="resumoAgendamentos" role="status" aria-live="polite" class="text-sm font-bold text-white"></h4>
+                        <div id="paginacaoAgendamentos" class="flex items-center gap-3 text-xs text-slate-300">
+                            <button id="btnPaginaAnteriorAgendamentos" onclick="mudarPaginaAgendamentos(-1)" class="px-3 py-1.5 rounded border border-slate-700 hover:border-amber-400 disabled:opacity-40 disabled:cursor-not-allowed">← Anterior</button>
+                            <span id="textoPaginaAgendamentos" class="font-mono"></span>
+                            <button id="btnPaginaSeguinteAgendamentos" onclick="mudarPaginaAgendamentos(1)" class="px-3 py-1.5 rounded border border-slate-700 hover:border-amber-400 disabled:opacity-40 disabled:cursor-not-allowed">Próxima →</button>
+                        </div>
+                    </div>
+                    <div class="overflow-auto border border-slate-800 rounded bg-slate-950 max-h-[65vh]">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead id="theadAgendamentos" class="bg-slate-900 text-slate-300 uppercase font-bold sticky top-0"></thead>
+                            <tbody id="tbodyAgendamentos" class="divide-y divide-slate-800 text-slate-300"></tbody>
+                        </table>
+                    </div>
+                    <pre id="detalhesAgendamentos" class="hidden bg-black border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-slate-300 overflow-auto max-h-[50vh] whitespace-pre-wrap"></pre>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -1273,7 +1368,7 @@
     </div> <!-- fecha appLayout -->
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz5Ce6LTRGsIwzDWa6Ev-A2PP7EMaV-in5UIw9kd0cZvyDaXNfiiX_KNTsbI_sOZQP8Sw/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyRJgUMErSlLTZSoDEm_J_jgqZQ3-fJrPBA748zKas2JxrrYrIvPhthYXowl5tA9AOqlQ/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
         const VERSAO_FRONT = "v5.36.0"; 
@@ -1688,6 +1783,15 @@
                         urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/RegimeTributacao?PageSize=100000`;
                     } else if (action === 'get_divisoes_erp') {
                         urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Divisao`;
+                    } else if (action === 'consulta_agendamentos') {
+                        if (parametrosAdicionais.status && !['1', '2', '3', '4'].includes(String(parametrosAdicionais.status))) {
+                            return { erro: 'Status inválido. Use 1, 2, 3 ou 4.', statusCode: 400 };
+                        }
+                        const baseUrl = cliente.urlBase.replace(/\/+$/, '');
+                        const query = new URLSearchParams({ PageSize: '100000' });
+                        if (parametrosAdicionais.dataInicio) query.set('DtaIniVigencia', parametrosAdicionais.dataInicio);
+                        if (parametrosAdicionais.status) query.set('Status', parametrosAdicionais.status);
+                        urlLocal = `${baseUrl}/TributacaoAPI/api/v1/Agendamento/atualiza/dados-fiscais-familia-divisao?${query.toString()}`;
                     } else if (action === 'atualizar_ipi') {
                         urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Familia?idFamilia=${parametrosAdicionais.idFamilia}`;
                         fetchOptions.method = 'PATCH';
@@ -1950,12 +2054,14 @@
                 const selectAnalise = document.getElementById('selectClienteAnalise');
                 const selectRtc = document.getElementById('selectClienteRtc');
                 const selectRegimes = document.getElementById('selectClienteRegimes');
+                const selectAgendamentos = document.getElementById('selectClienteAgendamentos');
                 
                 selectMain.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 selectIpi.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 selectAnalise.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 selectRtc.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 selectRegimes.innerHTML = '<option value="">Selecione o Cliente...</option>';
+                selectAgendamentos.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 
                 if (data.clientes && Array.isArray(data.clientes)) {
                     data.clientes.forEach(c => {
@@ -1966,12 +2072,14 @@
                         let optAnalise = new Option(c.nome + tagLocal, c.id);
                         let optRtc = new Option(c.nome + tagLocal, c.id);
                         let optRegimes = new Option(c.nome + tagLocal, c.id);
+                        let optAgendamentos = new Option(c.nome + tagLocal, c.id);
                         
                         selectMain.appendChild(optMain);
                         selectIpi.appendChild(optIpi);
                         selectAnalise.appendChild(optAnalise);
                         selectRtc.appendChild(optRtc);
                         selectRegimes.appendChild(optRegimes);
+                        selectAgendamentos.appendChild(optAgendamentos);
                     });
                 }
             } catch (error) {
@@ -2649,6 +2757,7 @@
                 document.getElementById('selectClienteAnalise').value = clienteMain;
                 document.getElementById('selectClienteRtc').value = clienteMain;
                 document.getElementById('selectClienteRegimes').value = clienteMain;
+                document.getElementById('selectClienteAgendamentos').value = clienteMain;
             }
             mostrarView('ferramentas');
         }
@@ -2658,7 +2767,7 @@
         }
 
         function alternarAbaFerramenta(aba) {
-            ['ferramentaIpi', 'ferramentaAnalise', 'ferramentaRtc', 'ferramentaClientes', 'ferramentaValidador'].forEach(f => {
+            ['ferramentaIpi', 'ferramentaAnalise', 'ferramentaRtc', 'ferramentaClientes', 'ferramentaValidador', 'ferramentaAgendamentos'].forEach(f => {
                 document.getElementById(f).classList.add('hidden');
             });
 
@@ -2672,6 +2781,277 @@
                 document.getElementById('ferramentaClientes').classList.remove('hidden');
             } else if (aba === 'regimes') {
                 document.getElementById('ferramentaValidador').classList.remove('hidden');
+            } else if (aba === 'agendamentos') {
+                document.getElementById('ferramentaAgendamentos').classList.remove('hidden');
+            }
+        }
+
+        const AGENDAMENTOS_POR_PAGINA = 100;
+        const FILTROS_LOCAIS_AGENDAMENTOS = [
+            { campo: 'seqFamilia', id: 'filtroAgendamentoSeqFamilia' },
+            { campo: 'nroTributacao', id: 'filtroAgendamentoNroTributacao' },
+            { campo: 'seqPauta', id: 'filtroAgendamentoSeqPauta' },
+            { campo: 'seqPautaICMS', id: 'filtroAgendamentoSeqPautaICMS' },
+            { campo: 'seqPautaICMSAntec', id: 'filtroAgendamentoSeqPautaICMSAntec' },
+            { campo: 'usuarioAlteracao', id: 'filtroAgendamentoUsuarioAlteracao' },
+            { campo: 'nroDivisao', id: 'filtroAgendamentoNroDivisao' }
+        ];
+        let agendamentosConsultaCache = [];
+        let agendamentosFiltradosCache = [];
+        let totalAgendamentosConsultados = 0;
+        let colunasAgendamentosCache = [];
+        let paginaAtualAgendamentos = 1;
+        let agendamentosTemProximaPaginaServidor = false;
+
+        function obterItensAgendamentos(resposta) {
+            if (Array.isArray(resposta)) return resposta;
+            if (!resposta || typeof resposta !== 'object') return [];
+
+            for (const chave of ['items', 'agendamentos', 'dados', 'data', 'results', 'content']) {
+                if (Array.isArray(resposta[chave])) return resposta[chave];
+                if (resposta[chave] && typeof resposta[chave] === 'object') {
+                    const itensAninhados = obterItensAgendamentos(resposta[chave]);
+                    if (itensAninhados.length) return itensAninhados;
+                }
+            }
+            return [];
+        }
+
+        function formatarValorAgendamento(valor) {
+            if (valor === null || valor === undefined) return '';
+            return typeof valor === 'object' ? JSON.stringify(valor) : String(valor);
+        }
+
+        function achatarCamposAgendamento(valor, prefixo, destino) {
+            if (!valor || typeof valor !== 'object' || Array.isArray(valor)) {
+                if (prefixo) destino[prefixo] = formatarValorAgendamento(valor);
+                return;
+            }
+
+            Object.keys(valor).forEach(chave => {
+                const nomeCampo = prefixo ? `${prefixo}.${chave}` : chave;
+                const valorCampo = valor[chave];
+                if (valorCampo && typeof valorCampo === 'object' && !Array.isArray(valorCampo)) {
+                    achatarCamposAgendamento(valorCampo, nomeCampo, destino);
+                } else {
+                    destino[nomeCampo] = formatarValorAgendamento(valorCampo);
+                }
+            });
+        }
+
+        function prepararLinhasAgendamentos(itens, resposta) {
+            return itens.flatMap(item => {
+                const adicionarMetadadosResposta = linha => {
+                    if (!resposta || Array.isArray(resposta) || typeof resposta !== 'object') return;
+                    const metadados = { ...resposta };
+                    delete metadados.items;
+                    achatarCamposAgendamento(metadados, 'Resposta', linha);
+                };
+
+                if (!item || typeof item !== 'object' || Array.isArray(item)) {
+                    const linha = { Agendamento: formatarValorAgendamento(item) };
+                    adicionarMetadadosResposta(linha);
+                    return [linha];
+                }
+
+                const colecoesDetalhadas = Object.keys(item).filter(chave =>
+                    Array.isArray(item[chave]) &&
+                    item[chave].some(registro => registro && typeof registro === 'object' && !Array.isArray(registro))
+                );
+
+                if (!colecoesDetalhadas.length) {
+                    const linha = {};
+                    achatarCamposAgendamento(item, '', linha);
+                    adicionarMetadadosResposta(linha);
+                    return [linha];
+                }
+
+                return colecoesDetalhadas.flatMap(colecao => {
+                    const registros = item[colecao];
+                    return registros.map(registro => {
+                        const linha = {};
+                        const itemSemColecoesExpandidas = { ...item };
+                        colecoesDetalhadas.forEach(nomeColecao => {
+                            itemSemColecoesExpandidas[nomeColecao] = `${item[nomeColecao].length} registro(s)`;
+                        });
+                        achatarCamposAgendamento(itemSemColecoesExpandidas, '', linha);
+                        linha['Coleção detalhada'] = colecao;
+                        achatarCamposAgendamento(registro, colecao, linha);
+                        adicionarMetadadosResposta(linha);
+                        return linha;
+                    });
+                });
+            });
+        }
+
+        function renderizarAgendamentos(resposta) {
+            if (resposta && typeof resposta.status === 'string' &&
+                resposta.status.startsWith('C5 Inspector API (')) {
+                throw new Error('O backend publicado não reconhece a consulta de agendamentos. Atualize o código do Apps Script e publique uma nova versão na implantação usada pelo Inspector.');
+            }
+            if (!Array.isArray(resposta) && (!resposta || !Array.isArray(resposta.items))) {
+                throw new Error('Resposta inválida da consulta de agendamentos: era esperada uma lista de registros no campo "items".');
+            }
+            const itens = obterItensAgendamentos(resposta);
+            totalAgendamentosConsultados = itens.length;
+            agendamentosTemProximaPaginaServidor = Boolean(resposta && !Array.isArray(resposta) && resposta.hasNext);
+            agendamentosConsultaCache = prepararLinhasAgendamentos(itens, resposta);
+            colunasAgendamentosCache = Array.from(new Set(agendamentosConsultaCache.flatMap(item =>
+                Object.keys(item)
+            )));
+            paginaAtualAgendamentos = 1;
+            const resultado = document.getElementById('resultadoAgendamentos');
+            const cabecalho = document.getElementById('theadAgendamentos');
+            const corpo = document.getElementById('tbodyAgendamentos');
+            const detalhes = document.getElementById('detalhesAgendamentos');
+            const paginacao = document.getElementById('paginacaoAgendamentos');
+            const resumo = document.getElementById('resumoAgendamentos');
+
+            resultado.classList.remove('hidden');
+            detalhes.classList.add('hidden');
+
+            if (!agendamentosConsultaCache.length) {
+                cabecalho.innerHTML = '';
+                corpo.innerHTML = '';
+                agendamentosFiltradosCache = [];
+                document.getElementById('btnExportarAgendamentos').disabled = true;
+                paginacao.classList.add('hidden');
+                resumo.innerText = 'Nenhum agendamento encontrado.';
+                if (!Array.isArray(resposta) && resposta && typeof resposta === 'object') {
+                    detalhes.innerText = JSON.stringify(resposta, null, 2);
+                    detalhes.classList.remove('hidden');
+                }
+                return;
+            }
+
+            cabecalho.innerHTML = `<tr>${colunasAgendamentosCache.map(coluna => `<th class="p-3 border-r border-b border-slate-800 whitespace-nowrap">${escapeHtml(coluna)}</th>`).join('')}</tr>`;
+            aplicarFiltrosLocaisAgendamentos();
+        }
+
+        function aplicarFiltrosLocaisAgendamentos() {
+            const filtros = FILTROS_LOCAIS_AGENDAMENTOS.map(({ campo, id }) => ({
+                campo: `dadosFiscaisFamiliaDivisao.${campo}`,
+                valor: document.getElementById(id).value.trim()
+            })).filter(filtro => filtro.valor !== '');
+
+            agendamentosFiltradosCache = agendamentosConsultaCache.filter(linha =>
+                filtros.every(filtro => linha[filtro.campo] !== undefined &&
+                    linha[filtro.campo] !== null && String(linha[filtro.campo]) === filtro.valor)
+            );
+            paginaAtualAgendamentos = 1;
+            const resumoPartes = [
+                `${totalAgendamentosConsultados.toLocaleString('pt-BR')} agendamento(s) consultado(s)`,
+                `${agendamentosFiltradosCache.length.toLocaleString('pt-BR')} de ${agendamentosConsultaCache.length.toLocaleString('pt-BR')} linha(s) detalhada(s)`
+            ];
+            if (filtros.length && !agendamentosFiltradosCache.length) {
+                resumoPartes.push('nenhum registro corresponde aos filtros locais');
+            }
+            if (agendamentosTemProximaPaginaServidor) {
+                resumoPartes.push('a API indica que há mais resultados além da página retornada');
+            }
+            document.getElementById('resumoAgendamentos').innerText = `${resumoPartes.join(' · ')}.`;
+            document.getElementById('detalhesAgendamentos').classList.add('hidden');
+            document.getElementById('paginacaoAgendamentos').classList.toggle('hidden', agendamentosFiltradosCache.length <= AGENDAMENTOS_POR_PAGINA);
+            desenharPaginaAgendamentos();
+        }
+
+        function limparFiltrosLocaisAgendamentos() {
+            FILTROS_LOCAIS_AGENDAMENTOS.forEach(({ id }) => {
+                document.getElementById(id).value = '';
+            });
+            aplicarFiltrosLocaisAgendamentos();
+        }
+
+        function desenharPaginaAgendamentos() {
+            document.getElementById('btnExportarAgendamentos').disabled = agendamentosFiltradosCache.length === 0;
+            const inicio = (paginaAtualAgendamentos - 1) * AGENDAMENTOS_POR_PAGINA;
+            const itensPagina = agendamentosFiltradosCache.slice(inicio, inicio + AGENDAMENTOS_POR_PAGINA);
+            document.getElementById('tbodyAgendamentos').innerHTML = itensPagina.map(linha =>
+                `<tr>${colunasAgendamentosCache.map(coluna => `<td class="p-3 border-r border-slate-800 align-top whitespace-nowrap">${escapeHtml(formatarValorAgendamento(linha[coluna]))}</td>`).join('')}</tr>`
+            ).join('');
+
+            const totalPaginas = Math.max(1, Math.ceil(agendamentosFiltradosCache.length / AGENDAMENTOS_POR_PAGINA));
+            document.getElementById('textoPaginaAgendamentos').innerText = `Página ${paginaAtualAgendamentos} de ${totalPaginas}`;
+            document.getElementById('btnPaginaAnteriorAgendamentos').disabled = paginaAtualAgendamentos <= 1;
+            document.getElementById('btnPaginaSeguinteAgendamentos').disabled = paginaAtualAgendamentos >= totalPaginas;
+        }
+
+        function mudarPaginaAgendamentos(direcao) {
+            const totalPaginas = Math.max(1, Math.ceil(agendamentosFiltradosCache.length / AGENDAMENTOS_POR_PAGINA));
+            paginaAtualAgendamentos = Math.min(totalPaginas, Math.max(1, paginaAtualAgendamentos + direcao));
+            desenharPaginaAgendamentos();
+        }
+
+        function baixarExcelAgendamentos() {
+            if (!agendamentosFiltradosCache.length) {
+                alert('Não há registros no resultado filtrado para exportar.');
+                return;
+            }
+
+            try {
+                const workbook = XLSX.utils.book_new();
+                const linhasPorAba = 1048575; // Limite do Excel, reservando uma linha para o cabeçalho.
+                for (let inicio = 0; inicio < agendamentosFiltradosCache.length; inicio += linhasPorAba) {
+                    const linhas = agendamentosFiltradosCache.slice(inicio, inicio + linhasPorAba);
+                    const worksheet = XLSX.utils.json_to_sheet(linhas, { header: colunasAgendamentosCache });
+                    const numeroAba = Math.floor(inicio / linhasPorAba) + 1;
+                    XLSX.utils.book_append_sheet(workbook, worksheet, `Agendamentos_${numeroAba}`);
+                }
+                XLSX.writeFile(workbook, `C5_Agendamentos_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            } catch (erro) {
+                console.error('Erro ao exportar agendamentos:', erro);
+                alert('Falha ao exportar agendamentos para Excel: ' + erro.message);
+            }
+        }
+
+        async function consultarAgendamentos() {
+            const clienteId = document.getElementById('selectClienteAgendamentos').value;
+            const dataInicio = document.getElementById('inputDataInicioAgendamentos').value;
+            const dataInicioDate = dataInicio ? new Date(`${dataInicio}T00:00:00Z`) : null;
+            const status = document.getElementById('selectStatusAgendamentos').value;
+            const statusTexto = document.getElementById('statusConsultaAgendamentos');
+            const btn = document.getElementById('btnConsultarAgendamentos');
+            const textoBtn = document.getElementById('txtBtnConsultarAgendamentos');
+            const spinner = document.getElementById('spinnerConsultarAgendamentos');
+
+            if (!clienteId) {
+                statusTexto.innerText = 'Selecione um cliente para realizar a consulta.';
+                statusTexto.className = 'text-sm text-amber-400';
+                return;
+            }
+            if (dataInicio && (!/^\d{4}-\d{2}-\d{2}$/.test(dataInicio) ||
+                Number.isNaN(dataInicioDate.getTime()) ||
+                dataInicioDate.toISOString().slice(0, 10) !== dataInicio)) {
+                statusTexto.innerText = 'Data inicial inválida.';
+                statusTexto.className = 'text-sm text-amber-400';
+                return;
+            }
+
+            btn.disabled = true;
+            textoBtn.innerText = 'Consultando...';
+            spinner.classList.remove('hidden');
+            statusTexto.innerText = 'Consultando agendamentos...';
+            statusTexto.className = 'text-sm text-cyan-400';
+            document.getElementById('resultadoAgendamentos').classList.add('hidden');
+
+            try {
+                const resposta = await fetchHibrido('consulta_agendamentos', clienteId, { dataInicio, status });
+                if (resposta && resposta.erro) {
+                    statusTexto.innerText = `Falha ao consultar agendamentos: ${resposta.erro}${resposta.detalhes ? ` — ${resposta.detalhes}` : ''}`;
+                    statusTexto.className = 'text-sm text-red-400';
+                    return;
+                }
+
+                renderizarAgendamentos(resposta);
+                statusTexto.innerText = `Consulta concluída para ${bdClientes[clienteId].nome}.`;
+                statusTexto.className = 'text-sm text-emerald-400';
+            } catch (erro) {
+                statusTexto.innerText = `Falha ao consultar agendamentos: ${erro.message}`;
+                statusTexto.className = 'text-sm text-red-400';
+            } finally {
+                btn.disabled = false;
+                textoBtn.innerText = '▶ Consultar Agendamentos';
+                spinner.classList.add('hidden');
             }
         }
 
