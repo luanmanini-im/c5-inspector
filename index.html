@@ -127,6 +127,58 @@
             background: #334155;
             color: #fbbf24;
         }
+
+        #ferramentaRtc { --rtc-accent: #ffc107; --rtc-border: #343b4d; }
+        #ferramentaRtc .rtc-card { background: #1b1f2e; border: 1px solid var(--rtc-border); border-radius: 12px; padding: 20px; }
+        #ferramentaRtc .rtc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+        #ferramentaRtc .rtc-title { color: #f1f5f9; font-size: 16px; font-weight: 650; margin: 0; }
+        #ferramentaRtc .rtc-help { color: #a3adbf; font-size: 12px; line-height: 1.6; margin: 6px 0 0; }
+        #ferramentaRtc .rtc-step { color: var(--rtc-accent); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; }
+        #ferramentaRtc .rtc-button {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 10px 16px; border: 1px solid var(--rtc-border); border-radius: 8px;
+            background: #252b3a; color: #e2e8f0; font-size: 13px; font-weight: 600; cursor: pointer;
+        }
+        #ferramentaRtc .rtc-button:hover:not(:disabled) { background: #30384a; border-color: #64748b; }
+        #ferramentaRtc .rtc-button-primary { background: var(--rtc-accent); border-color: var(--rtc-accent); color: #13161f; }
+        #ferramentaRtc .rtc-button-primary:hover:not(:disabled) { background: #e0a800; border-color: #e0a800; }
+        #ferramentaRtc .rtc-button:disabled { opacity: .45; cursor: not-allowed; }
+        #ferramentaRtc .rtc-link { color: #cbd5e1; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+        #ferramentaRtc .rtc-link:hover { color: var(--rtc-accent); }
+        #ferramentaRtc .rtc-link:disabled { opacity: .45; cursor: not-allowed; }
+        #ferramentaRtc button:focus-visible, #ferramentaRtc input:focus-visible,
+        #ferramentaRtc select:focus-visible, #ferramentaRtc summary:focus-visible { outline: 2px solid var(--rtc-accent); outline-offset: 3px; }
+        #ferramentaRtc .rtc-file { display: block; width: 100%; padding: 12px; border: 1px dashed #596174; border-radius: 8px; background: #13161f; color: #cbd5e1; font-size: 13px; }
+        #ferramentaRtc .rtc-file::file-selector-button { background: #30384a; color: #e2e8f0; border: 1px solid #596174; border-radius: 5px; padding: 6px 12px; margin-right: 12px; cursor: pointer; }
+        #ferramentaRtc .rtc-table-wrap { max-height: 480px; overflow: auto; border: 1px solid var(--rtc-border); border-radius: 8px; }
+        #ferramentaRtc .rtc-table { width: 100%; min-width: 760px; font-size: 12px; text-align: left; border-collapse: separate; border-spacing: 0; }
+        #ferramentaRtc .rtc-table th { position: sticky; top: 0; z-index: 1; background: #252b3a; color: #cbd5e1; padding: 12px; font-weight: 600; }
+        #ferramentaRtc .rtc-table td { padding: 14px 12px; border-top: 1px solid var(--rtc-border); vertical-align: middle; }
+        #ferramentaRtc .rtc-table tr:hover td { background: #222838; }
+        #ferramentaRtc .rtc-code { width: 96px; padding: 9px; background: #13161f; color: #f1f5f9; border: 1px solid #596174; border-radius: 6px; font-family: monospace; }
+        #ferramentaRtc input[type=checkbox] { accent-color: var(--rtc-accent); width: 18px; height: 18px; cursor: pointer; }
+        #ferramentaRtc .rtc-status { display: inline-block; padding: 4px 8px; border: 1px solid #465064; border-radius: 5px; color: #cbd5e1; white-space: nowrap; }
+        #ferramentaRtc .rtc-status-review { color: #fcd34d; border-color: #806820; }
+        #ferramentaRtc .rtc-empty { padding: 28px 16px; border: 1px dashed var(--rtc-border); border-radius: 8px; text-align: center; }
+        #ferramentaRtc .rtc-count { font-size: 13px; color: #cbd5e1; margin-top: 6px; }
+        #ferramentaRtc #rtcOrigem {
+            color: #e2e8f0; background: #13161f; border: 1px solid var(--rtc-border);
+            border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.6;
+            max-height: 50vh; overflow: auto; overflow-wrap: anywhere; margin: 16px 0 0;
+        }
+        #ferramentaRtc #rtcOrigem:empty { display: none; }
+        #ferramentaRtc #rtcHistoricoModal {
+            width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 32px);
+            margin: auto; padding: 24px; background: #1b1f2e; color: #e2e8f0;
+            border: 1px solid var(--rtc-border); border-radius: 12px;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, .5);
+        }
+        #ferramentaRtc #rtcHistoricoModal:not([open]) { display: none; }
+        #ferramentaRtc #rtcHistoricoModal::backdrop { background: rgba(0, 0, 0, .65); }
+        @media (max-width: 640px) {
+            #ferramentaRtc { padding: 16px; }
+            #ferramentaRtc .rtc-card { padding: 16px; }
+        }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
@@ -821,74 +873,113 @@
 
             <!-- ABA 3: IMPLANTADOR DE CONDIÇÕES - RTC -->
             <div id="ferramentaRtc" class="p-6 flex-1 overflow-auto flex flex-col gap-6 hidden min-h-0">
-                <div class="bg-rose-950/30 border border-rose-900/50 p-4 rounded-lg">
-                    <h4 class="text-rose-400 font-bold text-sm mb-2">RTC — Reaproveitamento e implantação</h4>
-                    <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
+                <div>
+                    <h4 class="text-xl font-bold text-slate-100 mb-1">Classificações e cenários RTC</h4>
+                    <p class="rtc-help">Reutilize classificações entre clientes ou implante famílias nos cenários do ERP.</p>
+                    <details class="text-xs text-slate-300 mt-3">
+                        <summary class="rtc-link">Como funciona e cuidados com os dados</summary>
+                    <ul class="rtc-help list-disc list-inside mt-3">
                         <li>Modelo obrigatório: <strong>COD_FAMILIA / DESCRICAO / NCM / CCLASTRIB</strong>. CClassTrib pode ficar vazio somente na consulta.</li>
                         <li>A base é compartilhada entre todos os clientes. A comparação usa NCM e descrição exatos, normalizando espaços e maiúsculas.</li>
                         <li>Implantações confirmadas alimentam a base automaticamente. Histórico não é validação tributária legal.</li>
-                        <li>Normal e VPN precisam de acesso ao Google. Use “Pendências” para recuperar execuções interrompidas, sem repetir vínculos já conferidos.</li>
+                        <li>Normal e VPN precisam de acesso ao Google. Use “Recuperar operações interrompidas” para retomar pendências, sem repetir vínculos já conferidos.</li>
                     </ul>
-                    <details class="text-xs text-slate-300 mt-2">
-                        <summary class="cursor-pointer">Armazenamento e recuperação</summary>
                         <p class="mt-2">O backend inicializa RTC_Base, RTC_Historico e RTC_Execucoes na planilha configurada. Não edite os cabeçalhos nem as abas de controle manualmente. Correções da referência global ficam no histórico. Em falhas de conexão, uma reserva pode levar até 10 minutos para expirar; depois, a retomada confere o ERP antes de enviar vínculos ausentes. “SINCRONIZAR” grava somente a base, sem implantar novamente.</p>
                         <p class="mt-2">Use colunas de texto: NCM com 8 dígitos e CClassTrib com 6. Células numéricas do Excel serão completadas com zeros à esquerda nesses dois campos; zeros já perdidos no código da família não podem ser recuperados. O modelo antigo de duas colunas não é aceito. Linhas inválidas bloqueiam o arquivo inteiro e são identificadas no console.</p>
                         <p class="mt-2">Publicação: atualize o código do backend no Apps Script e publique uma nova versão da implantação Web App existente, mantendo a URL configurada. Depois distribua este frontend. Antes do uso em lote, confira um pequeno arquivo no cliente de teste nos modos normal e VPN. A base não substitui revisão tributária nem backup da planilha.</p>
                     </details>
                 </div>
                 <fieldset id="rtcControles" class="space-y-4 min-w-0">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                    <div class="rtc-card">
+                    <div class="rtc-toolbar mb-4">
+                        <h5 class="rtc-title">O que você deseja fazer?</h5>
+                        <button onclick="listarPendenciasRtc()" class="rtc-link">Recuperar operações interrompidas</button>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Cliente de destino / origem da importação</label>
-                            <select id="selectClienteRtc" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
-                                <option value="">Carregando...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Rotina</label>
+                            <label for="rtcRotina" class="block text-xs font-bold text-slate-400 mb-2">Rotina</label>
                             <select id="rtcRotina" onchange="alternarRotinaRtc()" class="w-full p-2.5 border rounded-lg text-sm imendes-input">
                                 <option value="implantacao">Implantação de cenários</option>
                                 <option value="reaproveitamento">Reaproveitamento de dados</option>
                             </select>
+                            <p id="rtcAjudaRotina" class="rtc-help">Vincule famílias aos cenários do cliente. As classificações confirmadas alimentarão a base.</p>
+                        </div>
+                        <div>
+                            <label id="rtcLabelCliente" for="selectClienteRtc" class="block text-xs font-bold text-slate-400 mb-2">Cliente de destino</label>
+                            <select id="selectClienteRtc" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
+                                <option value="">Carregando...</option>
+                            </select>
+                            <p id="rtcAjudaCliente" class="rtc-help">O ERP deste cliente receberá os vínculos após sua confirmação.</p>
                         </div>
                     </div>
-                    <div class="flex gap-2 flex-wrap">
-                        <button onclick="baixarModeloRtc()" class="px-3 py-2 bg-slate-700 rounded text-sm">Baixar modelo</button>
-                        <button onclick="listarPendenciasRtc()" class="px-3 py-2 bg-amber-700 rounded text-sm">Pendências (todos os clientes)</button>
+                    <div id="rtcPendencias" class="space-y-2 text-sm mt-3"></div>
                     </div>
-                    <div id="rtcPendencias" class="space-y-2 text-sm"></div>
                     <div id="rtcReaproveitamento" class="hidden space-y-4">
-                        <input type="file" id="inputBaseRtc" accept=".xlsx,.xls,.csv" class="w-full p-2 border border-slate-700 rounded text-sm">
-                        <div class="flex gap-2 flex-wrap">
-                            <button onclick="consultarBaseRtc()" class="px-3 py-2 bg-blue-700 rounded text-sm">Consultar classificações</button>
-                            <button onclick="importarBaseRtc()" class="px-3 py-2 bg-emerald-700 rounded text-sm">Importar referências revisadas</button>
-                            <button onclick="aprovarPropostasRtc()" class="px-3 py-2 bg-slate-700 rounded text-sm">Aprovar correspondências sem divergência</button>
-                            <button onclick="aprovarTodasRtc()" class="px-3 py-2 bg-amber-700 rounded text-sm">Aprovar todas</button>
-                            <button onclick="exportarBaseRtc()" class="px-3 py-2 bg-slate-700 rounded text-sm">Exportar revisados</button>
+                        <div class="rtc-card space-y-4">
+                            <div class="rtc-toolbar">
+                                <div><p class="rtc-step">1. Buscar</p><h5 class="rtc-title">Envie a planilha de famílias</h5></div>
+                                <button onclick="baixarModeloRtc()" class="rtc-link">Baixar modelo de planilha</button>
+                            </div>
+                            <p id="rtcAjudaArquivo" class="rtc-help">COD_FAMILIA · DESCRICAO · NCM · CCLASTRIB. Deixe o CClassTrib vazio quando não souber o código.</p>
+                            <label for="inputBaseRtc" class="sr-only">Planilha para consulta ou importação</label>
+                            <input type="file" id="inputBaseRtc" accept=".xlsx,.xls,.csv" aria-describedby="rtcAjudaArquivo" class="rtc-file">
+                            <div class="rtc-toolbar">
+                                <p class="rtc-help">A busca consulta a base de todos os clientes. Não altera o ERP.</p>
+                                <button onclick="consultarBaseRtc()" class="rtc-button rtc-button-primary">Buscar CClassTrib</button>
+                            </div>
+                            <details class="border-t border-slate-700 pt-3">
+                                <summary class="rtc-link">Já tenho classificações revisadas e quero adicioná-las à base</summary>
+                                <p class="rtc-help mb-3">Esta é uma ação separada da busca. Importa o arquivo selecionado acima, com os quatro campos preenchidos. Selecione o cliente de origem; os dados ficarão disponíveis para todos os clientes. Não utiliza as edições da tabela abaixo.</p>
+                                <button onclick="importarBaseRtc()" class="rtc-button">Adicionar arquivo à base compartilhada</button>
+                            </details>
                         </div>
-                        <p class="text-xs text-slate-400">Revise o código e marque “Aprovado” antes de exportar. “Aprovar todas” marca todas as linhas com CClassTrib de 6 dígitos, inclusive não encontradas e divergentes; códigos vazios ou inválidos permanecem pendentes. Isso não grava na base nem implanta no ERP. Pendências serão exportadas em uma aba separada; a implantação lê somente a primeira aba.</p>
-                        <div class="overflow-auto max-h-96">
-                            <table class="w-full text-xs text-left">
-                                <thead><tr><th class="p-2">Família / descrição</th><th class="p-2">NCM</th><th class="p-2">Situação / referências</th><th class="p-2">CClassTrib</th><th class="p-2">Aprovado</th><th class="p-2">Origem / revisão global</th></tr></thead>
+                        <div id="rtcVazio" class="rtc-empty">
+                            <h5 class="rtc-title">Suas classificações aparecerão aqui</h5>
+                            <p class="rtc-help">Envie uma planilha e clique em “Buscar CClassTrib” para revisar os resultados.</p>
+                        </div>
+                        <div id="rtcRevisao" class="rtc-card space-y-4 hidden">
+                            <div class="rtc-toolbar">
+                                <div>
+                                    <p class="rtc-step">2. Revisar e baixar</p>
+                                    <h5 class="rtc-title">Confira os códigos antes de aprovar</h5>
+                                    <p id="rtcResumoRevisao" class="rtc-count" role="status" aria-live="polite"></p>
+                                </div>
+                                <button id="rtcExportar" onclick="exportarBaseRtc()" class="rtc-button rtc-button-primary" disabled>Baixar planilha aprovada</button>
+                            </div>
+                            <div class="rtc-toolbar">
+                                <p class="rtc-help">Use “Aprovar todas” no cabeçalho da coluna ou marque as linhas individualmente.</p>
+                                <button onclick="aprovarPropostasRtc()" class="rtc-link">Aprovar só correspondências sem divergência</button>
+                            </div>
+                        <div class="rtc-table-wrap">
+                            <table class="rtc-table">
+                                <thead><tr><th>Família / descrição</th><th>NCM</th><th>Resultado da busca</th><th>CClassTrib</th><th class="text-center">Aprovado<br><button onclick="aprovarTodasRtc()" class="rtc-link mt-2" title="Marcar todas as linhas com CClassTrib válido, após confirmação">Aprovar todas</button></th><th>Referência</th></tr></thead>
                                 <tbody id="rtcResultadoBase"></tbody>
                             </table>
                         </div>
-                        <pre id="rtcOrigem" class="text-xs whitespace-pre-wrap max-h-48 overflow-auto"></pre>
+                        <p class="rtc-help">A aprovação apenas prepara a exportação: não grava na base nem implanta no ERP. “Aprovar todas” inclui códigos de 6 dígitos, mesmo sem referência ou com conflito; vazios e inválidos ficam pendentes. As linhas não aprovadas serão separadas em outra aba do arquivo.</p>
+                        </div>
                     </div>
                     <div id="rtcImplantacao" class="space-y-4">
-                    <div id="rtcPasso1" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Planilha padronizada (quatro colunas)</label>
-                            <input type="file" id="inputArquivoRtc" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="w-full p-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-300 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-rose-400 file:text-slate-900 hover:file:bg-rose-500 cursor-pointer">
+                    <div id="rtcPasso1" class="rtc-card space-y-4">
+                        <div class="rtc-toolbar">
+                            <div><p class="rtc-step">1. Preparar</p><h5 class="rtc-title">Envie a planilha já classificada</h5></div>
+                            <button onclick="baixarModeloRtc()" class="rtc-link">Baixar modelo de planilha</button>
                         </div>
-                    <button id="btnAnalisarRtc" onclick="analisarPlanilhaRtc()" class="w-full bg-rose-600 hover:bg-rose-500 text-white py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
-                        <span>▶ Analisar Planilha e Buscar Cenários</span>
+                        <div>
+                            <label for="inputArquivoRtc" class="rtc-help block mb-3">COD_FAMILIA · DESCRICAO · NCM · CCLASTRIB. Os quatro campos devem estar preenchidos.</label>
+                            <input type="file" id="inputArquivoRtc" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="rtc-file">
+                        </div>
+                    <div class="rtc-toolbar">
+                        <p class="rtc-help">Você revisará os cenários antes de qualquer alteração no ERP.</p>
+                    <button id="btnAnalisarRtc" onclick="analisarPlanilhaRtc()" class="rtc-button rtc-button-primary">
+                        Analisar planilha e buscar cenários
                     </button>
+                    </div>
                 </div>
 
                 <!-- Passo 2: Mapeamento e Confirmação -->
-                <div id="rtcPasso2" class="hidden flex-col gap-4 flex-1">
-                    <h4 class="text-sm font-bold text-white border-b border-slate-800 pb-2">Confirmação de Cenários por CClassTrib</h4>
+                <div id="rtcPasso2" class="rtc-card hidden flex-col gap-4 flex-1">
+                    <div><p class="rtc-step">2. Conferir e implantar</p><h4 class="rtc-title">Confirme os cenários de cada CClassTrib</h4></div>
                     <div class="flex-1 overflow-auto border border-slate-800 rounded bg-slate-950">
                         <table class="w-full text-left border-collapse text-xs">
                             <thead class="bg-slate-900 text-slate-300 uppercase font-bold sticky top-0 shadow-xs">
@@ -905,19 +996,30 @@
                     </div>
                     
                     <div class="grid grid-cols-2 gap-4">
-                        <button onclick="cancelarRtc()" class="w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg transition-all cursor-pointer font-bold">
+                        <button onclick="cancelarRtc()" class="rtc-button">
                             Nova planilha
                         </button>
-                        <button id="btnImplantarRtc" onclick="implantarCondicoesRtc()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
-                            <span>🚀 Confirmar e Implantar Condições</span>
+                        <button id="btnImplantarRtc" onclick="implantarCondicoesRtc()" class="rtc-button rtc-button-primary">
+                            Confirmar implantação no ERP
                         </button>
                     </div>
 
                     </div>
                     </div>
                 </fieldset>
+                <dialog id="rtcHistoricoModal" aria-labelledby="rtcHistoricoTitulo" aria-describedby="rtcHistoricoFamilia" onkeydown="if (event.key === 'Escape') { event.preventDefault(); this.close(); }">
+                    <div class="rtc-toolbar">
+                        <h4 id="rtcHistoricoTitulo" class="rtc-title">Histórico da classificação</h4>
+                        <form method="dialog" class="m-0">
+                            <button class="rtc-button" autofocus>Fechar</button>
+                        </form>
+                    </div>
+                    <p id="rtcHistoricoFamilia" class="rtc-help"></p>
+                    <pre id="rtcOrigem" aria-label="Histórico da classificação" tabindex="0" class="whitespace-pre-wrap"></pre>
+                    <p class="rtc-help">Pressione Esc ou clique em Fechar para voltar à tabela.</p>
+                </dialog>
                 <div class="flex flex-col h-48 mt-2">
-                    <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">Console RTC</h4>
+                    <h4 class="text-xs font-bold text-slate-400 mb-2">Atividade e mensagens</h4>
                     <pre id="logFerramentaRtc" role="status" aria-live="polite" class="flex-1 bg-black border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-slate-300 overflow-y-auto log-scroll whitespace-pre-wrap">Aguardando análise...</pre>
                 </div>
             </div>
@@ -1416,7 +1518,7 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzxxNQQhyaLlRfdssU_2nVzwDr9cFwq8CneMsjO-fRxNhosDJFiLCsS7oFWj-NDh-UAAQ/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.40.1"; 
+        const VERSAO_FRONT = "v5.41.1"; 
         // Launcher local (.bat) hospedado no GitHub - baixa o HTML mais recente diretamente do repositorio
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -4718,6 +4820,13 @@
             const consulta = document.getElementById('rtcRotina').value === 'reaproveitamento';
             document.getElementById('rtcReaproveitamento').classList.toggle('hidden', !consulta);
             document.getElementById('rtcImplantacao').classList.toggle('hidden', consulta);
+            document.getElementById('rtcLabelCliente').textContent = consulta ? 'Cliente de origem (somente para adicionar à base)' : 'Cliente de destino';
+            document.getElementById('rtcAjudaCliente').textContent = consulta
+                ? 'Não é necessário selecionar cliente para buscar: a base é compartilhada.'
+                : 'O ERP deste cliente receberá os vínculos após sua confirmação.';
+            document.getElementById('rtcAjudaRotina').textContent = consulta
+                ? 'Busque códigos no histórico, revise os resultados e baixe a planilha aprovada.'
+                : 'Vincule famílias aos cenários do cliente. As classificações confirmadas alimentarão a base.';
         }
 
         function rtcCodigo(valor, tamanho) {
@@ -4821,16 +4930,31 @@
         }
 
         function renderizarBaseRtc() {
+            const rotulos = new Map([
+                ['PROPOSTA', 'Sugestão encontrada'], ['CONCORDANTE', 'Confere com a base'],
+                ['NAO_ENCONTRADO', 'Sem referência'], ['DIVERGENCIA', 'Código divergente'], ['CONFLITO', 'Referências em conflito']
+            ]);
             document.getElementById('rtcResultadoBase').innerHTML = rtcConsulta.map((item, i) => `
-                <tr class="border-b border-slate-700">
-                    <td class="p-2">${escapeHtml(item.familia)}<br>${escapeHtml(item.descricao)}</td>
-                    <td class="p-2 font-mono">${escapeHtml(item.ncm)}</td>
-                    <td class="p-2">${escapeHtml(item.status)}<br>${escapeHtml(item.referencias.map(ref => ref.cclastrib).join(', '))}</td>
-                    <td class="p-2"><input aria-label="CClassTrib da família ${escapeHtml(item.familia)}" value="${escapeHtml(item.valor)}" maxlength="6" class="w-24 p-2 bg-slate-950 border rounded" oninput="rtcConsulta[${i}].valor=this.value.trim(); rtcConsulta[${i}].aprovado=false; document.getElementById('rtcAprovar${i}').checked=false;"></td>
-                    <td class="p-2"><input id="rtcAprovar${i}" aria-label="Aprovar família ${escapeHtml(item.familia)}" type="checkbox" ${item.aprovado ? 'checked' : ''} onchange="rtcConsulta[${i}].aprovado=this.checked"></td>
-                    <td class="p-2"><button onclick="verOrigemRtc(${i})" class="underline">Histórico</button>
-                    ${item.status === 'CONFLITO' ? `<button onclick="resolverConflitoRtc(${i})" class="block underline text-amber-400">Definir referência global</button>` : ''}</td>
+                <tr>
+                    <td><span class="text-slate-400 font-mono">${escapeHtml(item.familia)}</span><br>${escapeHtml(item.descricao)}</td>
+                    <td class="font-mono">${escapeHtml(item.ncm)}</td>
+                    <td><span class="rtc-status ${['DIVERGENCIA', 'CONFLITO'].includes(item.status) ? 'rtc-status-review' : ''}">${escapeHtml(rotulos.get(item.status) || item.status)}</span>
+                        ${item.referencias.length ? `<p class="rtc-help font-mono">${escapeHtml(item.referencias.map(ref => ref.cclastrib).join(', '))}</p>` : ''}</td>
+                    <td><input aria-label="CClassTrib da família ${escapeHtml(item.familia)}" value="${escapeHtml(item.valor)}" maxlength="6" class="rtc-code" oninput="rtcConsulta[${i}].valor=this.value.trim(); rtcConsulta[${i}].aprovado=false; document.getElementById('rtcAprovar${i}').checked=false; atualizarResumoRtc();"></td>
+                    <td class="text-center"><input id="rtcAprovar${i}" aria-label="Aprovar família ${escapeHtml(item.familia)}" type="checkbox" ${item.aprovado ? 'checked' : ''} onchange="rtcConsulta[${i}].aprovado=this.checked; atualizarResumoRtc();"></td>
+                    <td><button onclick="verOrigemRtc(${i})" class="rtc-link">Ver histórico</button>
+                    ${item.status === 'CONFLITO' ? `<button onclick="resolverConflitoRtc(${i})" class="rtc-link block mt-2">Revisar base global</button>` : ''}</td>
                 </tr>`).join('');
+            document.getElementById('rtcRevisao').classList.toggle('hidden', !rtcConsulta.length);
+            document.getElementById('rtcVazio').classList.toggle('hidden', !!rtcConsulta.length);
+            atualizarResumoRtc();
+        }
+
+        function atualizarResumoRtc() {
+            const aprovadas = rtcConsulta.filter(item => item.aprovado).length;
+            document.getElementById('rtcResumoRevisao').textContent =
+                `${rtcConsulta.length} famílias · ${aprovadas} aprovadas · ${rtcConsulta.length - aprovadas} aguardando revisão`;
+            document.getElementById('rtcExportar').disabled = aprovadas === 0;
         }
 
         function aprovarPropostasRtc() {
@@ -4868,11 +4992,24 @@
         }
 
         async function verOrigemRtc(indice) {
+            const acionador = document.activeElement;
+            let abrir = false;
             await rtcNaTela(async () => {
-                const dados = await rtcApi('rtc_historico', { item: rtcConsulta[indice] });
-                document.getElementById('rtcOrigem').textContent = `Histórico: ${dados.total} eventos (últimos 50)\n` +
-                    dados.eventos.map(evento => `${evento.data} | ${evento.tipo} | Cliente ${evento.cliente || '-'} / família ${evento.familia} | ${evento.cclastrib} | ${evento.usuario} | ${evento.origem}`).join('\n');
+                const item = rtcConsulta[indice];
+                document.getElementById('rtcOrigem').textContent = '';
+                const dados = await rtcApi('rtc_historico', { item });
+                document.getElementById('rtcHistoricoFamilia').textContent = `Família ${item.familia} · NCM ${item.ncm}\n${item.descricao}`;
+                document.getElementById('rtcOrigem').textContent = dados.eventos.length
+                    ? `${dados.total} evento(s) registrado(s) · Exibindo os últimos 50\n\n` +
+                        dados.eventos.map(evento => `${evento.data} · ${evento.tipo}\nCClassTrib: ${evento.cclastrib}\nCliente: ${evento.cliente || '-'} · Família: ${evento.familia}\nResponsável: ${evento.usuario}\nOrigem: ${evento.origem}`).join('\n\n')
+                    : 'Nenhum histórico encontrado para este NCM e descrição.';
+                abrir = true;
             });
+            if (abrir) {
+                const modal = document.getElementById('rtcHistoricoModal');
+                modal.onclose = () => { if (acionador?.isConnected) acionador.focus(); };
+                modal.showModal();
+            }
         }
 
         async function resolverConflitoRtc(indice) {
@@ -4904,7 +5041,7 @@
                 try {
                     resposta = await rtcApi('rtc_preparar', { id, tipo, cliente, arquivo, itens: itens.slice(i, i + 20) });
                 } catch (erro) {
-                    throw new Error(`Registro interrompido no lote ${id}. ${execucoes.length} lotes anteriores foram salvos. Consulte Pendências antes de reenviar; os registros posteriores a este lote ainda não foram enviados. ${erro.message}`);
+                    throw new Error(`Registro interrompido no lote ${id}. ${execucoes.length} lotes anteriores foram salvos. Use “Recuperar operações interrompidas” antes de reenviar; os registros posteriores a este lote ainda não foram enviados. ${erro.message}`);
                 }
                 execucoes.push(resposta.execucao);
             }
@@ -5010,7 +5147,7 @@
             try {
                 resposta = await rtcApi('rtc_confirmar', { id: execucao.id, reserva: execucao.reserva, confirmadas: [...confirmadas], detalhe: erros.join('\n') });
             } catch (erro) {
-                throw new Error(`Execução ${execucao.id}: ${confirmadas.size} famílias confirmadas, mas atualização da base pendente. Use Pendências; não reimporte para repetir a implantação. ${erro.message}`);
+                throw new Error(`Execução ${execucao.id}: ${confirmadas.size} famílias confirmadas, mas atualização da base pendente. Use “Recuperar operações interrompidas”; não reimporte para repetir a implantação. ${erro.message}`);
             }
             rtcLog(`${execucao.id}: ${resposta.execucao.status}.`);
             return resposta.execucao;
@@ -5022,7 +5159,8 @@
                 const area = document.getElementById('rtcPendencias');
                 area.replaceChildren();
                 const resumo = document.createElement('p');
-                resumo.textContent = `${dados.total} lotes pendentes. Exibindo ${dados.execucoes.length} a partir de ${offset + 1}.`;
+                resumo.textContent = dados.total === 0 ? 'Nenhuma operação interrompida. Tudo em dia.' :
+                    `${dados.total} lotes para recuperar, de todos os clientes. Exibindo ${offset + 1} a ${offset + dados.execucoes.length}.`;
                 area.appendChild(resumo);
                 dados.execucoes.forEach(execucao => {
                     const linha = document.createElement('div');
@@ -5030,7 +5168,7 @@
                     texto.textContent = `${execucao.tipo} | Cliente ${execucao.cliente} | ${execucao.arquivo} | ${execucao.status} | ${execucao.confirmadas.length}/${execucao.itens.length} | ${execucao.id} `;
                     const botao = document.createElement('button');
                     botao.textContent = execucao.status === 'SINCRONIZAR' ? 'Sincronizar base' : 'Conferir e retomar';
-                    botao.className = 'underline text-amber-400';
+                    botao.className = 'rtc-link';
                     botao.onclick = () => rtcNaTela(async () => {
                         if (!confirm(`Retomar ${execucao.id} no cliente ${execucao.cliente}? Vínculos existentes serão conferidos antes de enviar os ausentes.`)) return;
                         const resultado = await rtcProcessarExecucao(execucao);
@@ -5044,7 +5182,7 @@
                     if (pagina < 0 || pagina >= dados.total) continue;
                     const botao = document.createElement('button');
                     botao.textContent = rotulo;
-                    botao.className = 'px-3 underline';
+                    botao.className = 'rtc-link px-3';
                     botao.onclick = () => listarPendenciasRtc(pagina);
                     area.appendChild(botao);
                 }
@@ -5085,7 +5223,7 @@
 
         async function implantarCondicoesRtc() {
             await rtcNaTela(async () => {
-                if (rtcImplantacaoIniciada) throw new Error('Esta planilha já foi iniciada. Use Pendências para retomar ou Nova planilha.');
+                if (rtcImplantacaoIniciada) throw new Error('Esta planilha já foi iniciada. Use “Recuperar operações interrompidas” para retomar ou “Nova planilha”.');
                 if (document.getElementById('selectClienteRtc').value !== rtcClienteId) throw new Error('O cliente mudou. Analise a planilha novamente.');
                 const mapa = new Map();
                 document.querySelectorAll('.rtc-input-map').forEach(input => {
@@ -5106,7 +5244,7 @@
                     const resultado = await rtcProcessarExecucao(execucao);
                     if (resultado.status === 'CONCLUIDA') concluidas++;
                 }
-                rtcLog(`Finalizado: ${concluidas}/${execucoes.length} lotes concluídos. ${execucoes.length - concluidas} pendentes. Consulte Pendências para retomar.`);
+                rtcLog(`Finalizado: ${concluidas}/${execucoes.length} lotes concluídos. ${execucoes.length - concluidas} pendentes. Use “Recuperar operações interrompidas” para retomar.`);
             });
         }
 
