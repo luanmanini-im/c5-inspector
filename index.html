@@ -940,11 +940,14 @@
                         <div id="rtcRevisao" class="rtc-card space-y-4 hidden">
                             <div class="rtc-toolbar">
                                 <div>
-                                    <p class="rtc-step">2. Revisar e baixar</p>
+                                    <p class="rtc-step">2. Revisar e continuar</p>
                                     <h5 class="rtc-title">Confira os códigos antes de aprovar</h5>
                                     <p id="rtcResumoRevisao" class="rtc-count" role="status" aria-live="polite"></p>
                                 </div>
-                                <button id="rtcExportar" onclick="exportarBaseRtc()" class="rtc-button rtc-button-primary" disabled>Baixar planilha aprovada</button>
+                                <div class="flex gap-2 flex-wrap">
+                                    <button id="rtcExportar" onclick="exportarBaseRtc()" class="rtc-button" disabled>Baixar planilha aprovada</button>
+                                    <button id="rtcImplantarAprovados" onclick="implantarAprovadosRtc()" class="rtc-button rtc-button-primary" disabled>Implantar Dados Aprovados</button>
+                                </div>
                             </div>
                             <div class="rtc-toolbar">
                                 <p class="rtc-help">Use “Aprovar todas” no cabeçalho da coluna ou marque as linhas individualmente.</p>
@@ -956,7 +959,7 @@
                                 <tbody id="rtcResultadoBase"></tbody>
                             </table>
                         </div>
-                        <p class="rtc-help">A aprovação apenas prepara a exportação: não grava na base nem implanta no ERP. “Aprovar todas” inclui códigos de 6 dígitos, mesmo sem referência ou com conflito; vazios e inválidos ficam pendentes. As linhas não aprovadas serão separadas em outra aba do arquivo.</p>
+                        <p class="rtc-help">A aprovação não grava na base nem implanta no ERP. Baixe a planilha ou selecione o cliente de destino e use “Implantar Dados Aprovados” para revisar os cenários, sem reenviar o arquivo. Só as linhas aprovadas seguirão para implantação, que exige confirmação. “Aprovar todas” inclui códigos de 6 dígitos, mesmo sem referência ou com conflito; vazios e inválidos ficam pendentes. No download, linhas não aprovadas serão separadas em outra aba.</p>
                         </div>
                     </div>
                     <div id="rtcImplantacao" class="space-y-4">
@@ -980,6 +983,7 @@
                 <!-- Passo 2: Mapeamento e Confirmação -->
                 <div id="rtcPasso2" class="rtc-card hidden flex-col gap-4 flex-1">
                     <div><p class="rtc-step">2. Conferir e implantar</p><h4 class="rtc-title">Confirme os cenários de cada CClassTrib</h4></div>
+                    <p id="rtcResumoImplantacao" class="rtc-help"></p>
                     <div class="flex-1 overflow-auto border border-slate-800 rounded bg-slate-950">
                         <table class="w-full text-left border-collapse text-xs">
                             <thead class="bg-slate-900 text-slate-300 uppercase font-bold sticky top-0 shadow-xs">
@@ -1518,7 +1522,7 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzxxNQQhyaLlRfdssU_2nVzwDr9cFwq8CneMsjO-fRxNhosDJFiLCsS7oFWj-NDh-UAAQ/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.41.1"; 
+        const VERSAO_FRONT = "v5.42.0"; 
         // Launcher local (.bat) hospedado no GitHub - baixa o HTML mais recente diretamente do repositorio
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -4776,7 +4780,9 @@
         let rtcCenariosAtivos = [];
         let rtcClienteId = '';
         let rtcItensImplantacao = [];
+        let rtcArquivoImplantacao = '';
         let rtcConsulta = [];
+        let rtcArquivoConsulta = '';
         let rtcOcupado = false;
         let rtcImplantacaoIniciada = false;
 
@@ -4820,12 +4826,12 @@
             const consulta = document.getElementById('rtcRotina').value === 'reaproveitamento';
             document.getElementById('rtcReaproveitamento').classList.toggle('hidden', !consulta);
             document.getElementById('rtcImplantacao').classList.toggle('hidden', consulta);
-            document.getElementById('rtcLabelCliente').textContent = consulta ? 'Cliente de origem (somente para adicionar à base)' : 'Cliente de destino';
+            document.getElementById('rtcLabelCliente').textContent = consulta ? 'Cliente de origem / destino da implantação' : 'Cliente de destino';
             document.getElementById('rtcAjudaCliente').textContent = consulta
-                ? 'Não é necessário selecionar cliente para buscar: a base é compartilhada.'
+                ? 'Não é necessário selecionar cliente para buscar. Para implantar os aprovados, selecione o destino; para importar referências, selecione a origem.'
                 : 'O ERP deste cliente receberá os vínculos após sua confirmação.';
             document.getElementById('rtcAjudaRotina').textContent = consulta
-                ? 'Busque códigos no histórico, revise os resultados e baixe a planilha aprovada.'
+                ? 'Busque códigos no histórico, revise os resultados e baixe ou encaminhe os aprovados para implantação.'
                 : 'Vincule famílias aos cenários do cliente. As classificações confirmadas alimentarão a base.';
         }
 
@@ -4921,9 +4927,11 @@
         async function consultarBaseRtc() {
             await rtcNaTela(async () => {
                 rtcConsulta = [];
+                rtcArquivoConsulta = '';
                 renderizarBaseRtc();
                 const dados = await rtcLerArquivo('inputBaseRtc', false);
                 rtcConsulta = await rtcConsultarItens(dados.itens);
+                rtcArquivoConsulta = dados.arquivo;
                 renderizarBaseRtc();
                 rtcLog('Consulta concluída. Revise as propostas; nenhuma referência foi gravada.');
             });
@@ -4955,6 +4963,7 @@
             document.getElementById('rtcResumoRevisao').textContent =
                 `${rtcConsulta.length} famílias · ${aprovadas} aprovadas · ${rtcConsulta.length - aprovadas} aguardando revisão`;
             document.getElementById('rtcExportar').disabled = aprovadas === 0;
+            document.getElementById('rtcImplantarAprovados').disabled = aprovadas === 0 || perfilEhSomenteLeitura();
         }
 
         function aprovarPropostasRtc() {
@@ -4977,11 +4986,32 @@
             });
         }
 
+        function obterAprovadosRtc() {
+            if (!rtcConsulta.length) throw new Error('Consulte uma planilha primeiro.');
+            const aprovados = rtcConsulta.filter(item => item.aprovado).map(item => ({
+                familia: item.familia, descricao: item.descricao, ncm: item.ncm, cclastrib: rtcCodigo(item.valor, 6)
+            }));
+            if (!aprovados.length) throw new Error('Aprove ao menos um registro para continuar.');
+            return aprovados;
+        }
+
+        async function implantarAprovadosRtc() {
+            await rtcNaTela(async () => {
+                if (perfilEhSomenteLeitura()) throw new Error('Seu perfil permite somente consulta.');
+                if (rtcImplantacaoIniciada) throw new Error('Uma implantação já foi iniciada. Use “Recuperar operações interrompidas” para retomar ou “Nova planilha” antes de preparar outra.');
+                const aprovados = obterAprovadosRtc();
+                const cliente = document.getElementById('selectClienteRtc').value;
+                if (!cliente) throw new Error('Selecione o cliente de destino antes de implantar os dados aprovados.');
+                const origem = rtcArquivoConsulta ? `${rtcArquivoConsulta} (dados aprovados)` : 'Reaproveitamento de dados aprovados';
+                await prepararImplantacaoRtc(cliente, aprovados, origem);
+                document.getElementById('rtcRotina').value = 'implantacao';
+                alternarRotinaRtc();
+            });
+        }
+
         async function exportarBaseRtc() {
             await rtcNaTela(async () => {
-                if (!rtcConsulta.length) throw new Error('Consulte uma planilha primeiro.');
-                const aprovados = rtcConsulta.filter(item => item.aprovado).map(item => ({ ...item, cclastrib: rtcCodigo(item.valor, 6) }));
-                if (!aprovados.length) throw new Error('Aprove ao menos um registro para exportar.');
+                const aprovados = obterAprovadosRtc();
                 const pendentes = rtcConsulta.filter(item => !item.aprovado).map(item => ({ ...item, cclastrib: item.cclastrib }));
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, rtcPlanilha(aprovados), 'RTC_Revisados');
@@ -5194,22 +5224,30 @@
                 const cliente = document.getElementById('selectClienteRtc').value;
                 if (!cliente) throw new Error('Selecione um cliente.');
                 const dados = await rtcLerArquivo('inputArquivoRtc', true);
-                rtcCenariosAtivos = rtcExtrairCenarios(await fetchHibrido('listar_cenarios', cliente)).filter(cenario => cenario.status === 'A');
-                rtcClienteId = cliente;
-                rtcItensImplantacao = dados.itens;
-                rtcImplantacaoIniciada = false;
-                const classes = [...new Set(dados.itens.map(item => item.cclastrib))];
-                document.getElementById('tbodyRtc').innerHTML = classes.map(cclastrib => {
-                    const ids = rtcCenariosAtivos.filter(cenario => rtcCodigo(cenario.codigoClassTrib, 6) === cclastrib).map(cenario => String(cenario.idCenario ?? cenario.id));
-                    return `<tr><td class="p-3 font-mono">${cclastrib}</td><td class="p-3">${dados.itens.filter(item => item.cclastrib === cclastrib).length}</td>
-                        <td class="p-3"><input aria-label="Cenários para ${cclastrib}" data-cclass="${cclastrib}" value="${ids.join(', ')}" placeholder="Ex.: 113, 114" class="rtc-input-map w-full p-2 border border-slate-700 bg-black rounded"></td></tr>`;
-                }).join('');
-                document.getElementById('rtcPasso1').classList.add('hidden');
-                document.getElementById('rtcPasso2').classList.remove('hidden');
-                document.getElementById('rtcPasso2').classList.add('flex');
-                document.getElementById('btnImplantarRtc').disabled = perfilEhSomenteLeitura();
-                rtcLog(`Análise concluída para o cliente ${cliente}. Revise todos os cenários.`);
+                await prepararImplantacaoRtc(cliente, dados.itens, dados.arquivo);
             });
+        }
+
+        async function prepararImplantacaoRtc(cliente, itens, arquivo) {
+            const cenarios = rtcExtrairCenarios(await fetchHibrido('listar_cenarios', cliente)).filter(cenario => cenario.status === 'A');
+            const classes = [...new Set(itens.map(item => item.cclastrib))];
+            const linhas = classes.map(cclastrib => {
+                const ids = cenarios.filter(cenario => rtcCodigo(cenario.codigoClassTrib, 6) === cclastrib).map(cenario => String(cenario.idCenario ?? cenario.id));
+                return `<tr><td class="p-3 font-mono">${cclastrib}</td><td class="p-3">${itens.filter(item => item.cclastrib === cclastrib).length}</td>
+                    <td class="p-3"><input aria-label="Cenários para ${cclastrib}" data-cclass="${cclastrib}" value="${ids.join(', ')}" placeholder="Ex.: 113, 114" class="rtc-input-map w-full p-2 border border-slate-700 bg-black rounded"></td></tr>`;
+            }).join('');
+            rtcCenariosAtivos = cenarios;
+            rtcClienteId = cliente;
+            rtcItensImplantacao = itens;
+            rtcArquivoImplantacao = arquivo;
+            rtcImplantacaoIniciada = false;
+            document.getElementById('tbodyRtc').innerHTML = linhas;
+            document.getElementById('rtcResumoImplantacao').textContent = `${itens.length} famílias · Cliente ${cliente} · Origem: ${arquivo}`;
+            document.getElementById('rtcPasso1').classList.add('hidden');
+            document.getElementById('rtcPasso2').classList.remove('hidden');
+            document.getElementById('rtcPasso2').classList.add('flex');
+            document.getElementById('btnImplantarRtc').disabled = perfilEhSomenteLeitura();
+            rtcLog(`Análise concluída para o cliente ${cliente}. Revise todos os cenários.`);
         }
 
         function cancelarRtc() {
@@ -5218,6 +5256,8 @@
             document.getElementById('rtcPasso1').classList.remove('hidden');
             document.getElementById('inputArquivoRtc').value = '';
             rtcItensImplantacao = [];
+            rtcArquivoImplantacao = '';
+            document.getElementById('rtcResumoImplantacao').textContent = '';
             rtcImplantacaoIniciada = false;
         }
 
@@ -5237,8 +5277,7 @@
                 if (!confirm(`Implantar ${itens.length} famílias no cliente ${rtcClienteId} e alimentar automaticamente a base compartilhada com as classificações confirmadas?`)) return;
                 rtcImplantacaoIniciada = true;
                 document.getElementById('btnImplantarRtc').disabled = true;
-                const arquivo = document.getElementById('inputArquivoRtc').files[0].name;
-                const execucoes = await rtcPrepararLotes('IMPLANTACAO', rtcClienteId, arquivo, itens);
+                const execucoes = await rtcPrepararLotes('IMPLANTACAO', rtcClienteId, rtcArquivoImplantacao, itens);
                 let concluidas = 0;
                 for (const execucao of execucoes) {
                     const resultado = await rtcProcessarExecucao(execucao);
