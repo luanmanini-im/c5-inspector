@@ -756,12 +756,14 @@
                     <h4 class="text-emerald-400 font-bold text-sm mb-2">Instruções da Planilha (Consulta Otimizada):</h4>
                     <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
                         <li>Suba um arquivo Excel (<strong class="text-white">.xlsx, .xls</strong>) ou <strong class="text-white">.csv</strong>.</li>
-                        <li><strong>Apenas na Coluna A:</strong> Insira o SKU do Produto (um por linha).</li>
-                        <li>O sistema utilizará a <strong>Consulta Leve</strong> (omitindo EAN) para alta performance em grandes volumes.</li>
+                        <li id="instrucaoTipoAnalise"><strong>Apenas na Coluna A:</strong> Insira o SKU do Produto (um por linha).</li>
+                        <li>A consulta em lotes inclui EANs, tributação, NCM e os IDs dos cenários CBS/IBS ativos, consultados por família. Não consulta regras por UF.</li>
+                        <li>Para cada imposto, usa o primeiro cenário retornado, como no Início, sem seleção adicional por vigência. Ausência de cenário e falha de consulta são indicadas separadamente no Excel.</li>
+                        <li id="instrucaoFamiliaAnalise" class="hidden">Para cada família, será analisado apenas o <strong>primeiro produto retornado pela API</strong>, como no Início. Não é uma análise de todos os SKUs da família.</li>
                     </ul>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">1. Cliente</label>
                         <select id="selectClienteAnalise" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
@@ -769,22 +771,29 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">2. Planilha SKUs</label>
+                        <label for="selectTipoAnalise" class="block text-xs font-bold text-slate-400 uppercase mb-1">2. Tipo de código</label>
+                        <select id="selectTipoAnalise" onchange="atualizarTipoAnalise()" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
+                            <option value="sku">SKU</option>
+                            <option value="familia">FAMÍLIA</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label id="labelArquivoAnalise" class="block text-xs font-bold text-slate-400 uppercase mb-1">3. Planilha SKUs</label>
                         <input type="file" id="inputArquivoAnalise" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="w-full p-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-300 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-emerald-400 file:text-slate-900 hover:file:bg-emerald-500 cursor-pointer">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="SKUs por lote">3. Qtd/Lote</label>
+                        <label id="labelLoteAnalise" class="block text-xs font-bold text-slate-400 uppercase mb-1" title="SKUs por lote">4. Qtd/Lote</label>
                         <input type="number" id="qtdLoteAnalise" value="20" min="1" max="100" step="1" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Atraso aplicado entre lotes">4. Atraso Lote (ms)</label>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Atraso aplicado entre lotes">5. Atraso Lote (ms)</label>
                         <input type="number" id="delayAnalise" value="0" min="0" step="10" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
                     </div>
                 </div>
 
                 <div class="flex gap-3">
                     <button id="btnStartAnalise" onclick="processarAnaliseTributacao()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
-                        <span>▶ Iniciar Consulta Sequencial Leve</span>
+                        <span>▶ Iniciar Consulta em Lotes</span>
                     </button>
                     <button id="btnStopAnalise" onclick="pararAnaliseTributacao()" class="hidden flex-1 bg-red-600 hover:bg-red-500 text-white py-3 rounded-lg transition-all shadow-md cursor-pointer font-bold flex items-center justify-center gap-2">
                         <span>⏹ Parar e Baixar Parcial</span>
@@ -802,9 +811,10 @@
                     <div class="w-full bg-slate-950 rounded-full h-5 border border-slate-800 overflow-hidden relative">
                         <div id="progressAnaliseBar" class="bg-emerald-500 h-5 transition-all duration-300" style="width: 0%"></div>
                     </div>
-                    <div class="mt-4 p-4 bg-black border border-slate-800 rounded flex gap-6 text-xs text-slate-400 font-mono">
-                        <div>Sucessos: <span id="analiseSucesso" class="text-emerald-400 font-bold text-sm">0</span></div>
+                    <div class="mt-4 p-4 bg-black border border-slate-800 rounded flex flex-wrap gap-6 text-xs text-slate-400 font-mono">
+                        <div>Produtos encontrados: <span id="analiseSucesso" class="text-emerald-400 font-bold text-sm">0</span></div>
                         <div>Erros / Ñ Encontrado: <span id="analiseErro" class="text-red-400 font-bold text-sm">0</span></div>
+                        <div title="Linhas com produto encontrado, mas sem família disponível ou com falha na consulta dos cenários">Falhas da reforma (linhas): <span id="analiseErroReforma" class="text-amber-400 font-bold text-sm">0</span></div>
                     </div>
                 </div>
             </div>
@@ -1368,10 +1378,10 @@
     </div> <!-- fecha appLayout -->
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyRJgUMErSlLTZSoDEm_J_jgqZQ3-fJrPBA748zKas2JxrrYrIvPhthYXowl5tA9AOqlQ/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxqlCba9VbfakWedyQ2j9CYB3GmLSYGLzx9b4HAVcG6PPL6OIKPnhpnK_gD5g_w-DEWwg/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.37.0"; 
+        const VERSAO_FRONT = "v5.39.0"; 
         // Launcher local (.bat) hospedado no GitHub - baixa o HTML mais recente diretamente do repositorio
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -1581,6 +1591,72 @@
             return resultado;
         }
 
+        async function buscarProdutosPorFamiliasLoteLocal(cliente, token, familiasCsv) {
+            const familias = [...new Set(String(familiasCsv || "").split(',').map(f => f.trim()).filter(Boolean))];
+            if (!familias.length) return { erro: "Array de Famílias vazio." };
+            const resultado = { total: familias.length, processados: 0, qtdSucesso: 0, qtdErros: 0, items: [], erros: [] };
+            const referencias = [];
+
+            await Promise.all(familias.map(async (familia) => {
+                try {
+                    const url = `${cliente.urlBase}/SMProdutosAPI/api/v4/produtos/dados-cadastrais?IdFamilia=${encodeURIComponent(familia)}`;
+                    const resp = await fetch(url, { method: 'GET', headers: { "Authorization": `Bearer ${token}` } });
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                    const data = await resp.json();
+                    const items = Array.isArray(data) ? data : data && data.items;
+                    if (!Array.isArray(items)) throw new Error("Resposta inválida da API.");
+                    if (!items.length) throw new Error("Família sem produtos.");
+                    const sku = String(items[0]?.IdProduto ?? "").trim();
+                    if (!sku) throw new Error("Primeiro produto sem IdProduto.");
+                    referencias.push({ familia, sku });
+                } catch (ex) {
+                    resultado.erros.push({ familia, motivo: `Consulta da família: ${ex.message}` });
+                }
+            }));
+
+            if (referencias.length) {
+                const skus = [...new Set(referencias.map(ref => ref.sku))];
+                const produtos = await buscarProdutosLoteLocal(cliente, token, skus.join(','));
+                referencias.forEach(({ familia, sku }) => {
+                    const produto = (produtos.items || []).find(item => String(item.idProduto) === sku);
+                    const erro = (produtos.erros || []).find(item => String(item.sku) === sku);
+                    if (produtos.erro || !produto || !produto.familia || Array.isArray(produto.familia) || typeof produto.familia !== 'object') {
+                        const motivo = produtos.erro
+                            ? `${produtos.erro}${produtos.detalhes ? ': ' + produtos.detalhes : ''}`
+                            : (erro ? erro.motivo : "Dados do produto/família ausentes ou inválidos.");
+                        resultado.erros.push({ familia, sku, motivo: `Detalhamento do SKU ${sku}: ${motivo}` });
+                    } else {
+                        resultado.items.push({ familiaConsultada: familia, skuReferencia: sku, produto });
+                    }
+                });
+            }
+            resultado.qtdSucesso = resultado.items.length;
+            resultado.qtdErros = resultado.erros.length;
+            resultado.processados = resultado.qtdSucesso + resultado.qtdErros;
+            return resultado;
+        }
+
+        async function buscarReformaLoteLocal(cliente, token, familiasCsv) {
+            const familias = [...new Set(String(familiasCsv || "").split(',').map(f => f.trim()).filter(Boolean))];
+            if (!familias.length || familias.length > 100) return { erro: "Informe entre 1 e 100 famílias por lote." };
+            const resultado = { items: [], erros: [] };
+            await Promise.all(familias.map(async familia => {
+                try {
+                    const consultar = parametro => fetch(
+                        `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?${parametro}=${encodeURIComponent(familia)}&status=A&orderby=id`,
+                        { method: 'GET', headers: { "Authorization": `Bearer ${token}` } }
+                    );
+                    let resp = await consultar('Familia');
+                    if ([400, 404].includes(resp.status)) resp = await consultar('idFamilia');
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                    resultado.items.push({ familia, dados: await resp.json() });
+                } catch (ex) {
+                    resultado.erros.push({ familia, motivo: `Consulta da reforma: ${ex.message}` });
+                }
+            }));
+            return resultado;
+        }
+
         async function buscarFamiliasLoteLocal(cliente, token, familiasCsv) {
             const familias = String(familiasCsv || "").split(',').map(f => f.trim()).filter(Boolean);
             const resultado = { total: familias.length, processados: 0, qtdSucesso: 0, qtdErros: 0, items: [], erros: [] };
@@ -1767,6 +1843,8 @@
                     } else if (action === 'produtos_lote_leve') {
                         // Busca em série no próprio navegador, reaproveitando o token já obtido
                         return await buscarProdutosLoteLocal(cliente, token, parametrosAdicionais.skus);
+                    } else if (action === 'produtos_familias_lote') {
+                        return await buscarProdutosPorFamiliasLoteLocal(cliente, token, parametrosAdicionais.familias);
                     } else if (action === 'familias_lote') {
                         return await buscarFamiliasLoteLocal(cliente, token, parametrosAdicionais.familias);
                     } else if (action === 'tributacao_titulo') {
@@ -1777,6 +1855,8 @@
                         urlLocal = `${cliente.urlBase}/CadastrosEstruturaisApi/api/v1/Tributacao/uf?IdTributacao=${parametrosAdicionais.idTributacao}&pageSize=10000`;
                     } else if (action === 'reforma') {
                         urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?Familia=${parametrosAdicionais.idFamilia}&status=A&orderby=id`;
+                    } else if (action === 'reforma_lote') {
+                        return await buscarReformaLoteLocal(cliente, token, parametrosAdicionais.familias);
                     } else if (action === 'listar_cenarios') {
                         urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?pagesize=1000`;
                     } else if (action === 'get_regimes_erp') {
@@ -4267,188 +4347,246 @@
         // ==========================================
         let isAnaliseRunning = false;
         let dadosAnaliseExcel = [];
+        let tipoAnaliseExcel = 'sku';
+
+        function atualizarTipoAnalise() {
+            const porFamilia = document.getElementById('selectTipoAnalise').value === 'familia';
+            document.getElementById('instrucaoTipoAnalise').innerHTML = `<strong>Apenas na Coluna A:</strong> Insira ${porFamilia ? 'o ID da Família' : 'o SKU do Produto'} (um por linha). Cabeçalho opcional.`;
+            document.getElementById('instrucaoFamiliaAnalise').classList.toggle('hidden', !porFamilia);
+            document.getElementById('labelArquivoAnalise').innerText = `3. Planilha ${porFamilia ? 'Famílias' : 'SKUs'}`;
+            document.getElementById('labelLoteAnalise').title = `${porFamilia ? 'Famílias' : 'SKUs'} por lote`;
+        }
+
+        function extrairCenariosAnalise(dados) {
+            if (dados?.erro || dados?.error) throw new Error(String(dados.erro || dados.error));
+            if (dados?.statusCode >= 400) throw new Error(`HTTP ${dados.statusCode}`);
+            const items = Array.isArray(dados) ? dados : (dados?.items ?? dados?.dados);
+            if (!Array.isArray(items)) throw new Error("Resposta inválida da reforma.");
+            const cenarios = items.map(item => {
+                if (!item || typeof item !== 'object' || Array.isArray(item)) throw new Error("Cenário inválido na resposta.");
+                let imposto = Number(item.idImposto);
+                if (!imposto && typeof item.descricao === 'string') {
+                    const descricao = item.descricao.toUpperCase();
+                    if (descricao.includes('CBS')) imposto = 1;
+                    else if (descricao.includes('IBS')) imposto = 2;
+                }
+                if (!Number.isInteger(imposto) || imposto <= 0) throw new Error("Cenário sem identificação do imposto.");
+                return { item, imposto };
+            });
+            let falha = false;
+            const obterId = imposto => {
+                const cenario = cenarios.find(c => c.imposto === imposto)?.item;
+                if (!cenario) return "SEM CENÁRIO ATIVO";
+                const id = cenario.idCenario || cenario.id;
+                if ((typeof id !== 'string' && typeof id !== 'number') || !String(id).trim()) {
+                    falha = true;
+                    return "ERRO NA CONSULTA: Cenário sem identificação.";
+                }
+                return id;
+            };
+            const cbs = obterId(1);
+            const ibs = obterId(2);
+            return { cbs, ibs, falha };
+        }
+
+        async function consultarReformaAnalise(clienteId, familias, cache) {
+            const resultado = new Map();
+            const pendentes = [];
+            for (const familia of new Set(familias)) {
+                if (cache.has(familia)) resultado.set(familia, cache.get(familia));
+                else pendentes.push(familia);
+            }
+            if (!pendentes.length) return resultado;
+
+            let resposta, erroLote;
+            try {
+                resposta = await fetchHibrido('reforma_lote', clienteId, { familias: pendentes.join(',') });
+                if (resposta?.erro) throw new Error(`${resposta.erro}${resposta.detalhes ? ': ' + resposta.detalhes : ''}`);
+                if (!Array.isArray(resposta?.items) || !Array.isArray(resposta?.erros)) throw new Error("Resposta inválida do lote da reforma.");
+                if ([...resposta.items, ...resposta.erros].some(item => !item || !String(item.familia ?? '').trim())) throw new Error("Resposta da reforma sem identificação da família.");
+            } catch (ex) {
+                erroLote = ex.message || "Falha de conexão.";
+            }
+            const itens = new Map((erroLote ? [] : resposta.items).map(item => [String(item.familia), item.dados]));
+            const erros = new Map((erroLote ? [] : resposta.erros).map(item => [String(item.familia), item.motivo]));
+            for (const familia of pendentes) {
+                let cenario;
+                try {
+                    if (erroLote) throw new Error(erroLote);
+                    if (erros.has(familia)) throw new Error(erros.get(familia) || "Falha na consulta da reforma.");
+                    if (!itens.has(familia)) throw new Error("Família sem resposta na consulta da reforma.");
+                    cenario = extrairCenariosAnalise(itens.get(familia));
+                } catch (ex) {
+                    const mensagem = `ERRO NA CONSULTA: ${ex.message}`;
+                    cenario = { cbs: mensagem, ibs: mensagem, falha: true };
+                }
+                if (cenario.falha) console.error(`Falha da reforma na família ${familia}:`, cenario);
+                else cache.set(familia, cenario);
+                resultado.set(familia, cenario);
+            }
+            return resultado;
+        }
 
         async function processarAnaliseTributacao() {
+            const btnStart = document.getElementById('btnStartAnalise');
+            if (btnStart.disabled) return;
             const clienteId = document.getElementById('selectClienteAnalise').value;
+            const tipo = document.getElementById('selectTipoAnalise').value;
+            const porFamilia = tipo === 'familia';
+            const unidade = porFamilia ? 'Famílias' : 'SKUs';
             const fileInput = document.getElementById('inputArquivoAnalise');
-            const qtdPorLote = parseInt(document.getElementById('qtdLoteAnalise').value) || 20;
-            const delayMs = parseInt(document.getElementById('delayAnalise').value) || 0;
-            
+            const qtdPorLote = Number(document.getElementById('qtdLoteAnalise').value);
+            const delayMs = Number(document.getElementById('delayAnalise').value);
+
             if (!clienteId) return alert("Por favor, selecione um cliente na etapa 1.");
-            if (!fileInput.files.length) return alert("Por favor, anexe uma planilha de SKUs.");
+            if (!['sku', 'familia'].includes(tipo)) return alert("Selecione SKU ou FAMÍLIA.");
+            if (!fileInput.files.length) return alert(`Por favor, anexe uma planilha de ${unidade}.`);
+            if (!Number.isInteger(qtdPorLote) || qtdPorLote < 1 || qtdPorLote > 100) return alert("A quantidade por lote deve ser um inteiro entre 1 e 100.");
+            if (!Number.isFinite(delayMs) || delayMs < 0) return alert("O atraso entre lotes deve ser maior ou igual a zero.");
 
             const file = fileInput.files[0];
-            const reader = new FileReader();
-
-            document.getElementById('btnStartAnalise').classList.add('hidden');
-            document.getElementById('btnStopAnalise').classList.remove('hidden');
+            const controles = ['selectClienteAnalise', 'selectTipoAnalise', 'inputArquivoAnalise', 'qtdLoteAnalise', 'delayAnalise', 'btnStartAnalise'];
+            controles.forEach(id => { document.getElementById(id).disabled = true; });
+            btnStart.classList.add('hidden');
+            const btnStop = document.getElementById('btnStopAnalise');
+            btnStop.disabled = false;
+            btnStop.classList.remove('hidden');
             document.getElementById('btnDownloadAnalise').classList.add('hidden');
-            
+
             const pBar = document.getElementById('progressAnaliseBar');
             const pText = document.getElementById('progressAnaliseText');
             const valSuc = document.getElementById('analiseSucesso');
             const valErr = document.getElementById('analiseErro');
+            const valErrReforma = document.getElementById('analiseErroReforma');
+            isAnaliseRunning = true;
+            dadosAnaliseExcel = [];
+            tipoAnaliseExcel = tipo;
+            let suc = 0, err = 0, errReforma = 0, processados = 0;
+            const cacheReforma = new Map();
+            valSuc.innerText = "0"; valErr.innerText = "0"; valErrReforma.innerText = "0";
+            pBar.style.width = "0%";
+            pText.innerText = "Lendo planilha...";
 
-            reader.onload = async function(e) {
+            try {
+                let jsonRows;
                 try {
-                    const data = new Uint8Array(e.target.result);
+                    const data = new Uint8Array(await file.arrayBuffer());
+                    if (!isAnaliseRunning) {
+                        pText.innerText = "Processamento Interrompido antes da consulta.";
+                        return;
+                    }
                     const workbook = XLSX.read(data, {type: 'array'});
-                    const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
-
-                    let skus = [];
-                    for (let i = 0; i < jsonRows.length; i++) {
-                        const val = String(jsonRows[i][0] || "").trim();
-                        if(val && val.toLowerCase() !== 'sku' && val.toLowerCase() !== 'idproduto' && val.toLowerCase() !== 'id_produto') {
-                            skus.push(val);
-                        }
-                    }
-
-                    const totalSkus = skus.length;
-                    if(totalSkus === 0) throw new Error("Nenhum SKU válido encontrado na Coluna A.");
-
-                    isAnaliseRunning = true;
-                    dadosAnaliseExcel = [];
-                    let suc = 0, err = 0;
-
-                    // Dividir em lotes
-                    const lotes = dividirEmLotes(skus, qtdPorLote);
-                    const totalLotes = lotes.length;
-                    
-                    valSuc.innerText = "0"; valErr.innerText = "0";
-                    pBar.style.width = "0%";
-                    pText.innerText = `Iniciando análise: ${totalLotes} lotes de até ${qtdPorLote} SKUs`;
-
-                    let processados = 0;
-
-                    for (let loteIdx = 0; loteIdx < totalLotes; loteIdx++) {
-                        if(!isAnaliseRunning) break;
-
-                        const lote = lotes[loteIdx];
-                        const skusBatch = lote.join(',');
-                        
-                        pText.innerText = `Lote ${loteIdx + 1}/${totalLotes} (${lote.length} SKUs) - Total: ${processados}/${totalSkus}`;
-
-                        try {
-                            // Chamar rota batch
-                            const resultado = await fetchHibrido('produtos_lote_leve', clienteId, { skus: skusBatch });
-
-                            // ✅ Processar sucessos
-                            if (resultado.items && resultado.items.length > 0) {
-                                for (const prod of resultado.items) {
-                                    if(!isAnaliseRunning) break;
-                                    
-                                    const divi = prod.familia?.familiaDivisao?.[0] || {};
-                                    const eans = (prod.produtoCodigo || []).filter(cod => cod.tipoCodigo === 'E').map(cod => cod.codigoAcesso);
-                                    
-                                    dadosAnaliseExcel.push({
-                                        "SKU": prod.idProduto || "N/A",
-                                        "Descrição Completa": prod.descricaoCompleta || "N/A",
-                                        "_eans": eans,
-                                        "ID Tributação": divi.idTributacao || "N/A",
-                                        "Descrição Tributação": divi.tributacao?.descricao || "N/A",
-                                        "NCM (codNbmsh)": prod.familia?.codNbmsh || "N/A"
-                                    });
-                                    suc++;
-                                    processados++;
-                                    valSuc.innerText = suc;
-                                }
-                            }
-
-                            // ✅ Processar erros do lote
-                            if (resultado.erros && resultado.erros.length > 0) {
-                                for (const errItem of resultado.erros) {
-                                    dadosAnaliseExcel.push({
-                                        "SKU": errItem.sku || "?",
-                                        "Descrição Completa": "❌ NÃO ENCONTRADO",
-                                        "_eans": [],
-                                        "ID Tributação": "",
-                                        "Descrição Tributação": errItem.motivo || "",
-                                        "NCM (codNbmsh)": ""
-                                    });
-                                    err++;
-                                    processados++;
-                                    valErr.innerText = err;
-                                }
-                            }
-
-                            // ✅ Verificar se há SKUs que não foram retornados (nem sucesso nem erro)
-                            const skusRetornados = new Set();
-                            if (resultado.items) {
-                                resultado.items.forEach(item => {
-                                    skusRetornados.add(String(item.idProduto));
-                                });
-                            }
-                            if (resultado.erros) {
-                                resultado.erros.forEach(err => {
-                                    skusRetornados.add(String(err.sku));
-                                });
-                            }
-
-                            // Adicionar SKUs do lote que não foram encontrados em nenhuma resposta
-                            for (const sku of lote) {
-                                if (!skusRetornados.has(String(sku))) {
-                                    dadosAnaliseExcel.push({
-                                        "SKU": sku,
-                                        "Descrição Completa": "⚠️ SEM RESPOSTA",
-                                        "_eans": [],
-                                        "ID Tributação": "",
-                                        "Descrição Tributação": "Não retornou na API",
-                                        "NCM (codNbmsh)": ""
-                                    });
-                                    err++;
-                                    processados++;
-                                    valErr.innerText = err;
-                                }
-                            }
-
-                        } catch(ex) {
-                            // Em caso de falha, marcar todo o lote como erro
-                            for (const sku of lote) {
-                                dadosAnaliseExcel.push({
-                                    "SKU": sku,
-                                    "Descrição Completa": "🔴 FALHA DE CONEXÃO",
-                                    "_eans": [],
-                                    "ID Tributação": "",
-                                    "Descrição Tributação": ex.message || "Erro de conexão",
-                                    "NCM (codNbmsh)": ""
-                                });
-                                err++;
-                                processados++;
-                            }
-                            valErr.innerText = err;
-                        }
-                        
-                        // ✅ Atualizar progresso CORRETAMENTE
-                        pBar.style.width = `${(processados / totalSkus) * 100}%`;
-                        
-                        if (delayMs > 0 && loteIdx < totalLotes - 1) {
-                            await new Promise(r => setTimeout(r, delayMs));
-                        }
-                    }
-
-                    if(isAnaliseRunning) {
-                        pText.innerText = `✅ Consulta Finalizada! ${suc} sucesso | ${err} erro em ${totalLotes} lotes`;
-                        pBar.style.width = `100%`;
-                    }
-                    
+                    jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1});
                 } catch (ex) {
-                    alert("Erro ao ler planilha: " + ex.message);
-                } finally {
-                    isAnaliseRunning = false;
-                    document.getElementById('btnStartAnalise').classList.remove('hidden');
-                    document.getElementById('btnStopAnalise').classList.add('hidden');
-                    
-                    if(dadosAnaliseExcel.length > 0) {
-                        document.getElementById('btnDownloadAnalise').classList.remove('hidden');
+                    throw new Error("Erro ao ler planilha: " + ex.message);
+                }
+
+                const cabecalhos = porFamilia ? ['familia', 'idfamilia'] : ['sku', 'idproduto'];
+                const codigos = jsonRows.map(row => String(row[0] ?? "").trim()).filter(valor => {
+                    const normalizado = valor.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[\s_]/g, '').toLowerCase();
+                    return valor && !cabecalhos.includes(normalizado);
+                });
+                if (!codigos.length) throw new Error(`Nenhum código de ${porFamilia ? 'família' : 'SKU'} válido encontrado na Coluna A.`);
+                const lotes = dividirEmLotes(codigos, qtdPorLote);
+
+                for (let loteIdx = 0; loteIdx < lotes.length; loteIdx++) {
+                    if (!isAnaliseRunning) break;
+                    const lote = lotes[loteIdx];
+                    pText.innerText = `Lote ${loteIdx + 1}/${lotes.length} (${lote.length} ${unidade}) - Total: ${processados}/${codigos.length}`;
+                    let resultado, falhaLote;
+                    try {
+                        resultado = await fetchHibrido(
+                            porFamilia ? 'produtos_familias_lote' : 'produtos_lote_leve',
+                            clienteId,
+                            porFamilia ? { familias: lote.join(',') } : { skus: lote.join(',') }
+                        );
+                        if (resultado?.erro) throw new Error(`${resultado.erro}${resultado.detalhes ? ': ' + resultado.detalhes : ''}`);
+                        if (!Array.isArray(resultado?.items) || !Array.isArray(resultado?.erros)) throw new Error("Resposta inválida ao consultar o lote.");
+                    } catch (ex) {
+                        falhaLote = ex.message || "Erro de conexão";
+                        console.error("Erro na análise de tributação:", ex);
+                    }
+
+                    const itens = new Map((falhaLote ? [] : resultado.items).map(item => [String(porFamilia ? item.familiaConsultada : item.idProduto), item]));
+                    const erros = new Map((falhaLote ? [] : resultado.erros).map(item => [String(porFamilia ? item.familia : item.sku), item]));
+
+                    const familias = lote.map(codigo => {
+                        const item = itens.get(codigo);
+                        const prod = porFamilia ? item?.produto : item;
+                        return prod ? String((porFamilia ? codigo : prod.idFamilia) ?? '').trim() : '';
+                    }).filter(Boolean);
+                    if (isAnaliseRunning) pText.innerText = `Lote ${loteIdx + 1}/${lotes.length}: consultando cenários CBS/IBS por família...`;
+                    const reforma = await consultarReformaAnalise(clienteId, familias, cacheReforma);
+
+                    // Ao parar, preserva todo o lote em andamento, sem iniciar o próximo.
+                    for (const codigo of lote) {
+                        const item = itens.get(codigo);
+                        const erro = erros.get(codigo);
+                        const prod = porFamilia ? item?.produto : item;
+                        let linha;
+                        if (prod) {
+                            const divi = prod.familia?.familiaDivisao?.[0] || {};
+                            linha = {
+                                "SKU": prod.idProduto || "N/A",
+                                "Descrição Completa": prod.descricaoCompleta || "N/A",
+                                "_eans": (prod.produtoCodigo || []).filter(cod => cod.tipoCodigo === 'E').map(cod => cod.codigoAcesso),
+                                "ID Tributação": divi.idTributacao || "N/A",
+                                "Descrição Tributação": divi.tributacao?.descricao || "N/A",
+                                "NCM (codNbmsh)": prod.familia?.codNbmsh || "N/A"
+                            };
+                            const familia = String((porFamilia ? codigo : prod.idFamilia) ?? '').trim();
+                            const cenario = reforma.get(familia);
+                            const naoConsultado = "NÃO CONSULTADO: Família indisponível.";
+                            linha["Cenário CBS"] = cenario ? cenario.cbs : naoConsultado;
+                            linha["Cenário IBS"] = cenario ? cenario.ibs : naoConsultado;
+                            if (!cenario || cenario.falha) errReforma++;
+                            suc++;
+                        } else {
+                            linha = {
+                                "SKU": porFamilia ? (erro?.sku || "") : codigo,
+                                "Descrição Completa": falhaLote ? "🔴 FALHA NA CONSULTA" : (erro ? "❌ NÃO ENCONTRADO / ERRO" : "⚠️ SEM RESPOSTA"),
+                                "_eans": [],
+                                "ID Tributação": "",
+                                "Descrição Tributação": falhaLote || erro?.motivo || "Não retornou na API",
+                                "NCM (codNbmsh)": ""
+                            };
+                            const naoConsultado = `NÃO CONSULTADO: ${falhaLote || erro?.motivo || 'Produto sem resposta.'}`;
+                            linha["Cenário CBS"] = naoConsultado;
+                            linha["Cenário IBS"] = naoConsultado;
+                            err++;
+                        }
+                        if (porFamilia) linha["Família consultada"] = codigo;
+                        dadosAnaliseExcel.push(linha);
+                        processados++;
+                    }
+                    valSuc.innerText = suc;
+                    valErr.innerText = err;
+                    valErrReforma.innerText = errReforma;
+                    pBar.style.width = `${(processados / codigos.length) * 100}%`;
+
+                    if (isAnaliseRunning && delayMs > 0 && loteIdx < lotes.length - 1) {
+                        await new Promise(r => setTimeout(r, delayMs));
                     }
                 }
-            };
-            reader.readAsArrayBuffer(file);
+                pText.innerText = isAnaliseRunning
+                    ? `${errReforma ? '⚠️' : '✅'} Consulta Finalizada! ${suc} produtos encontrados | ${err} erros de produto | ${errReforma} linhas com falha da reforma em ${lotes.length} lotes`
+                    : `Processamento Interrompido: ${processados}/${codigos.length} ${unidade} | ${errReforma} linhas com falha da reforma. Baixe os resultados parciais.`;
+            } catch (ex) {
+                pText.innerText = ex.message;
+                alert(ex.message);
+            } finally {
+                isAnaliseRunning = false;
+                controles.forEach(id => { document.getElementById(id).disabled = false; });
+                btnStart.classList.remove('hidden');
+                btnStop.classList.add('hidden');
+                document.getElementById('btnDownloadAnalise').classList.toggle('hidden', dadosAnaliseExcel.length === 0);
+            }
         }
 
         function pararAnaliseTributacao() {
             isAnaliseRunning = false;
-            document.getElementById('progressAnaliseText').innerText = "Processamento Interrompido. Você pode baixar o que foi salvo até agora.";
+            document.getElementById('btnStopAnalise').disabled = true;
+            document.getElementById('progressAnaliseText').innerText = "Interrompendo: aguardando a leitura ou o lote em andamento. Nenhum novo lote será iniciado.";
         }
 
         function baixarExcelAnalise() {
@@ -4462,24 +4600,31 @@
             try {
                 // Cada produto pode ter uma quantidade diferente de EANs - descobre o máximo
                 // pra criar colunas "EAN 1", "EAN 2", ... suficientes pra cobrir todo mundo
-                const maxEans = Math.max(1, ...dadosAnaliseExcel.map(d => (d._eans || []).length));
+                const maxEans = dadosAnaliseExcel.reduce((max, d) => Math.max(max, (d._eans || []).length), 1);
                 const colunasEan = Array.from({ length: maxEans }, (_, i) => `EAN ${i + 1}`);
-                const header = ["SKU", "Descrição Completa", ...colunasEan, "ID Tributação", "Descrição Tributação", "NCM (codNbmsh)"];
+                const porFamilia = tipoAnaliseExcel === 'familia';
+                const colunaSku = porFamilia ? "SKU de referência" : "SKU";
+                const header = [...(porFamilia ? ["Família consultada"] : []), colunaSku, "Descrição Completa", ...colunasEan, "ID Tributação", "Descrição Tributação", "NCM (codNbmsh)", "Cenário CBS", "Cenário IBS"];
 
                 const linhasFinais = dadosAnaliseExcel.map(d => {
-                    const linha = { "SKU": d["SKU"], "Descrição Completa": d["Descrição Completa"] };
+                    const linha = {};
+                    if (porFamilia) linha["Família consultada"] = d["Família consultada"];
+                    linha[colunaSku] = d["SKU"];
+                    linha["Descrição Completa"] = d["Descrição Completa"];
                     const eans = d._eans || [];
                     colunasEan.forEach((col, i) => { linha[col] = eans[i] || ""; });
                     linha["ID Tributação"] = d["ID Tributação"];
                     linha["Descrição Tributação"] = d["Descrição Tributação"];
                     linha["NCM (codNbmsh)"] = d["NCM (codNbmsh)"];
+                    linha["Cenário CBS"] = d["Cenário CBS"];
+                    linha["Cenário IBS"] = d["Cenário IBS"];
                     return linha;
                 });
 
                 const ws = XLSX.utils.json_to_sheet(linhasFinais, { header: header });
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Tributacao_Inspector");
-                XLSX.writeFile(wb, `C5_Analise_Tributacao_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                XLSX.writeFile(wb, `C5_Analise_Tributacao_${porFamilia ? 'Familias_' : ''}${new Date().toISOString().slice(0, 10)}.xlsx`);
                 console.log("✅ Arquivo baixado com sucesso!");
                 alert(`✅ Planilha baixada com ${dadosAnaliseExcel.length} registros!`);
             } catch (ex) {
