@@ -863,9 +863,10 @@
                             <button onclick="consultarBaseRtc()" class="px-3 py-2 bg-blue-700 rounded text-sm">Consultar classificações</button>
                             <button onclick="importarBaseRtc()" class="px-3 py-2 bg-emerald-700 rounded text-sm">Importar referências revisadas</button>
                             <button onclick="aprovarPropostasRtc()" class="px-3 py-2 bg-slate-700 rounded text-sm">Aprovar correspondências sem divergência</button>
+                            <button onclick="aprovarTodasRtc()" class="px-3 py-2 bg-amber-700 rounded text-sm">Aprovar todas</button>
                             <button onclick="exportarBaseRtc()" class="px-3 py-2 bg-slate-700 rounded text-sm">Exportar revisados</button>
                         </div>
-                        <p class="text-xs text-slate-400">Revise o código e marque “Aprovado” antes de exportar. Propostas não alimentam a base. Pendências serão exportadas em uma aba separada; a implantação lê somente a primeira aba.</p>
+                        <p class="text-xs text-slate-400">Revise o código e marque “Aprovado” antes de exportar. “Aprovar todas” marca todas as linhas com CClassTrib de 6 dígitos, inclusive não encontradas e divergentes; códigos vazios ou inválidos permanecem pendentes. Isso não grava na base nem implanta no ERP. Pendências serão exportadas em uma aba separada; a implantação lê somente a primeira aba.</p>
                         <div class="overflow-auto max-h-96">
                             <table class="w-full text-xs text-left">
                                 <thead><tr><th class="p-2">Família / descrição</th><th class="p-2">NCM</th><th class="p-2">Situação / referências</th><th class="p-2">CClassTrib</th><th class="p-2">Aprovado</th><th class="p-2">Origem / revisão global</th></tr></thead>
@@ -1415,7 +1416,7 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzxxNQQhyaLlRfdssU_2nVzwDr9cFwq8CneMsjO-fRxNhosDJFiLCsS7oFWj-NDh-UAAQ/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.40.0"; 
+        const VERSAO_FRONT = "v5.40.1"; 
         // Launcher local (.bat) hospedado no GitHub - baixa o HTML mais recente diretamente do repositorio
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -4837,6 +4838,19 @@
                 if (['PROPOSTA', 'CONCORDANTE'].includes(item.status) && item.valor === item.sugerido) item.aprovado = true;
             });
             renderizarBaseRtc();
+        }
+
+        async function aprovarTodasRtc() {
+            await rtcNaTela(async () => {
+                if (!rtcConsulta.length) throw new Error('Consulte uma planilha primeiro.');
+                const validos = rtcConsulta.filter(item => /^\d{6}$/.test(item.valor));
+                if (!validos.length) throw new Error('Nenhuma linha com CClassTrib válido de 6 dígitos para aprovar.');
+                const pendentes = rtcConsulta.length - validos.length;
+                if (!confirm(`Aprovar todas as ${validos.length} linhas com CClassTrib preenchido, inclusive não encontradas, divergências e conflitos? Confirme somente após revisar os códigos. ${pendentes} linha(s) com código vazio ou inválido permanecerão pendentes. Isso não grava na base nem implanta no ERP.`)) return;
+                rtcConsulta.forEach(item => { item.aprovado = /^\d{6}$/.test(item.valor); });
+                renderizarBaseRtc();
+                rtcLog(`Aprovação em lote: ${validos.length} linhas aprovadas; ${pendentes} pendentes por código vazio ou inválido.`);
+            });
         }
 
         async function exportarBaseRtc() {
