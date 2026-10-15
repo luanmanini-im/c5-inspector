@@ -128,6 +128,19 @@
             color: #fbbf24;
         }
 
+        #ferramentaTributacaoUf .uf-heading { color: #f1f5f9; font-size: 18px; font-weight: 650; margin: 0 0 8px; }
+        #ferramentaTributacaoUf .uf-help { color: #a3adbf; font-size: 13px; line-height: 1.6; margin: 0; }
+        #ferramentaTributacaoUf .uf-guide { border: 1px solid #2d3748; border-radius: 8px; padding: 12px 16px; }
+        #ferramentaTributacaoUf .uf-guide summary { color: #cbd5e1; font-size: 12px; font-weight: 600; cursor: pointer; }
+        #ferramentaTributacaoUf .uf-guide[open] summary { margin-bottom: 10px; }
+        #ferramentaTributacaoUf label { color: #cbd5e1; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+        #ferramentaTributacaoUf select, #ferramentaTributacaoUf textarea { font-size: 13px; border-radius: 8px; }
+        #ferramentaTributacaoUf textarea { min-height: 112px; resize: vertical; }
+        #ferramentaTributacaoUf .uf-footer { border-top: 1px solid #2d3748; padding-top: 20px; }
+        #ferramentaTributacaoUf .uf-status { color: #a3adbf; font-size: 12px; line-height: 1.6; margin: 0; overflow-wrap: anywhere; }
+        #ferramentaTributacaoUf button:focus-visible, #ferramentaTributacaoUf select:focus-visible,
+        #ferramentaTributacaoUf textarea:focus-visible, #ferramentaTributacaoUf summary:focus-visible { outline: 2px solid #ffc107; outline-offset: 3px; }
+
         #ferramentaRtc { --rtc-accent: #ffc107; --rtc-border: #343b4d; }
         #ferramentaRtc .rtc-card { background: #1b1f2e; border: 1px solid var(--rtc-border); border-radius: 12px; padding: 20px; }
         #ferramentaRtc .rtc-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -240,6 +253,7 @@
                 <button onclick="abrirFerramentaViaSidebar('regimes')" class="sidebar-sublink">Validador de Regimes/Divisões</button>
 
                 <div class="sidebar-group-label mt-2">Utilitários</div>
+                <button onclick="abrirFerramentaViaSidebar('tributacaoUf')" class="sidebar-sublink">Análise de Tributação por UF</button>
                 <button onclick="abrirFerramentaViaSidebar('agendamentos')" class="sidebar-sublink">Consulta de Agendamentos</button>
                 <button onclick="abrirConversorPdf()" class="sidebar-sublink">Conversor pdf -> xlsx - Inconsistências</button>
                 <button id="btnBaixarLauncher" onclick="baixarLauncherLocal()" class="sidebar-sublink">Baixar Launcher Local (.bat)</button>
@@ -301,7 +315,7 @@
                 <option value="sku">SKU</option>
                 <option value="ean">EAN</option>
                 <option value="familia">FAMILIA</option>
-                <option value="id_trib">Tributação</option>
+                <option value="id_trib" title="Consulta o cadastro pelo NumeroTributacao; as regras por UF ficam no botão Analisar Tributação.">Tributação</option>
                 <option value="titulo_trib">Título Tributação</option>
             </select>
 
@@ -881,10 +895,13 @@
                     <ul class="rtc-help list-disc list-inside mt-3">
                         <li>Modelo obrigatório: <strong>COD_FAMILIA / DESCRICAO / NCM / CCLASTRIB</strong>. CClassTrib pode ficar vazio somente na consulta.</li>
                         <li>A base é compartilhada entre todos os clientes. A comparação usa NCM e descrição exatos, normalizando espaços e maiúsculas.</li>
-                        <li>Implantações confirmadas alimentam a base automaticamente. Histórico não é validação tributária legal.</li>
+                        <li>Implantações confirmadas alimentam a base automaticamente, exceto classificações particulares originadas de regras do cliente. Histórico não é validação tributária legal.</li>
+                        <li>No reaproveitamento, selecione o cliente e configure a aba “Regras do cliente”. A menor prioridade numérica vence. Empates com códigos diferentes exigem preenchimento manual e revisão. A comparação ignora maiúsculas/minúsculas e normaliza espaços, mas preserva acentos.</li>
+                        <li>“Contém palavra inteira” reconhece MP em “MP - FARINHA”, mas não em “TAMPA”. “Não contém” e “Diferente” podem atingir quase todo o arquivo: confira os percentuais na simulação.</li>
+                        <li>Regras ficam em RTC_Regras_Clientes; classificações particulares confirmadas ficam em RTC_Historico_Regras, sem alimentar RTC_Base. A implantação direta não executa regras. Preserve a coluna extra RTC_REGRA_CLIENTE nos arquivos exportados para manter o isolamento e a origem ao reimportar.</li>
                         <li>Normal e VPN precisam de acesso ao Google. Use “Recuperar operações interrompidas” para retomar pendências, sem repetir vínculos já conferidos.</li>
                     </ul>
-                        <p class="mt-2">O backend inicializa RTC_Base, RTC_Historico e RTC_Execucoes na planilha configurada. Não edite os cabeçalhos nem as abas de controle manualmente. Correções da referência global ficam no histórico. Em falhas de conexão, uma reserva pode levar até 10 minutos para expirar; depois, a retomada confere o ERP antes de enviar vínculos ausentes. “SINCRONIZAR” grava somente a base, sem implantar novamente.</p>
+                        <p class="mt-2">O backend inicializa as abas RTC na planilha configurada conforme o uso, incluindo RTC_Regras_Clientes ao salvar regras e RTC_Historico_Regras ao confirmar classificações particulares. Não edite os cabeçalhos nem as abas de controle manualmente. Correções da referência global ficam no histórico. Em falhas de conexão, uma reserva pode levar até 10 minutos para expirar; depois, a retomada confere o ERP antes de enviar vínculos ausentes. “SINCRONIZAR” grava somente a base e o histórico, sem implantar novamente.</p>
                         <p class="mt-2">Use colunas de texto: NCM com 8 dígitos e CClassTrib com 6. Células numéricas do Excel serão completadas com zeros à esquerda nesses dois campos; zeros já perdidos no código da família não podem ser recuperados. O modelo antigo de duas colunas não é aceito. Linhas inválidas bloqueiam o arquivo inteiro e são identificadas no console.</p>
                         <p class="mt-2">Publicação: atualize o código do backend no Apps Script e publique uma nova versão da implantação Web App existente, mantendo a URL configurada. Depois distribua este frontend. Antes do uso em lote, confira um pequeno arquivo no cliente de teste nos modos normal e VPN. A base não substitui revisão tributária nem backup da planilha.</p>
                     </details>
@@ -906,7 +923,7 @@
                         </div>
                         <div>
                             <label id="rtcLabelCliente" for="selectClienteRtc" class="block text-xs font-bold text-slate-400 mb-2">Cliente de destino</label>
-                            <select id="selectClienteRtc" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
+                            <select id="selectClienteRtc" onchange="trocarClienteRtc()" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
                                 <option value="">Carregando...</option>
                             </select>
                             <p id="rtcAjudaCliente" class="rtc-help">O ERP deste cliente receberá os vínculos após sua confirmação.</p>
@@ -915,6 +932,44 @@
                     <div id="rtcPendencias" class="space-y-2 text-sm mt-3"></div>
                     </div>
                     <div id="rtcReaproveitamento" class="hidden space-y-4">
+                        <div class="rtc-toolbar" role="tablist" aria-label="Reaproveitamento RTC">
+                            <button id="rtcTabConsulta" role="tab" aria-selected="true" aria-controls="rtcPainelConsulta" onclick="abrirAbaRtc('consulta')" class="rtc-button rtc-button-primary">Simular e revisar</button>
+                            <button id="rtcTabRegras" role="tab" aria-selected="false" aria-controls="rtcPainelRegras" onclick="abrirAbaRtc('regras')" class="rtc-button">Regras do cliente</button>
+                        </div>
+                        <div id="rtcPainelRegras" role="tabpanel" aria-labelledby="rtcTabRegras" class="rtc-card space-y-4 hidden">
+                            <div class="rtc-toolbar">
+                                <h5 class="rtc-title">Regras por descrição da família</h5>
+                                <button onclick="carregarRegrasRtc()" class="rtc-link">Recarregar regras</button>
+                            </div>
+                            <p class="rtc-help">Aplicadas somente no reaproveitamento do cliente selecionado. Menor prioridade vence; empate com códigos diferentes exige revisão. Salvar ou trocar o cliente invalida a simulação anterior.</p>
+                            <div class="rtc-table-wrap"><table class="rtc-table">
+                                <thead><tr><th>Ativa</th><th>Filtro / valor</th><th>CClassTrib</th><th>Prioridade</th><th>Ação</th></tr></thead>
+                                <tbody id="rtcListaRegras"></tbody>
+                            </table></div>
+                            <fieldset id="rtcEditorRegra" class="space-y-3">
+                                <legend id="rtcTituloRegra" class="rtc-title">Nova regra</legend>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <label class="rtc-help">Descrição
+                                        <select id="rtcRegraOperador" class="imendes-input w-full p-2 rounded">
+                                            <option value="PALAVRA">Contém palavra inteira</option>
+                                            <option value="CONTEM">Contém</option><option value="NAO_CONTEM">Não contém</option>
+                                            <option value="IGUAL">Igual</option><option value="DIFERENTE">Diferente</option>
+                                            <option value="COMECA_COM">Começa com</option>
+                                        </select>
+                                    </label>
+                                    <label class="rtc-help">Valor procurado<input id="rtcRegraValor" maxlength="500" placeholder="Ex.: MP" class="imendes-input w-full p-2 rounded"></label>
+                                    <label class="rtc-help">CClassTrib<input id="rtcRegraCodigo" maxlength="6" inputmode="numeric" placeholder="Ex.: 200047" class="imendes-input w-full p-2 rounded"></label>
+                                    <label class="rtc-help">Prioridade (1 a 9999)<input id="rtcRegraPrioridade" type="number" min="1" max="9999" value="1" class="imendes-input w-full p-2 rounded"></label>
+                                </div>
+                                <label class="rtc-help"><input id="rtcRegraAtiva" type="checkbox" checked> Regra ativa</label>
+                                <div class="rtc-toolbar">
+                                    <button onclick="salvarRegraRtc()" class="rtc-button rtc-button-primary">Salvar regra</button>
+                                    <button onclick="novaRegraRtc()" class="rtc-button">Limpar / nova regra</button>
+                                </div>
+                            </fieldset>
+                            <p class="rtc-help">Desative uma regra editando-a e desmarcando “Regra ativa”. Perfis somente leitura podem consultar e simular, mas não salvar regras. CClassTrib deve ter 6 dígitos; a regra não substitui validação tributária.</p>
+                        </div>
+                        <div id="rtcPainelConsulta" role="tabpanel" aria-labelledby="rtcTabConsulta" class="space-y-4">
                         <div class="rtc-card space-y-4">
                             <div class="rtc-toolbar">
                                 <div><p class="rtc-step">1. Buscar</p><h5 class="rtc-title">Envie a planilha de famílias</h5></div>
@@ -924,18 +979,18 @@
                             <label for="inputBaseRtc" class="sr-only">Planilha para consulta ou importação</label>
                             <input type="file" id="inputBaseRtc" accept=".xlsx,.xls,.csv" aria-describedby="rtcAjudaArquivo" class="rtc-file">
                             <div class="rtc-toolbar">
-                                <p class="rtc-help">A busca consulta a base de todos os clientes. Não altera o ERP.</p>
-                                <button onclick="consultarBaseRtc()" class="rtc-button rtc-button-primary">Buscar CClassTrib</button>
+                                <p class="rtc-help">As regras do cliente prevalecem sobre o arquivo. A base compartilhada é consultada para os demais itens. A simulação não grava classificações nem altera o ERP.</p>
+                                <button onclick="consultarBaseRtc()" class="rtc-button rtc-button-primary">Simular regras e buscar CClassTrib</button>
                             </div>
                             <details class="border-t border-slate-700 pt-3">
                                 <summary class="rtc-link">Já tenho classificações revisadas e quero adicioná-las à base</summary>
-                                <p class="rtc-help mb-3">Esta é uma ação separada da busca. Importa o arquivo selecionado acima, com os quatro campos preenchidos. Selecione o cliente de origem; os dados ficarão disponíveis para todos os clientes. Não utiliza as edições da tabela abaixo.</p>
-                                <button onclick="importarBaseRtc()" class="rtc-button">Adicionar arquivo à base compartilhada</button>
+                                <p class="rtc-help mb-3">Esta é uma ação separada da simulação: não executa regras nem utiliza as edições abaixo. Importa o arquivo com os quatro campos preenchidos. Registros com RTC_REGRA_CLIENTE são mantidos no histórico particular do cliente de origem; os demais alimentam a base compartilhada.</p>
+                                <button onclick="importarBaseRtc()" class="rtc-button">Importar arquivo revisado</button>
                             </details>
                         </div>
                         <div id="rtcVazio" class="rtc-empty">
                             <h5 class="rtc-title">Suas classificações aparecerão aqui</h5>
-                            <p class="rtc-help">Envie uma planilha e clique em “Buscar CClassTrib” para revisar os resultados.</p>
+                            <p class="rtc-help">Selecione o cliente, envie uma planilha e clique em “Simular regras e buscar CClassTrib”.</p>
                         </div>
                         <div id="rtcRevisao" class="rtc-card space-y-4 hidden">
                             <div class="rtc-toolbar">
@@ -943,6 +998,7 @@
                                     <p class="rtc-step">2. Revisar e continuar</p>
                                     <h5 class="rtc-title">Confira os códigos antes de aprovar</h5>
                                     <p id="rtcResumoRevisao" class="rtc-count" role="status" aria-live="polite"></p>
+                                    <p id="rtcResumoSimulacao" class="rtc-help whitespace-pre-wrap"></p>
                                 </div>
                                 <div class="flex gap-2 flex-wrap">
                                     <button id="rtcExportar" onclick="exportarBaseRtc()" class="rtc-button" disabled>Baixar planilha aprovada</button>
@@ -959,7 +1015,8 @@
                                 <tbody id="rtcResultadoBase"></tbody>
                             </table>
                         </div>
-                        <p class="rtc-help">A aprovação não grava na base nem implanta no ERP. Baixe a planilha ou selecione o cliente de destino e use “Implantar Dados Aprovados” para revisar os cenários, sem reenviar o arquivo. Só as linhas aprovadas seguirão para implantação, que exige confirmação. “Aprovar todas” inclui códigos de 6 dígitos, mesmo sem referência ou com conflito; vazios e inválidos ficam pendentes. No download, linhas não aprovadas serão separadas em outra aba.</p>
+                        <p class="rtc-help">A aprovação não grava na base nem implanta no ERP. Baixe a planilha ou use “Implantar Dados Aprovados” para revisar os cenários do mesmo cliente. “Aprovar todas” inclui códigos de 6 dígitos; conflitos de regras ficam vazios até sua decisão manual. Resultados particulares permanecem isolados, inclusive após edição manual. Preserve RTC_REGRA_CLIENTE no download. Linhas não aprovadas ficam em outra aba.</p>
+                        </div>
                         </div>
                     </div>
                     <div id="rtcImplantacao" class="space-y-4">
@@ -1122,6 +1179,45 @@
                         <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">Console</h4>
                         <pre id="logRegimesDivisoes" class="flex-1 bg-black border border-slate-800 rounded-lg p-3 font-mono text-[11px] text-slate-300 overflow-y-auto log-scroll whitespace-pre-wrap">Aguardando consulta...</pre>
                     </div>
+                </div>
+            </div>
+
+            <div id="ferramentaTributacaoUf" class="p-4 sm:p-6 flex-1 overflow-auto flex flex-col gap-6 hidden min-h-0">
+                <div>
+                    <h4 class="uf-heading">Análise de Tributação por UF</h4>
+                    <p class="uf-help">Consulte as regras fiscais do cliente e exporte os detalhes por UF em uma planilha XLSX.</p>
+                </div>
+                <details class="uf-guide">
+                    <summary>Como funciona a consulta e o arquivo exportado</summary>
+                    <p class="uf-help">SKU, EAN e família consultam os produtos antes das tributações de todas as divisões. Por título, serão incluídas todas as tributações encontradas.</p>
+                    <p class="uf-help mt-2">O XLSX contém uma linha por regra: ID tributação, regime, UF empresa, operação (EI, ED, EM, SN, SC e demais retornadas) e UF cliente/fornecedor, com todos os campos da API em colunas. IDs repetidos são consultados uma única vez. A aba Consultas relaciona os termos aos IDs; falhas aparecem em Pendências e identificam o arquivo como PARCIAL.</p>
+                </details>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label for="selectClienteTributacaoUf" class="block">Cliente</label>
+                        <select id="selectClienteTributacaoUf" class="w-full p-2.5 border rounded-lg imendes-input cursor-pointer">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="selectFiltroTributacaoUf" class="block">Filtro</label>
+                        <select id="selectFiltroTributacaoUf" class="w-full p-2.5 border rounded-lg imendes-input cursor-pointer">
+                            <option value="sku">SKU</option>
+                            <option value="ean">EAN</option>
+                            <option value="familia">FAMÍLIA</option>
+                            <option value="id_trib">TRIBUTAÇÃO</option>
+                            <option value="titulo_trib">TÍTULO TRIBUTAÇÃO</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label for="inputTermosTributacaoUf" class="block">Valores da consulta</label>
+                    <textarea id="inputTermosTributacaoUf" rows="4" aria-describedby="ajudaTermosTributacaoUf" placeholder="Ex.: 128453;128454;128455" class="w-full p-3 border rounded-lg imendes-input"></textarea>
+                    <p id="ajudaTermosTributacaoUf" class="uf-help">Separe os valores por ponto e vírgula (;).</p>
+                </div>
+                <div class="uf-footer flex flex-col sm:flex-row sm:items-center gap-4">
+                    <button id="btnExportarTributacaoUf" onclick="exportarAnaliseTributacaoUf()" class="imendes-btn w-full sm:w-auto shrink-0 px-5 py-2.5 text-sm rounded-lg cursor-pointer">Consultar e exportar XLSX</button>
+                    <p id="statusTributacaoUf" role="status" aria-live="polite" class="uf-status min-w-0 whitespace-pre-wrap">Aguardando consulta...</p>
                 </div>
             </div>
 
@@ -1519,10 +1615,10 @@
     </div> <!-- fecha appLayout -->
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzxxNQQhyaLlRfdssU_2nVzwDr9cFwq8CneMsjO-fRxNhosDJFiLCsS7oFWj-NDh-UAAQ/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbypiQgXVma8k6gX1NHPHVOnDW1v-u5K5mILnVpt47FjYMfjhznaELp-upKKFLqp21UZYQ/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.42.0"; 
+        const VERSAO_FRONT = "v5.45.0"; 
         // Launcher local (.bat) hospedado no GitHub - baixa o HTML mais recente diretamente do repositorio
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -1974,13 +2070,13 @@
                     };
 
                     if (action === 'produto') {
-                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${parametrosAdicionais.sku}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
+                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${encodeURIComponent(parametrosAdicionais.sku)}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
                     } else if (action === 'produto_leve') {
                         urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${parametrosAdicionais.sku}&Expand=familia.familiaDivisao.tributacao`;
                     } else if (action === 'produto_ean') {
-                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?CodigoAcesso=${parametrosAdicionais.ean}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
+                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?CodigoAcesso=${encodeURIComponent(parametrosAdicionais.ean)}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
                     } else if (action === 'produto_familia') {
-                        urlLocal = `${cliente.urlBase}/SMProdutosAPI/api/v4/produtos/dados-cadastrais?IdFamilia=${parametrosAdicionais.idFamilia}`;
+                        urlLocal = `${cliente.urlBase}/SMProdutosAPI/api/v4/produtos/dados-cadastrais?IdFamilia=${encodeURIComponent(parametrosAdicionais.idFamilia)}`;
                     } else if (action === 'produtos_lote_leve') {
                         // Busca em série no próprio navegador, reaproveitando o token já obtido
                         return await buscarProdutosLoteLocal(cliente, token, parametrosAdicionais.skus);
@@ -1988,12 +2084,14 @@
                         return await buscarProdutosPorFamiliasLoteLocal(cliente, token, parametrosAdicionais.familias);
                     } else if (action === 'familias_lote') {
                         return await buscarFamiliasLoteLocal(cliente, token, parametrosAdicionais.familias);
-                    } else if (action === 'tributacao_titulo') {
-                        const titulo = String(parametrosAdicionais.titulo ?? '').trim();
-                        if (!titulo) return { erro: "Informe o título da tributação." };
-                        urlLocal = `${cliente.urlBase}/SMProdutosAPI/api/v4/produtos/tributacao?TituloTributacao=${encodeURIComponent(titulo)}`;
+                    } else if (action === 'tributacao_titulo' || action === 'tributacao_numero') {
+                        const porTitulo = action === 'tributacao_titulo';
+                        const valor = String((porTitulo ? parametrosAdicionais.titulo : parametrosAdicionais.idTributacao) ?? '').trim();
+                        if (!valor) return { erro: `Informe o ${porTitulo ? 'título' : 'número'} da tributação.` };
+                        const filtro = porTitulo ? 'TituloTributacao' : 'NumeroTributacao';
+                        urlLocal = `${cliente.urlBase.replace(/\/+$/, '')}/SMProdutosAPI/api/v4/produtos/tributacao?${filtro}=${encodeURIComponent(valor)}`;
                     } else if (action === 'tributacao') {
-                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisApi/api/v1/Tributacao/uf?IdTributacao=${parametrosAdicionais.idTributacao}&pageSize=10000`;
+                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisApi/api/v1/Tributacao/uf?IdTributacao=${encodeURIComponent(parametrosAdicionais.idTributacao)}&pageSize=10000`;
                     } else if (action === 'reforma') {
                         urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?Familia=${parametrosAdicionais.idFamilia}&status=A&orderby=id`;
                     } else if (action === 'reforma_lote') {
@@ -2053,6 +2151,9 @@
                     }
                     
                     console.log(`[LOCAL] Rota: ${urlLocal}`);
+                    if (['produto', 'produto_ean', 'produto_familia', 'tributacao_titulo', 'tributacao_numero', 'tributacao'].includes(action) && parametrosAdicionais.page !== undefined) {
+                        urlLocal += `&page=${encodeURIComponent(parametrosAdicionais.page)}`;
+                    }
                     const response = await fetch(urlLocal, fetchOptions);
                     
                     // ✅ VERIFICAR ERROS HTTP
@@ -2074,10 +2175,10 @@
 
                     let data = await response.json();
 
-                    if (action === 'tributacao_titulo') {
+                    if (action === 'tributacao_titulo' || action === 'tributacao_numero') {
                         const items = Array.isArray(data) ? data : data && data.items;
-                        if (!Array.isArray(items)) return { erro: "Resposta inválida ao consultar o título da tributação." };
-                        data = { items: items };
+                        if (!Array.isArray(items)) return { erro: `Resposta inválida ao consultar o ${action === 'tributacao_titulo' ? 'título' : 'número'} da tributação.` };
+                        data = Array.isArray(data) ? { items } : { ...data, items };
                     } else if (action === 'tributacao' && Array.isArray(data)) data = { items: data };
                     else if (action === 'produto_familia' && Array.isArray(data)) data = { items: data };
                     else if (action === 'listar_cenarios') data = { sucesso: true, dados: data };
@@ -2276,6 +2377,7 @@
                 const selectRtc = document.getElementById('selectClienteRtc');
                 const selectRegimes = document.getElementById('selectClienteRegimes');
                 const selectAgendamentos = document.getElementById('selectClienteAgendamentos');
+                const selectTributacaoUf = document.getElementById('selectClienteTributacaoUf');
                 
                 selectMain.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 selectIpi.innerHTML = '<option value="">Selecione o Cliente...</option>';
@@ -2283,6 +2385,7 @@
                 selectRtc.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 selectRegimes.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 selectAgendamentos.innerHTML = '<option value="">Selecione o Cliente...</option>';
+                selectTributacaoUf.innerHTML = '<option value="">Selecione o Cliente...</option>';
                 
                 if (data.clientes && Array.isArray(data.clientes)) {
                     data.clientes.forEach(c => {
@@ -2301,6 +2404,7 @@
                         selectRtc.appendChild(optRtc);
                         selectRegimes.appendChild(optRegimes);
                         selectAgendamentos.appendChild(optAgendamentos);
+                        selectTributacaoUf.appendChild(new Option(c.nome + tagLocal, c.id));
                     });
                 }
             } catch (error) {
@@ -2517,13 +2621,15 @@
                 action = 'produto_familia';
                 params = { idFamilia: termo };
             } else if (tipoBusca === 'id_trib') {
-                action = 'tributacao';
+                action = 'tributacao_numero';
                 params = { idTributacao: termo };
             }
 
             document.getElementById('txtGetProduto').innerText = `-> ${bdClientes[clienteId].modoVpn ? '[ROTA VPN]' : '[ROTA NUVEM]'} action=${action}`;
             if (tipoBusca === 'id_trib') {
-                document.getElementById('txtGetTributacao').innerText = `-> ${bdClientes[clienteId].modoVpn ? '[ROTA VPN]' : '[ROTA NUVEM]'} Consultando Tributação ID=${termo}`;
+                document.getElementById('txtGetProduto').innerText = "N/A (Consulta apenas de Tributação)";
+                document.getElementById('txtGetTributacao').innerText = `-> ${bdClientes[clienteId].modoVpn ? '[ROTA VPN]' : '[ROTA NUVEM]'} action=${action} ID=${termo}`;
+                document.getElementById('txtGetTributacaoOriginal').innerText = "Aguardando consulta...";
             }
 
             try {
@@ -2531,15 +2637,21 @@
 
                 if (data.erro) return alert("Erro: " + data.erro + (data.detalhes ? `\nDetalhes: ${data.detalhes}` : ''));
 
-                document.getElementById('txtGetProdutoOriginal').innerText = data.endpointOriginal || "N/A";
+                document.getElementById('txtGetProdutoOriginal').innerText = tipoBusca === 'id_trib'
+                    ? "N/A (Consulta apenas de Tributação)" : data.endpointOriginal || "N/A";
 
                 // 🔴 TRATAMENTO ESPECIAL PARA ID TRIBUTAÇÃO
                 if (tipoBusca === 'id_trib') {
-                    // Verificar se há itens (linhas de tributação)
-                    if (!data.items || data.items.length === 0) return alert("Nenhuma tributação encontrada com este ID.");
+                    document.getElementById('txtGetTributacaoOriginal').innerText = data.endpointOriginal || "N/A";
+                    if (!Array.isArray(data.items)) throw new Error("Resposta inválida ao consultar o cadastro da tributação.");
+                    if (data.items.length === 0) return alert("Nenhuma tributação encontrada com este ID.");
+                    const tribInfo = data.items[0];
+                    if (!tribInfo || String(tribInfo.NumeroTributacao ?? '').trim() === '') {
+                        throw new Error("Cadastro retornado sem NumeroTributacao.");
+                    }
 
                     // Preencher cabeçalho com o ID da tributação
-                    document.getElementById('headerProduto').innerText = `Tributação ID: ${termo}`;
+                    document.getElementById('headerProduto').innerText = `Tributação ID: ${tribInfo.NumeroTributacao}`;
 
                     // Limpar/Resetar campos de produto (não há produto nesta consulta)
                     document.getElementById('idProduto').innerText = "N/A";
@@ -2567,14 +2679,12 @@
                     document.getElementById('btnEditarIpi').classList.add('hidden');
                     document.getElementById('btnEditarTributacao').classList.add('hidden');
 
-                    // Preencher com dados da tributação (primeira linha)
-                    const tribInfo = data.items[0] || {};
-                    document.getElementById('idTributacao').innerText = tribInfo.idTributacao || termo;
-                    document.getElementById('descTributacao').innerText = tribInfo.descricao || "Tributação sem descrição";
-                    document.getElementById('aceitaPauta').innerText = tribInfo.aceitaPauta || "N/A";
-                    document.getElementById('statusTributacao').innerText = tribInfo.status || "N/A";
-                    document.getElementById('idPauta').innerText = tribInfo.idPauta || "N/A";
-                    document.getElementById('nomeFamDiv').innerText = tribInfo.descricao || "N/A";
+                    document.getElementById('idTributacao').innerText = tribInfo.NumeroTributacao;
+                    document.getElementById('descTributacao').innerText = tribInfo.TituloTributacao || "Tributação sem descrição";
+                    document.getElementById('aceitaPauta').innerText = "N/A";
+                    document.getElementById('statusTributacao').innerText = tribInfo.Status || "N/A";
+                    document.getElementById('idPauta').innerText = "N/A";
+                    document.getElementById('nomeFamDiv').innerText = "N/A";
 
                     // Não há reforma quando consultando apenas por ID tributação
                     preencherBlocoReforma('cbs', null, false);
@@ -2589,10 +2699,10 @@
                     skuProdutoAtual = null;
                     idFamiliaAtual = null;
                     idDivisaoAtual = null;
-                    idTributacaoAtual = termo;
-                    descTributacaoAtual = tribInfo.descricao || "Tributação sem descrição";
-                    aceitaPautaAtual = tribInfo.aceitaPauta || null;
-                    statusTributacaoAtual = tribInfo.status || null;
+                    idTributacaoAtual = String(tribInfo.NumeroTributacao);
+                    descTributacaoAtual = tribInfo.TituloTributacao || "Tributação sem descrição";
+                    aceitaPautaAtual = null;
+                    statusTributacaoAtual = tribInfo.Status || null;
 
                     document.getElementById('btnVerTributacao').classList.remove('hidden');
                     document.getElementById('resultado').classList.remove('hidden');
@@ -2807,6 +2917,7 @@
                 alert("Erro ao conectar. Detalhes: " + error.message);
             } finally {
                 document.getElementById('loading').classList.add('hidden');
+                if (tipoBusca === 'id_trib') carregandoReforma = false;
             }
         }
 
@@ -2976,9 +3087,13 @@
             if (clienteMain) {
                 document.getElementById('selectClienteIpi').value = clienteMain;
                 document.getElementById('selectClienteAnalise').value = clienteMain;
-                document.getElementById('selectClienteRtc').value = clienteMain;
+                if (document.getElementById('selectClienteRtc').value !== clienteMain && !rtcOcupado) {
+                    document.getElementById('selectClienteRtc').value = clienteMain;
+                    trocarClienteRtc();
+                }
                 document.getElementById('selectClienteRegimes').value = clienteMain;
                 document.getElementById('selectClienteAgendamentos').value = clienteMain;
+                document.getElementById('selectClienteTributacaoUf').value = clienteMain;
             }
             mostrarView('ferramentas');
         }
@@ -2988,7 +3103,7 @@
         }
 
         function alternarAbaFerramenta(aba) {
-            ['ferramentaIpi', 'ferramentaAnalise', 'ferramentaRtc', 'ferramentaClientes', 'ferramentaValidador', 'ferramentaAgendamentos'].forEach(f => {
+            ['ferramentaIpi', 'ferramentaAnalise', 'ferramentaRtc', 'ferramentaClientes', 'ferramentaValidador', 'ferramentaAgendamentos', 'ferramentaTributacaoUf'].forEach(f => {
                 document.getElementById(f).classList.add('hidden');
             });
 
@@ -3004,6 +3119,192 @@
                 document.getElementById('ferramentaValidador').classList.remove('hidden');
             } else if (aba === 'agendamentos') {
                 document.getElementById('ferramentaAgendamentos').classList.remove('hidden');
+            } else if (aba === 'tributacaoUf') {
+                document.getElementById('ferramentaTributacaoUf').classList.remove('hidden');
+            }
+        }
+
+        async function consultarPaginasTributacaoUf(action, clienteId, parametros) {
+            const itens = [];
+            let paginaAnterior = '';
+            for (let page = 1; ; page++) {
+                const resposta = await fetchHibrido(action, clienteId, { ...parametros, page });
+                if (!resposta || resposta.erro || resposta.statusCode >= 400) {
+                    throw new Error(resposta ? `${resposta.erro || 'Falha na consulta'}${resposta.detalhes ? ': ' + resposta.detalhes : ''}` : 'Resposta vazia da API.');
+                }
+                const dados = resposta.dados ?? resposta;
+                const pagina = Array.isArray(dados) ? dados : dados.items;
+                if (!Array.isArray(pagina) || pagina.some(item => !item || typeof item !== 'object' || Array.isArray(item))) {
+                    throw new Error('Resposta inválida: esperada uma lista de registros da API.');
+                }
+                const assinatura = JSON.stringify(pagina);
+                if (page > 1 && assinatura === paginaAnterior) {
+                    throw new Error('A API repetiu a página anterior; consulta interrompida para evitar uma exportação incompleta.');
+                }
+                paginaAnterior = assinatura;
+                for (const item of pagina) itens.push(item);
+                const hasNext = dados.hasNext;
+                if (![true, 'true', 1, '1'].includes(hasNext)) break;
+                if (!pagina.length) throw new Error('A API indicou outra página, mas retornou uma página vazia.');
+            }
+            return itens;
+        }
+
+        async function resolverIdsTributacaoUf(clienteId, filtro, termo, cacheProdutos) {
+            if (filtro === 'id_trib') return [termo];
+            if (filtro === 'titulo_trib') {
+                const tributos = await consultarPaginasTributacaoUf('tributacao_titulo', clienteId, { titulo: termo });
+                if (!tributos.length) throw new Error('Nenhuma tributação encontrada para o título.');
+                return [...new Set(tributos.map(tributo => {
+                    const id = String(tributo.NumeroTributacao ?? '').trim();
+                    if (!id) throw new Error('Tributação retornada sem NumeroTributacao.');
+                    return id;
+                }))];
+            }
+            const consultarSku = async sku => {
+                if (!cacheProdutos.has(sku)) {
+                    const encontrados = await consultarPaginasTributacaoUf('produto', clienteId, { sku });
+                    if (!encontrados.length) throw new Error(`Produto ${sku} não encontrado.`);
+                    cacheProdutos.set(sku, encontrados);
+                }
+                return cacheProdutos.get(sku);
+            };
+            let produtos;
+            if (filtro === 'familia') {
+                const referencias = await consultarPaginasTributacaoUf('produto_familia', clienteId, { idFamilia: termo });
+                if (!referencias.length) throw new Error('Família sem produtos.');
+                const skus = [...new Set(referencias.map(item => {
+                    const sku = String(item.IdProduto ?? item.idProduto ?? '').trim();
+                    if (!sku) throw new Error('Produto da família retornado sem IdProduto.');
+                    return sku;
+                }))];
+                produtos = [];
+                for (const sku of skus) {
+                    for (const produto of await consultarSku(sku)) produtos.push(produto);
+                }
+            } else if (filtro === 'sku') {
+                produtos = await consultarSku(termo);
+            } else if (filtro === 'ean') {
+                produtos = await consultarPaginasTributacaoUf('produto_ean', clienteId, { ean: termo });
+            } else {
+                throw new Error('Filtro inválido.');
+            }
+            if (!produtos.length) throw new Error('Nenhum produto encontrado.');
+            const ids = new Set();
+            for (const produto of produtos) {
+                const divisoes = produto.familia?.familiaDivisao;
+                if (!Array.isArray(divisoes) || !divisoes.length) {
+                    throw new Error(`Produto ${produto.idProduto ?? termo} sem divisões/tributação.`);
+                }
+                for (const divisao of divisoes) {
+                    const id = String(divisao?.idTributacao ?? '').trim();
+                    if (!id) throw new Error(`Produto ${produto.idProduto ?? termo} com divisão sem idTributacao.`);
+                    ids.add(id);
+                }
+            }
+            return [...ids];
+        }
+
+        function achatarCamposTributacaoUf(valor, prefixo, destino) {
+            if (valor !== null && typeof valor === 'object' && Object.keys(valor).length) {
+                for (const [chave, item] of Object.entries(valor)) {
+                    const caminho = Array.isArray(valor) ? `${prefixo}[${chave}]` : `${prefixo}[${JSON.stringify(chave)}]`;
+                    achatarCamposTributacaoUf(item, caminho, destino);
+                }
+            } else {
+                destino[prefixo] = valor !== null && typeof valor === 'object' ? JSON.stringify(valor) : valor;
+            }
+        }
+
+        function prepararLinhasTributacaoUf(id, regras) {
+            return regras.map(regra => {
+                const linha = {
+                    'ID TRIBUTAÇÃO': String(regra.idTributacao ?? id),
+                    'REGIME': regra.idRegTributacao ?? '',
+                    'UF EMPRESA': regra.ufEmpresa ?? '',
+                    'OPERAÇÃO': regra.tipo ?? '',
+                    'UF CLIENTE/FORNECEDOR': regra.ufClienteFornecedor ?? ''
+                };
+                achatarCamposTributacaoUf(regra, 'API', linha);
+                return linha;
+            });
+        }
+
+        function adicionarAbasTributacaoUf(workbook, nome, linhas) {
+            if (!linhas.length) return;
+            const colunas = [...new Set(linhas.flatMap(linha => Object.keys(linha)))];
+            if (colunas.length > 16384) throw new Error(`A aba ${nome} ultrapassa o limite de colunas do Excel.`);
+            for (const linha of linhas) {
+                for (const valor of Object.values(linha)) {
+                    if (typeof valor === 'string' && valor.length > 32767) {
+                        throw new Error(`A aba ${nome} contém um campo maior que o limite de 32.767 caracteres do Excel. Nenhum campo foi truncado.`);
+                    }
+                }
+            }
+            const tamanhoAba = 1048575;
+            for (let inicio = 0; inicio < linhas.length; inicio += tamanhoAba) {
+                const worksheet = XLSX.utils.json_to_sheet(linhas.slice(inicio, inicio + tamanhoAba), { header: colunas });
+                worksheet['!autofilter'] = { ref: worksheet['!ref'] };
+                XLSX.utils.book_append_sheet(workbook, worksheet, inicio ? `${nome}_${inicio / tamanhoAba + 1}` : nome);
+            }
+        }
+
+        async function exportarAnaliseTributacaoUf() {
+            const controles = ['selectClienteTributacaoUf', 'selectFiltroTributacaoUf', 'inputTermosTributacaoUf', 'btnExportarTributacaoUf'].map(id => document.getElementById(id));
+            if (controles[3].disabled) return;
+            const [clienteId, filtro, entrada] = controles.map(controle => controle.value);
+            const status = document.getElementById('statusTributacaoUf');
+            const termos = [...new Set(entrada.split(';').map(termo => termo.trim()).filter(Boolean))];
+            if (!clienteId || !bdClientes[clienteId] || !termos.length) {
+                status.innerText = 'Selecione um cliente e informe pelo menos um valor separado por ponto e vírgula (;).';
+                return;
+            }
+            controles.forEach(controle => { controle.disabled = true; });
+            const pendencias = [];
+            const consultas = [];
+            const linhas = [];
+            try {
+                if (typeof XLSX === 'undefined') throw new Error('Biblioteca XLSX indisponível. Recarregue a página e tente novamente.');
+                const ids = new Set();
+                const cacheProdutos = new Map();
+                for (const [indice, termo] of termos.entries()) {
+                    status.innerText = `Resolvendo ${filtro}: ${termo} (${indice + 1}/${termos.length})...`;
+                    try {
+                        const encontrados = await resolverIdsTributacaoUf(clienteId, filtro, termo, cacheProdutos);
+                        for (const id of encontrados) {
+                            ids.add(id);
+                            consultas.push({ Cliente: bdClientes[clienteId].nome, Filtro: filtro, Termo: termo, 'ID TRIBUTAÇÃO': id });
+                        }
+                    } catch (erro) {
+                        console.error('Falha ao resolver tributação por UF:', termo, erro);
+                        pendencias.push({ Etapa: 'Filtro', Filtro: filtro, Termo: termo, Erro: erro.message });
+                    }
+                }
+                let indice = 0;
+                for (const id of ids) {
+                    status.innerText = `Consultando tributação ${id} (${++indice}/${ids.size})...`;
+                    try {
+                        const regras = await consultarPaginasTributacaoUf('tributacao', clienteId, { idTributacao: id });
+                        if (!regras.length) throw new Error('Nenhuma regra por UF encontrada.');
+                        for (const linha of prepararLinhasTributacaoUf(id, regras)) linhas.push(linha);
+                    } catch (erro) {
+                        console.error('Falha ao consultar tributação por UF:', id, erro);
+                        pendencias.push({ Etapa: 'Tributação/UF', 'ID TRIBUTAÇÃO': id, Erro: erro.message });
+                    }
+                }
+                const workbook = XLSX.utils.book_new();
+                adicionarAbasTributacaoUf(workbook, 'Tributacao_UF', linhas);
+                adicionarAbasTributacaoUf(workbook, 'Consultas', consultas);
+                adicionarAbasTributacaoUf(workbook, 'Pendencias', pendencias);
+                const parcial = pendencias.length > 0;
+                XLSX.writeFile(workbook, `C5_Analise_Tributacao_UF_${parcial ? 'PARCIAL_' : ''}${new Date().toISOString().slice(0, 10)}.xlsx`);
+                status.innerText = `${parcial ? 'ATENÇÃO: resultado PARCIAL' : 'Exportação concluída'}: ${linhas.length} regra(s), ${ids.size} ID(s) de tributação, ${pendencias.length} pendência(s).${parcial ? '\nConsulte a aba Pendencias do XLSX e repita a consulta após corrigir as falhas.' : ''}`;
+            } catch (erro) {
+                console.error('Erro ao exportar análise de tributação por UF:', erro);
+                status.innerText = 'Falha na exportação: ' + erro.message;
+                alert(status.innerText);
+            } finally {
+                controles.forEach(controle => { controle.disabled = false; });
             }
         }
 
@@ -4785,6 +5086,16 @@
         let rtcArquivoConsulta = '';
         let rtcOcupado = false;
         let rtcImplantacaoIniciada = false;
+        let rtcClienteConsulta = '';
+        let rtcImplantacaoDaConsulta = false;
+        let rtcRegras = [];
+        let rtcClienteRegras = '';
+        let rtcRegraEditada = null;
+        let rtcAbaReaproveitamento = 'consulta';
+        const rtcOperadores = new Map([
+            ['CONTEM', 'Contém'], ['NAO_CONTEM', 'Não contém'], ['IGUAL', 'Igual'],
+            ['DIFERENTE', 'Diferente'], ['PALAVRA', 'Contém palavra inteira'], ['COMECA_COM', 'Começa com']
+        ]);
 
         function rtcLog(mensagem) {
             const log = document.getElementById('logFerramentaRtc');
@@ -4808,7 +5119,7 @@
         }
 
         async function rtcApi(action, dados = {}) {
-            const leitura = ['rtc_consultar', 'rtc_pendentes', 'rtc_historico'].includes(action);
+            const leitura = ['rtc_consultar', 'rtc_pendentes', 'rtc_historico', 'rtc_regras_listar', 'rtc_simular'].includes(action);
             if (!leitura && perfilEhSomenteLeitura()) throw new Error('Seu perfil permite somente consulta.');
             // Sempre nuvem, inclusive na VPN; text/plain evita preflight no Web App do Apps Script.
             const response = await fetch(WEB_APP_URL, {
@@ -4828,11 +5139,136 @@
             document.getElementById('rtcImplantacao').classList.toggle('hidden', consulta);
             document.getElementById('rtcLabelCliente').textContent = consulta ? 'Cliente de origem / destino da implantação' : 'Cliente de destino';
             document.getElementById('rtcAjudaCliente').textContent = consulta
-                ? 'Não é necessário selecionar cliente para buscar. Para implantar os aprovados, selecione o destino; para importar referências, selecione a origem.'
+                ? 'Selecione o cliente para simular suas regras. Os aprovados só podem seguir para esse mesmo cliente. Trocar o cliente invalida a revisão.'
                 : 'O ERP deste cliente receberá os vínculos após sua confirmação.';
             document.getElementById('rtcAjudaRotina').textContent = consulta
-                ? 'Busque códigos no histórico, revise os resultados e baixe ou encaminhe os aprovados para implantação.'
+                ? 'Simule regras particulares antes da busca no histórico, revise e baixe ou encaminhe os aprovados para implantação.'
                 : 'Vincule famílias aos cenários do cliente. As classificações confirmadas alimentarão a base.';
+        }
+
+        function rtcInvalidarConsulta() {
+            rtcConsulta = [];
+            rtcArquivoConsulta = '';
+            rtcClienteConsulta = '';
+            document.getElementById('rtcResumoSimulacao').textContent = '';
+            if (rtcImplantacaoDaConsulta && !rtcImplantacaoIniciada) cancelarRtc();
+            renderizarBaseRtc();
+        }
+
+        function trocarClienteRtc() {
+            rtcInvalidarConsulta();
+            rtcRegras = [];
+            rtcClienteRegras = '';
+            novaRegraRtc();
+            renderizarRegrasRtc();
+            if (rtcAbaReaproveitamento === 'regras' && document.getElementById('selectClienteRtc').value) carregarRegrasRtc();
+        }
+
+        async function abrirAbaRtc(aba) {
+            rtcAbaReaproveitamento = aba;
+            for (const [nome, sufixo] of [['consulta', 'Consulta'], ['regras', 'Regras']]) {
+                const selecionada = nome === aba;
+                document.getElementById('rtcTab' + sufixo).setAttribute('aria-selected', String(selecionada));
+                document.getElementById('rtcTab' + sufixo).classList.toggle('rtc-button-primary', selecionada);
+                document.getElementById('rtcPainel' + sufixo).classList.toggle('hidden', !selecionada);
+            }
+            if (aba === 'regras') await carregarRegrasRtc();
+        }
+
+        function novaRegraRtc() {
+            rtcRegraEditada = null;
+            document.getElementById('rtcTituloRegra').textContent = 'Nova regra';
+            document.getElementById('rtcRegraOperador').value = 'PALAVRA';
+            document.getElementById('rtcRegraValor').value = '';
+            document.getElementById('rtcRegraCodigo').value = '';
+            document.getElementById('rtcRegraPrioridade').value = '1';
+            document.getElementById('rtcRegraAtiva').checked = true;
+        }
+
+        function rtcTextoRegra(regra) {
+            return `${rtcOperadores.get(regra.operador)} "${regra.valor}" → ${regra.cclastrib} (prioridade ${regra.prioridade})`;
+        }
+
+        function renderizarRegrasRtc() {
+            const cliente = document.getElementById('selectClienteRtc').value;
+            document.getElementById('rtcEditorRegra').disabled = !cliente || cliente !== rtcClienteRegras || perfilEhSomenteLeitura();
+            document.getElementById('rtcListaRegras').innerHTML = rtcRegras.length ? rtcRegras.map((regra, i) => `
+                <tr><td>${regra.ativa ? 'Sim' : 'Não'}</td>
+                <td>${escapeHtml(rtcOperadores.get(regra.operador))}<br>${escapeHtml(regra.valor)}</td>
+                <td class="font-mono">${escapeHtml(regra.cclastrib)}</td><td>${regra.prioridade}</td>
+                <td><button onclick="editarRegraRtc(${i})" class="rtc-link" ${perfilEhSomenteLeitura() ? 'disabled' : ''}>Editar</button></td></tr>`).join('')
+                : `<tr><td colspan="5">${!cliente ? 'Selecione um cliente.' : rtcClienteRegras === cliente ? 'Nenhuma regra cadastrada para este cliente.' : 'Carregue as regras antes de editar.'}</td></tr>`;
+        }
+
+        async function carregarRegrasRtc() {
+            await rtcNaTela(async () => {
+                const cliente = document.getElementById('selectClienteRtc').value;
+                rtcRegras = [];
+                rtcClienteRegras = '';
+                novaRegraRtc();
+                renderizarRegrasRtc();
+                if (!cliente) throw new Error('Selecione um cliente para carregar as regras.');
+                const dados = await rtcApi('rtc_regras_listar', { cliente });
+                if (document.getElementById('selectClienteRtc').value !== cliente) throw new Error('O cliente mudou. Recarregue as regras.');
+                rtcRegras = dados.regras;
+                rtcClienteRegras = cliente;
+                renderizarRegrasRtc();
+            });
+        }
+
+        function editarRegraRtc(indice) {
+            rtcRegraEditada = rtcRegras[indice];
+            document.getElementById('rtcTituloRegra').textContent = 'Editar regra';
+            document.getElementById('rtcRegraOperador').value = rtcRegraEditada.operador;
+            document.getElementById('rtcRegraValor').value = rtcRegraEditada.valor;
+            document.getElementById('rtcRegraCodigo').value = rtcRegraEditada.cclastrib;
+            document.getElementById('rtcRegraPrioridade').value = String(rtcRegraEditada.prioridade);
+            document.getElementById('rtcRegraAtiva').checked = rtcRegraEditada.ativa;
+        }
+
+        async function salvarRegraRtc() {
+            await rtcNaTela(async () => {
+                const cliente = document.getElementById('selectClienteRtc').value;
+                if (!cliente || cliente !== rtcClienteRegras) throw new Error('Carregue as regras do cliente antes de salvar.');
+                const regra = {
+                    ...(rtcRegraEditada ? { id: rtcRegraEditada.id, revisao: rtcRegraEditada.revisao } : {}),
+                    operador: document.getElementById('rtcRegraOperador').value,
+                    valor: document.getElementById('rtcRegraValor').value.trim(),
+                    cclastrib: rtcCodigo(document.getElementById('rtcRegraCodigo').value, 6),
+                    prioridade: Number(document.getElementById('rtcRegraPrioridade').value),
+                    ativa: document.getElementById('rtcRegraAtiva').checked
+                };
+                if (!regra.valor || !Number.isInteger(regra.prioridade) || regra.prioridade < 1 || regra.prioridade > 9999) {
+                    throw new Error('Informe o valor procurado e uma prioridade inteira entre 1 e 9999.');
+                }
+                // Invalida antes do POST: uma resposta perdida pode ocorrer depois da gravacao.
+                rtcInvalidarConsulta();
+                const dados = await rtcApi('rtc_regras_salvar', { cliente, regra });
+                rtcRegras = dados.regras;
+                novaRegraRtc();
+                renderizarRegrasRtc();
+                rtcLog('Regra salva para o cliente ' + cliente + '. Simule novamente antes de aprovar.');
+            });
+        }
+
+        function rtcConferirClienteConsulta() {
+            if (rtcClienteConsulta && rtcClienteConsulta !== document.getElementById('selectClienteRtc').value) {
+                throw new Error('O cliente mudou. Simule novamente antes de usar os resultados.');
+            }
+        }
+
+        function rtcOrigemPlanilha(texto) {
+            const origem = JSON.parse(texto);
+            if (!origem || typeof origem.cliente !== 'string' || !origem.cliente ||
+                typeof origem.original !== 'string' || (origem.original && !/^\d{6}$/.test(origem.original)) ||
+                !Array.isArray(origem.regras) || !origem.regras.length ||
+                origem.regras.some(regra => !regra || typeof regra.id !== 'string' || !/^[a-zA-Z0-9_-]{1,100}$/.test(regra.id) ||
+                    !rtcOperadores.has(regra.operador) || typeof regra.valor !== 'string' || !regra.valor.trim() ||
+                    regra.valor.length > 500 || typeof regra.cclastrib !== 'string' || !/^\d{6}$/.test(regra.cclastrib) ||
+                    !Number.isInteger(regra.prioridade) || regra.prioridade < 1 || regra.prioridade > 9999)) {
+                throw new Error('RTC_REGRA_CLIENTE inválida. Preserve a origem do arquivo exportado.');
+            }
+            return origem;
         }
 
         function rtcCodigo(valor, tamanho) {
@@ -4848,7 +5284,7 @@
 
         function rtcLerLinhas(linhas, exigirClassificacao) {
             if (!linhas.length) throw new Error('Planilha vazia.');
-            const aliases = new Map([['CODFAMILIA', 'familia'], ['DESCRICAO', 'descricao'], ['NCM', 'ncm'], ['CCLASTRIB', 'cclastrib'], ['CCLASSTRIB', 'cclastrib']]);
+            const aliases = new Map([['CODFAMILIA', 'familia'], ['DESCRICAO', 'descricao'], ['NCM', 'ncm'], ['CCLASTRIB', 'cclastrib'], ['CCLASSTRIB', 'cclastrib'], ['RTCREGRACLIENTE', 'regraCliente']]);
             const colunas = {};
             linhas[0].forEach((valor, i) => {
                 const nome = String(valor ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[\s_]/g, '');
@@ -4878,6 +5314,8 @@
                     const cclastrib = String(valorClass ?? '').trim() ? rtcCodigo(valorClass, 6) : '';
                     if (exigirClassificacao && !cclastrib) throw new Error('CClassTrib obrigatório.');
                     const item = { familia, descricao, ncm, cclastrib };
+                    const origem = colunas.regraCliente === undefined ? '' : String(linha[colunas.regraCliente] ?? '').trim();
+                    if (origem) item.regraCliente = rtcOrigemPlanilha(origem);
                     if (itens.has(familia)) {
                         if (JSON.stringify(itens.get(familia)) !== JSON.stringify(item)) throw new Error(`Família ${familia} repetida com dados divergentes.`);
                         repetidas++;
@@ -4902,9 +5340,11 @@
         }
 
         function rtcPlanilha(itens) {
+            const particular = itens.some(item => item.regraCliente);
             return XLSX.utils.aoa_to_sheet([
-                ['COD_FAMILIA', 'DESCRICAO', 'NCM', 'CCLASTRIB'],
-                ...itens.map(item => [item.familia, item.descricao, item.ncm, item.cclastrib])
+                ['COD_FAMILIA', 'DESCRICAO', 'NCM', 'CCLASTRIB', ...(particular ? ['RTC_REGRA_CLIENTE'] : [])],
+                ...itens.map(item => [item.familia, item.descricao, item.ncm, item.cclastrib,
+                    ...(particular ? [item.regraCliente ? JSON.stringify(item.regraCliente) : ''] : [])])
             ]);
         }
 
@@ -4914,44 +5354,76 @@
             XLSX.writeFile(workbook, 'Modelo_RTC.xlsx');
         }
 
-        async function rtcConsultarItens(itens) {
+        async function rtcConsultarItens(itens, cliente = '') {
             const resultado = [];
+            let versaoRegras;
             for (let i = 0; i < itens.length; i += 100) {
-                const resposta = await rtcApi('rtc_consultar', { itens: itens.slice(i, i + 100) });
+                const resposta = await rtcApi(cliente ? 'rtc_simular' : 'rtc_consultar', {
+                    itens: itens.slice(i, i + 100), ...(cliente ? { cliente, versaoRegras } : {})
+                });
                 if (!Array.isArray(resposta.itens) || resposta.itens.length !== Math.min(100, itens.length - i)) throw new Error('Resposta incompleta da base RTC.');
+                if (cliente) versaoRegras = resposta.versaoRegras;
                 resultado.push(...resposta.itens);
             }
-            return resultado.map(item => ({ ...item, valor: item.cclastrib || item.sugerido, aprovado: false }));
+            return resultado.map(item => ({ ...item,
+                valor: ['REGRA_CLIENTE', 'CONFLITO_REGRAS'].includes(item.status) ? item.sugerido : item.cclastrib || item.sugerido,
+                aprovado: false
+            }));
         }
 
         async function consultarBaseRtc() {
             await rtcNaTela(async () => {
-                rtcConsulta = [];
-                rtcArquivoConsulta = '';
-                renderizarBaseRtc();
+                rtcInvalidarConsulta();
+                const cliente = document.getElementById('selectClienteRtc').value;
+                if (!cliente) throw new Error('Selecione um cliente para simular as regras.');
                 const dados = await rtcLerArquivo('inputBaseRtc', false);
-                rtcConsulta = await rtcConsultarItens(dados.itens);
+                const consulta = await rtcConsultarItens(dados.itens, cliente);
+                if (document.getElementById('selectClienteRtc').value !== cliente) throw new Error('O cliente mudou. Simule novamente.');
+                rtcConsulta = consulta;
+                rtcClienteConsulta = cliente;
                 rtcArquivoConsulta = dados.arquivo;
+                rtcResumoRegras();
                 renderizarBaseRtc();
-                rtcLog('Consulta concluída. Revise as propostas; nenhuma referência foi gravada.');
+                rtcLog('Simulação concluída para o cliente ' + cliente + '. Revise as propostas; nenhuma classificação foi gravada e o ERP não foi alterado.');
             });
+        }
+
+        function rtcResumoRegras() {
+            const total = rtcConsulta.length;
+            const comRegra = rtcConsulta.filter(item => item.regrasCorrespondentes?.length).length;
+            const conflitos = rtcConsulta.filter(item => item.status === 'CONFLITO_REGRAS').length;
+            const alteradas = rtcConsulta.filter(item => item.status === 'REGRA_CLIENTE' && item.valor !== item.cclastrib).length;
+            const regras = new Map();
+            rtcConsulta.forEach(item => (item.regrasCorrespondentes || []).forEach(regra => {
+                if (!regras.has(regra.id)) regras.set(regra.id, { regra, quantidade: 0 });
+                regras.get(regra.id).quantidade++;
+            }));
+            const detalhes = [...regras.values()].map(({ regra, quantidade }) =>
+                `${rtcTextoRegra(regra)}: ${quantidade}/${total} famílias (${(quantidade / total * 100).toFixed(1)}%)` +
+                (['NAO_CONTEM', 'DIFERENTE'].includes(regra.operador) ? ' — ATENÇÃO: filtro amplo.' : ''));
+            document.getElementById('rtcResumoSimulacao').textContent =
+                `${comRegra} com regra · ${alteradas} alterações propostas · ${total - comRegra} sem regra atual · ${conflitos} conflitos de regras\n` +
+                detalhes.join('\n');
         }
 
         function renderizarBaseRtc() {
             const rotulos = new Map([
                 ['PROPOSTA', 'Sugestão encontrada'], ['CONCORDANTE', 'Confere com a base'],
-                ['NAO_ENCONTRADO', 'Sem referência'], ['DIVERGENCIA', 'Código divergente'], ['CONFLITO', 'Referências em conflito']
+                ['NAO_ENCONTRADO', 'Sem referência'], ['DIVERGENCIA', 'Código divergente'], ['CONFLITO', 'Referências em conflito'],
+                ['REGRA_CLIENTE', 'Regra do cliente'], ['CONFLITO_REGRAS', 'Conflito de regras: informe o código após revisar']
             ]);
             document.getElementById('rtcResultadoBase').innerHTML = rtcConsulta.map((item, i) => `
                 <tr>
                     <td><span class="text-slate-400 font-mono">${escapeHtml(item.familia)}</span><br>${escapeHtml(item.descricao)}</td>
                     <td class="font-mono">${escapeHtml(item.ncm)}</td>
-                    <td><span class="rtc-status ${['DIVERGENCIA', 'CONFLITO'].includes(item.status) ? 'rtc-status-review' : ''}">${escapeHtml(rotulos.get(item.status) || item.status)}</span>
-                        ${item.referencias.length ? `<p class="rtc-help font-mono">${escapeHtml(item.referencias.map(ref => ref.cclastrib).join(', '))}</p>` : ''}</td>
+                    <td><span class="rtc-status ${['DIVERGENCIA', 'CONFLITO', 'CONFLITO_REGRAS'].includes(item.status) ? 'rtc-status-review' : ''}">${escapeHtml(rotulos.get(item.status) || item.status)}</span>
+                        ${item.referencias.length ? `<p class="rtc-help font-mono">${escapeHtml(item.referencias.map(ref => ref.cclastrib).join(', '))}</p>` : ''}
+                        ${item.regraCliente ? `<p class="rtc-help">Particular do cliente ${escapeHtml(item.regraCliente.cliente)} · Original: ${escapeHtml(item.cclastrib || '(vazio)')}<br>
+                        ${escapeHtml((item.regrasCorrespondentes || item.regraCliente.regras).map(rtcTextoRegra).join('; '))}</p>` : ''}</td>
                     <td><input aria-label="CClassTrib da família ${escapeHtml(item.familia)}" value="${escapeHtml(item.valor)}" maxlength="6" class="rtc-code" oninput="rtcConsulta[${i}].valor=this.value.trim(); rtcConsulta[${i}].aprovado=false; document.getElementById('rtcAprovar${i}').checked=false; atualizarResumoRtc();"></td>
                     <td class="text-center"><input id="rtcAprovar${i}" aria-label="Aprovar família ${escapeHtml(item.familia)}" type="checkbox" ${item.aprovado ? 'checked' : ''} onchange="rtcConsulta[${i}].aprovado=this.checked; atualizarResumoRtc();"></td>
                     <td><button onclick="verOrigemRtc(${i})" class="rtc-link">Ver histórico</button>
-                    ${item.status === 'CONFLITO' ? `<button onclick="resolverConflitoRtc(${i})" class="rtc-link block mt-2">Revisar base global</button>` : ''}</td>
+                    ${item.status === 'CONFLITO' && !item.regraCliente ? `<button onclick="resolverConflitoRtc(${i})" class="rtc-link block mt-2">Revisar base global</button>` : ''}</td>
                 </tr>`).join('');
             document.getElementById('rtcRevisao').classList.toggle('hidden', !rtcConsulta.length);
             document.getElementById('rtcVazio').classList.toggle('hidden', !!rtcConsulta.length);
@@ -4987,9 +5459,11 @@
         }
 
         function obterAprovadosRtc() {
+            rtcConferirClienteConsulta();
             if (!rtcConsulta.length) throw new Error('Consulte uma planilha primeiro.');
             const aprovados = rtcConsulta.filter(item => item.aprovado).map(item => ({
-                familia: item.familia, descricao: item.descricao, ncm: item.ncm, cclastrib: rtcCodigo(item.valor, 6)
+                familia: item.familia, descricao: item.descricao, ncm: item.ncm, cclastrib: rtcCodigo(item.valor, 6),
+                ...(item.regraCliente ? { regraCliente: item.regraCliente } : {})
             }));
             if (!aprovados.length) throw new Error('Aprove ao menos um registro para continuar.');
             return aprovados;
@@ -5004,6 +5478,7 @@
                 if (!cliente) throw new Error('Selecione o cliente de destino antes de implantar os dados aprovados.');
                 const origem = rtcArquivoConsulta ? `${rtcArquivoConsulta} (dados aprovados)` : 'Reaproveitamento de dados aprovados';
                 await prepararImplantacaoRtc(cliente, aprovados, origem);
+                rtcImplantacaoDaConsulta = true;
                 document.getElementById('rtcRotina').value = 'implantacao';
                 alternarRotinaRtc();
             });
@@ -5027,11 +5502,12 @@
             await rtcNaTela(async () => {
                 const item = rtcConsulta[indice];
                 document.getElementById('rtcOrigem').textContent = '';
-                const dados = await rtcApi('rtc_historico', { item });
+                const dados = await rtcApi('rtc_historico', { item, cliente: document.getElementById('selectClienteRtc').value });
                 document.getElementById('rtcHistoricoFamilia').textContent = `Família ${item.familia} · NCM ${item.ncm}\n${item.descricao}`;
                 document.getElementById('rtcOrigem').textContent = dados.eventos.length
                     ? `${dados.total} evento(s) registrado(s) · Exibindo os últimos 50\n\n` +
-                        dados.eventos.map(evento => `${evento.data} · ${evento.tipo}\nCClassTrib: ${evento.cclastrib}\nCliente: ${evento.cliente || '-'} · Família: ${evento.familia}\nResponsável: ${evento.usuario}\nOrigem: ${evento.origem}`).join('\n\n')
+                        dados.eventos.map(evento => `${evento.data} · ${evento.tipo}\nCClassTrib: ${evento.cclastrib}\nCliente: ${evento.cliente || '-'} · Família: ${evento.familia}\nResponsável: ${evento.usuario}\nOrigem: ${evento.origem}` +
+                            (evento.regraCliente ? '\nParticular — não alimenta a base global\n' + evento.regraCliente.regras.map(rtcTextoRegra).join('\n') : '')).join('\n\n')
                     : 'Nenhum histórico encontrado para este NCM e descrição.';
                 abrir = true;
             });
@@ -5045,6 +5521,7 @@
         async function resolverConflitoRtc(indice) {
             await rtcNaTela(async () => {
                 const item = rtcConsulta[indice];
+                if (item.regraCliente) throw new Error('Uma classificação particular não pode resolver a base global.');
                 const escolhido = rtcCodigo(item.valor, 6);
                 const codigos = [...new Set(item.referencias.map(ref => ref.cclastrib))].sort();
                 if (!codigos.includes(escolhido)) throw new Error('Escolha no campo CClassTrib uma das referências em conflito.');
@@ -5052,8 +5529,9 @@
                 await rtcApi('rtc_resolver', { item: { ...item, cclastrib: escolhido }, codigos });
                 const normalizar = texto => texto.normalize('NFC').trim().replace(/\s+/g, ' ').toUpperCase();
                 const relacionados = rtcConsulta.filter(linha => linha.ncm === item.ncm && normalizar(linha.descricao) === normalizar(item.descricao));
-                const atualizados = new Map((await rtcConsultarItens(relacionados)).map(linha => [linha.familia, linha]));
+                const atualizados = new Map((await rtcConsultarItens(relacionados, rtcClienteConsulta)).map(linha => [linha.familia, linha]));
                 rtcConsulta = rtcConsulta.map(linha => atualizados.get(linha.familia) || linha);
+                if (rtcClienteConsulta) rtcResumoRegras();
                 renderizarBaseRtc();
                 rtcLog('Conflito resolvido com histórico. Revise novamente as propostas deste NCM e descrição; demais revisões foram preservadas.');
             });
@@ -5082,7 +5560,8 @@
             await rtcNaTela(async () => {
                 const dados = await rtcLerArquivo('inputBaseRtc', true);
                 const cliente = document.getElementById('selectClienteRtc').value;
-                if (!confirm(`Confirma que as ${dados.itens.length} classificações foram revisadas e podem alimentar a base de TODOS os clientes? Divergências serão registradas como conflitos.`)) return;
+                const particulares = dados.itens.filter(item => item.regraCliente).length;
+                if (!confirm(`Confirma a importação de ${dados.itens.length} classificações revisadas? ${particulares} particulares ficarão apenas no histórico do cliente; ${dados.itens.length - particulares} alimentarão a base de TODOS os clientes. Esta ação não aplica regras. Divergências globais serão registradas como conflitos.`)) return;
                 const execucoes = await rtcPrepararLotes('IMPORTACAO', cliente, dados.arquivo, dados.itens);
                 for (const execucao of execucoes) await rtcProcessarExecucao(execucao);
                 rtcLog('Importação concluída. Consulte a base para visualizar referências e conflitos.');
@@ -5229,6 +5708,9 @@
         }
 
         async function prepararImplantacaoRtc(cliente, itens, arquivo) {
+            if (itens.some(item => item.regraCliente && item.regraCliente.cliente !== cliente)) {
+                throw new Error('O arquivo contém regras de outro cliente. Use o cliente de origem.');
+            }
             const cenarios = rtcExtrairCenarios(await fetchHibrido('listar_cenarios', cliente)).filter(cenario => cenario.status === 'A');
             const classes = [...new Set(itens.map(item => item.cclastrib))];
             const linhas = classes.map(cclastrib => {
@@ -5241,6 +5723,7 @@
             rtcItensImplantacao = itens;
             rtcArquivoImplantacao = arquivo;
             rtcImplantacaoIniciada = false;
+            rtcImplantacaoDaConsulta = false;
             document.getElementById('tbodyRtc').innerHTML = linhas;
             document.getElementById('rtcResumoImplantacao').textContent = `${itens.length} famílias · Cliente ${cliente} · Origem: ${arquivo}`;
             document.getElementById('rtcPasso1').classList.add('hidden');
@@ -5259,6 +5742,7 @@
             rtcArquivoImplantacao = '';
             document.getElementById('rtcResumoImplantacao').textContent = '';
             rtcImplantacaoIniciada = false;
+            rtcImplantacaoDaConsulta = false;
         }
 
         async function implantarCondicoesRtc() {
@@ -5274,7 +5758,8 @@
                 const itens = rtcItensImplantacao.map(item => ({ ...item, cenarios: mapa.get(item.cclastrib) }));
                 if (!itens.length) throw new Error('Analise uma planilha primeiro.');
                 rtcValidarMapeamento(itens, rtcCenariosAtivos);
-                if (!confirm(`Implantar ${itens.length} famílias no cliente ${rtcClienteId} e alimentar automaticamente a base compartilhada com as classificações confirmadas?`)) return;
+                const particulares = itens.filter(item => item.regraCliente).length;
+                if (!confirm(`Implantar ${itens.length} famílias no cliente ${rtcClienteId}? ${particulares} classificações particulares ficarão somente no histórico desse cliente; ${itens.length - particulares} alimentarão a base compartilhada após confirmação.`)) return;
                 rtcImplantacaoIniciada = true;
                 document.getElementById('btnImplantarRtc').disabled = true;
                 const execucoes = await rtcPrepararLotes('IMPLANTACAO', rtcClienteId, rtcArquivoImplantacao, itens);
