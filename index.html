@@ -1001,7 +1001,7 @@
                                     <p id="rtcResumoSimulacao" class="rtc-help whitespace-pre-wrap"></p>
                                 </div>
                                 <div class="flex gap-2 flex-wrap">
-                                    <button id="rtcExportar" onclick="exportarBaseRtc()" class="rtc-button" disabled>Baixar planilha aprovada</button>
+                                    <button id="rtcExportar" onclick="exportarBaseRtc()" class="rtc-button" disabled>Baixar Planilha</button>
                                     <button id="rtcImplantarAprovados" onclick="implantarAprovadosRtc()" class="rtc-button rtc-button-primary" disabled>Implantar Dados Aprovados</button>
                                 </div>
                             </div>
@@ -1015,7 +1015,7 @@
                                 <tbody id="rtcResultadoBase"></tbody>
                             </table>
                         </div>
-                        <p class="rtc-help">A aprovação não grava na base nem implanta no ERP. Baixe a planilha ou use “Implantar Dados Aprovados” para revisar os cenários do mesmo cliente. “Aprovar todas” inclui códigos de 6 dígitos; conflitos de regras ficam vazios até sua decisão manual. Resultados particulares permanecem isolados, inclusive após edição manual. Preserve RTC_REGRA_CLIENTE no download. Linhas não aprovadas ficam em outra aba.</p>
+                        <p class="rtc-help">A aprovação não grava na base nem implanta no ERP. Baixe a planilha ou use “Implantar Dados Aprovados” para revisar os cenários do mesmo cliente. “Aprovar todas” inclui códigos de 6 dígitos; conflitos de regras ficam vazios até sua decisão manual. Resultados particulares permanecem isolados, inclusive após edição manual. Preserve RTC_REGRA_CLIENTE no download. A planilha contém todas as linhas na mesma aba: aprovadas com o CClassTrib informado e não aprovadas com o CClassTrib vazio para preenchimento manual.</p>
                         </div>
                         </div>
                     </div>
@@ -1618,7 +1618,7 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbypiQgXVma8k6gX1NHPHVOnDW1v-u5K5mILnVpt47FjYMfjhznaELp-upKKFLqp21UZYQ/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.45.0"; 
+        const VERSAO_FRONT = "v5.45.1"; 
         // Launcher local (.bat) hospedado no GitHub - baixa o HTML mais recente diretamente do repositorio
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -5434,7 +5434,7 @@
             const aprovadas = rtcConsulta.filter(item => item.aprovado).length;
             document.getElementById('rtcResumoRevisao').textContent =
                 `${rtcConsulta.length} famílias · ${aprovadas} aprovadas · ${rtcConsulta.length - aprovadas} aguardando revisão`;
-            document.getElementById('rtcExportar').disabled = aprovadas === 0;
+            document.getElementById('rtcExportar').disabled = rtcConsulta.length === 0;
             document.getElementById('rtcImplantarAprovados').disabled = aprovadas === 0 || perfilEhSomenteLeitura();
         }
 
@@ -5486,13 +5486,16 @@
 
         async function exportarBaseRtc() {
             await rtcNaTela(async () => {
-                const aprovados = obterAprovadosRtc();
-                const pendentes = rtcConsulta.filter(item => !item.aprovado).map(item => ({ ...item, cclastrib: item.cclastrib }));
+                rtcConferirClienteConsulta();
+                if (!rtcConsulta.length) throw new Error('Consulte uma planilha primeiro.');
+                const itens = rtcConsulta.map(item => ({
+                    ...item, cclastrib: item.aprovado ? rtcCodigo(item.valor, 6) : ''
+                }));
+                const aprovados = rtcConsulta.filter(item => item.aprovado).length;
                 const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, rtcPlanilha(aprovados), 'RTC_Revisados');
-                if (pendentes.length) XLSX.utils.book_append_sheet(workbook, rtcPlanilha(pendentes), 'Pendencias_NAO_implantar');
-                XLSX.writeFile(workbook, 'RTC_Revisados.xlsx');
-                rtcLog(`Exportados ${aprovados.length} revisados e ${pendentes.length} pendentes em aba separada.`);
+                XLSX.utils.book_append_sheet(workbook, rtcPlanilha(itens), 'RTC');
+                XLSX.writeFile(workbook, 'RTC.xlsx');
+                rtcLog(`Exportadas ${itens.length} linhas: ${aprovados} aprovadas com CClassTrib e ${itens.length - aprovados} pendentes com CClassTrib vazio para preenchimento manual.`);
             });
         }
 
