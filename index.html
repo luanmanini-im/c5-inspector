@@ -823,13 +823,13 @@
                     <ul class="text-xs text-slate-300 list-disc list-inside space-y-1 ml-2">
                         <li>Suba um arquivo Excel (<strong class="text-white">.xlsx, .xls</strong>) ou <strong class="text-white">.csv</strong>.</li>
                         <li id="instrucaoTipoAnalise"><strong>Apenas na Coluna A:</strong> Insira o SKU do Produto (um por linha).</li>
-                        <li>A consulta em lotes inclui EANs, tributação, NCM e os IDs dos cenários CBS/IBS ativos, consultados por família. Não consulta regras por UF.</li>
-                        <li>Para cada imposto, usa o primeiro cenário retornado, como no Início, sem seleção adicional por vigência. Ausência de cenário e falha de consulta são indicadas separadamente no Excel.</li>
+                        <li>Escolha o escopo: <strong>RTC</strong> consulta somente os cenários da reforma; <strong>Família</strong> consulta somente a tributação por UF; <strong>Ambos</strong> consulta os dois. O tipo de código (SKU ou FAMÍLIA) é independente do escopo.</li>
+                        <li>No RTC, usa o primeiro cenário CBS/IBS retornado por família, como no Início, sem seleção adicional por vigência. No escopo Família, as regras completas ficam na aba <strong>Tributacao_UF</strong>, vinculadas ao produto. Consultas bem-sucedidas são reutilizadas entre lotes. Falhas são indicadas no Excel.</li>
                         <li id="instrucaoFamiliaAnalise" class="hidden">Para cada família, será analisado apenas o <strong>primeiro produto retornado pela API</strong>, como no Início. Não é uma análise de todos os SKUs da família.</li>
                     </ul>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                <div class="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">1. Cliente</label>
                         <select id="selectClienteAnalise" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
@@ -844,15 +844,23 @@
                         </select>
                     </div>
                     <div>
-                        <label id="labelArquivoAnalise" class="block text-xs font-bold text-slate-400 uppercase mb-1">3. Planilha SKUs</label>
+                        <label for="selectEscopoAnalise" class="block text-xs font-bold text-slate-400 uppercase mb-1">3. Escopo da análise</label>
+                        <select id="selectEscopoAnalise" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input cursor-pointer">
+                            <option value="rtc">RTC</option>
+                            <option value="familia">Família</option>
+                            <option value="ambos" selected>Ambos</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label id="labelArquivoAnalise" class="block text-xs font-bold text-slate-400 uppercase mb-1">4. Planilha SKUs</label>
                         <input type="file" id="inputArquivoAnalise" accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel" class="w-full p-2 border border-slate-700 bg-slate-950 rounded-lg text-sm text-slate-300 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-bold file:bg-emerald-400 file:text-slate-900 hover:file:bg-emerald-500 cursor-pointer">
                     </div>
                     <div>
-                        <label id="labelLoteAnalise" class="block text-xs font-bold text-slate-400 uppercase mb-1" title="SKUs por lote">4. Qtd/Lote</label>
+                        <label id="labelLoteAnalise" class="block text-xs font-bold text-slate-400 uppercase mb-1" title="SKUs por lote">5. Qtd/Lote</label>
                         <input type="number" id="qtdLoteAnalise" value="20" min="1" max="100" step="1" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Atraso aplicado entre lotes">5. Atraso Lote (ms)</label>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1" title="Atraso aplicado entre lotes">6. Atraso Lote (ms)</label>
                         <input type="number" id="delayAnalise" value="0" min="0" step="10" class="w-full p-2.5 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm imendes-input">
                     </div>
                 </div>
@@ -881,6 +889,7 @@
                         <div>Produtos encontrados: <span id="analiseSucesso" class="text-emerald-400 font-bold text-sm">0</span></div>
                         <div>Erros / Ñ Encontrado: <span id="analiseErro" class="text-red-400 font-bold text-sm">0</span></div>
                         <div title="Linhas com produto encontrado, mas sem família disponível ou com falha na consulta dos cenários">Falhas da reforma (linhas): <span id="analiseErroReforma" class="text-amber-400 font-bold text-sm">0</span></div>
+                        <div title="Linhas com produto encontrado, mas sem tributação disponível ou com falha na consulta por UF">Falhas por UF (linhas): <span id="analiseErroUf" class="text-amber-400 font-bold text-sm">0</span></div>
                     </div>
                 </div>
             </div>
@@ -1615,10 +1624,10 @@
     </div> <!-- fecha appLayout -->
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbypiQgXVma8k6gX1NHPHVOnDW1v-u5K5mILnVpt47FjYMfjhznaELp-upKKFLqp21UZYQ/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyf7Q5NRx5zzprPk7Mb8GYAKs0W4cCJmwAYtpl4nO9LbpYkAo1TVvZvGwIHn-mHlHIyQ/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.45.1"; 
+        const VERSAO_FRONT = "v5.46.0"; 
         // Launcher local (.bat) hospedado no GitHub - baixa o HTML mais recente diretamente do repositorio
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
         pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
@@ -4790,12 +4799,14 @@
         let isAnaliseRunning = false;
         let dadosAnaliseExcel = [];
         let tipoAnaliseExcel = 'sku';
+        let escopoAnaliseExcel = 'ambos';
+        let dadosAnaliseUfExcel = [];
 
         function atualizarTipoAnalise() {
             const porFamilia = document.getElementById('selectTipoAnalise').value === 'familia';
             document.getElementById('instrucaoTipoAnalise').innerHTML = `<strong>Apenas na Coluna A:</strong> Insira ${porFamilia ? 'o ID da Família' : 'o SKU do Produto'} (um por linha). Cabeçalho opcional.`;
             document.getElementById('instrucaoFamiliaAnalise').classList.toggle('hidden', !porFamilia);
-            document.getElementById('labelArquivoAnalise').innerText = `3. Planilha ${porFamilia ? 'Famílias' : 'SKUs'}`;
+            document.getElementById('labelArquivoAnalise').innerText = `4. Planilha ${porFamilia ? 'Famílias' : 'SKUs'}`;
             document.getElementById('labelLoteAnalise').title = `${porFamilia ? 'Famílias' : 'SKUs'} por lote`;
         }
 
@@ -4869,11 +4880,39 @@
             return resultado;
         }
 
+        async function consultarUfAnalise(clienteId, ids, cache) {
+            const resultado = new Map();
+            await Promise.all([...new Set(ids)].map(async id => {
+                let consulta = cache.get(id);
+                if (!consulta) {
+                    try {
+                        const regras = await consultarPaginasTributacaoUf('tributacao', clienteId, { idTributacao: id });
+                        if (!regras.length) throw new Error('Nenhuma regra por UF encontrada.');
+                        consulta = { regras, falha: false };
+                        cache.set(id, consulta);
+                    } catch (ex) {
+                        console.error(`Falha da tributação por UF ${id}:`, ex);
+                        consulta = { regras: [], falha: true, erro: `ERRO NA CONSULTA: ${ex.message}` };
+                    }
+                }
+                resultado.set(id, consulta);
+            }));
+            return resultado;
+        }
+
+        function obterIdsTributacaoAnalise(produto) {
+            return [...new Set((produto?.familia?.familiaDivisao || [])
+                .map(divisao => String(divisao.idTributacao ?? '').trim()).filter(Boolean))];
+        }
+
         async function processarAnaliseTributacao() {
             const btnStart = document.getElementById('btnStartAnalise');
             if (btnStart.disabled) return;
             const clienteId = document.getElementById('selectClienteAnalise').value;
             const tipo = document.getElementById('selectTipoAnalise').value;
+            const escopo = document.getElementById('selectEscopoAnalise').value;
+            const incluirRtc = escopo !== 'familia';
+            const incluirUf = escopo !== 'rtc';
             const porFamilia = tipo === 'familia';
             const unidade = porFamilia ? 'Famílias' : 'SKUs';
             const fileInput = document.getElementById('inputArquivoAnalise');
@@ -4882,12 +4921,13 @@
 
             if (!clienteId) return alert("Por favor, selecione um cliente na etapa 1.");
             if (!['sku', 'familia'].includes(tipo)) return alert("Selecione SKU ou FAMÍLIA.");
+            if (!['rtc', 'familia', 'ambos'].includes(escopo)) return alert("Selecione o escopo RTC, Família ou Ambos.");
             if (!fileInput.files.length) return alert(`Por favor, anexe uma planilha de ${unidade}.`);
             if (!Number.isInteger(qtdPorLote) || qtdPorLote < 1 || qtdPorLote > 100) return alert("A quantidade por lote deve ser um inteiro entre 1 e 100.");
             if (!Number.isFinite(delayMs) || delayMs < 0) return alert("O atraso entre lotes deve ser maior ou igual a zero.");
 
             const file = fileInput.files[0];
-            const controles = ['selectClienteAnalise', 'selectTipoAnalise', 'inputArquivoAnalise', 'qtdLoteAnalise', 'delayAnalise', 'btnStartAnalise'];
+            const controles = ['selectClienteAnalise', 'selectTipoAnalise', 'selectEscopoAnalise', 'inputArquivoAnalise', 'qtdLoteAnalise', 'delayAnalise', 'btnStartAnalise'];
             controles.forEach(id => { document.getElementById(id).disabled = true; });
             btnStart.classList.add('hidden');
             const btnStop = document.getElementById('btnStopAnalise');
@@ -4900,12 +4940,17 @@
             const valSuc = document.getElementById('analiseSucesso');
             const valErr = document.getElementById('analiseErro');
             const valErrReforma = document.getElementById('analiseErroReforma');
+            const valErrUf = document.getElementById('analiseErroUf');
             isAnaliseRunning = true;
             dadosAnaliseExcel = [];
             tipoAnaliseExcel = tipo;
-            let suc = 0, err = 0, errReforma = 0, processados = 0;
+            escopoAnaliseExcel = escopo;
+            dadosAnaliseUfExcel = [];
+            let suc = 0, err = 0, errReforma = 0, errUf = 0, processados = 0;
             const cacheReforma = new Map();
+            const cacheUf = new Map();
             valSuc.innerText = "0"; valErr.innerText = "0"; valErrReforma.innerText = "0";
+            valErrUf.innerText = "0";
             pBar.style.width = "0%";
             pText.innerText = "Lendo planilha...";
 
@@ -4940,7 +4985,7 @@
                         resultado = await fetchHibrido(
                             porFamilia ? 'produtos_familias_lote' : 'produtos_lote_leve',
                             clienteId,
-                            porFamilia ? { familias: lote.join(',') } : { skus: lote.join(',') }
+                            { ...(porFamilia ? { familias: lote.join(',') } : { skus: lote.join(',') }), enriquecerTributacao: 'false' }
                         );
                         if (resultado?.erro) throw new Error(`${resultado.erro}${resultado.detalhes ? ': ' + resultado.detalhes : ''}`);
                         if (!Array.isArray(resultado?.items) || !Array.isArray(resultado?.erros)) throw new Error("Resposta inválida ao consultar o lote.");
@@ -4957,8 +5002,12 @@
                         const prod = porFamilia ? item?.produto : item;
                         return prod ? String((porFamilia ? codigo : prod.idFamilia) ?? '').trim() : '';
                     }).filter(Boolean);
-                    if (isAnaliseRunning) pText.innerText = `Lote ${loteIdx + 1}/${lotes.length}: consultando cenários CBS/IBS por família...`;
-                    const reforma = await consultarReformaAnalise(clienteId, familias, cacheReforma);
+                    const produtos = [...itens.values()].map(item => porFamilia ? item.produto : item);
+                    if (isAnaliseRunning) pText.innerText = `Lote ${loteIdx + 1}/${lotes.length}: consultando ${escopo === 'ambos' ? 'cenários CBS/IBS e tributação por UF' : incluirRtc ? 'cenários CBS/IBS' : 'tributação por UF'}...`;
+                    const [reforma, tributacoesUf] = await Promise.all([
+                        incluirRtc ? consultarReformaAnalise(clienteId, familias, cacheReforma) : new Map(),
+                        incluirUf ? consultarUfAnalise(clienteId, produtos.flatMap(obterIdsTributacaoAnalise), cacheUf) : new Map()
+                    ]);
 
                     // Ao parar, preserva todo o lote em andamento, sem iniciar o próximo.
                     for (const codigo of lote) {
@@ -4976,12 +5025,35 @@
                                 "Descrição Tributação": divi.tributacao?.descricao || "N/A",
                                 "NCM (codNbmsh)": prod.familia?.codNbmsh || "N/A"
                             };
-                            const familia = String((porFamilia ? codigo : prod.idFamilia) ?? '').trim();
-                            const cenario = reforma.get(familia);
-                            const naoConsultado = "NÃO CONSULTADO: Família indisponível.";
-                            linha["Cenário CBS"] = cenario ? cenario.cbs : naoConsultado;
-                            linha["Cenário IBS"] = cenario ? cenario.ibs : naoConsultado;
-                            if (!cenario || cenario.falha) errReforma++;
+                            if (incluirRtc) {
+                                const familia = String((porFamilia ? codigo : prod.idFamilia) ?? '').trim();
+                                const cenario = reforma.get(familia);
+                                const naoConsultado = "NÃO CONSULTADO: Família indisponível.";
+                                linha["Cenário CBS"] = cenario ? cenario.cbs : naoConsultado;
+                                linha["Cenário IBS"] = cenario ? cenario.ibs : naoConsultado;
+                                if (!cenario || cenario.falha) errReforma++;
+                            }
+                            if (incluirUf) {
+                                const ids = obterIdsTributacaoAnalise(prod);
+                                const falhas = [];
+                                if (!ids.length) falhas.push("NÃO CONSULTADO: Tributação indisponível.");
+                                for (const id of ids) {
+                                    const consulta = tributacoesUf.get(id);
+                                    if (!consulta || consulta.falha) {
+                                        falhas.push(`${id}: ${consulta?.erro || 'NÃO CONSULTADO: Tributação sem resposta.'}`);
+                                        continue;
+                                    }
+                                    for (const regra of prepararLinhasTributacaoUf(id, consulta.regras)) {
+                                        dadosAnaliseUfExcel.push({
+                                            ...(porFamilia ? { "Família consultada": codigo } : {}),
+                                            "SKU": prod.idProduto,
+                                            ...regra
+                                        });
+                                    }
+                                }
+                                linha["Tributação por UF"] = falhas.length ? falhas.join(' | ') : "CONSULTADO";
+                                if (falhas.length) errUf++;
+                            }
                             suc++;
                         } else {
                             linha = {
@@ -4993,8 +5065,11 @@
                                 "NCM (codNbmsh)": ""
                             };
                             const naoConsultado = `NÃO CONSULTADO: ${falhaLote || erro?.motivo || 'Produto sem resposta.'}`;
-                            linha["Cenário CBS"] = naoConsultado;
-                            linha["Cenário IBS"] = naoConsultado;
+                            if (incluirRtc) {
+                                linha["Cenário CBS"] = naoConsultado;
+                                linha["Cenário IBS"] = naoConsultado;
+                            }
+                            if (incluirUf) linha["Tributação por UF"] = naoConsultado;
                             err++;
                         }
                         if (porFamilia) linha["Família consultada"] = codigo;
@@ -5004,6 +5079,7 @@
                     valSuc.innerText = suc;
                     valErr.innerText = err;
                     valErrReforma.innerText = errReforma;
+                    valErrUf.innerText = errUf;
                     pBar.style.width = `${(processados / codigos.length) * 100}%`;
 
                     if (isAnaliseRunning && delayMs > 0 && loteIdx < lotes.length - 1) {
@@ -5011,8 +5087,8 @@
                     }
                 }
                 pText.innerText = isAnaliseRunning
-                    ? `${errReforma ? '⚠️' : '✅'} Consulta Finalizada! ${suc} produtos encontrados | ${err} erros de produto | ${errReforma} linhas com falha da reforma em ${lotes.length} lotes`
-                    : `Processamento Interrompido: ${processados}/${codigos.length} ${unidade} | ${errReforma} linhas com falha da reforma. Baixe os resultados parciais.`;
+                    ? `${errReforma || errUf ? '⚠️' : '✅'} Consulta Finalizada! ${suc} produtos encontrados | ${err} erros de produto${incluirRtc ? ` | ${errReforma} linhas com falha da reforma` : ''}${incluirUf ? ` | ${errUf} linhas com falha por UF` : ''} em ${lotes.length} lotes`
+                    : `Processamento Interrompido: ${processados}/${codigos.length} ${unidade}${incluirRtc ? ` | ${errReforma} linhas com falha da reforma` : ''}${incluirUf ? ` | ${errUf} linhas com falha por UF` : ''}. Baixe os resultados parciais.`;
             } catch (ex) {
                 pText.innerText = ex.message;
                 alert(ex.message);
@@ -5046,7 +5122,11 @@
                 const colunasEan = Array.from({ length: maxEans }, (_, i) => `EAN ${i + 1}`);
                 const porFamilia = tipoAnaliseExcel === 'familia';
                 const colunaSku = porFamilia ? "SKU de referência" : "SKU";
-                const header = [...(porFamilia ? ["Família consultada"] : []), colunaSku, "Descrição Completa", ...colunasEan, "ID Tributação", "Descrição Tributação", "NCM (codNbmsh)", "Cenário CBS", "Cenário IBS"];
+                const colunasEscopo = [
+                    ...(escopoAnaliseExcel !== 'familia' ? ["Cenário CBS", "Cenário IBS"] : []),
+                    ...(escopoAnaliseExcel !== 'rtc' ? ["Tributação por UF"] : [])
+                ];
+                const header = [...(porFamilia ? ["Família consultada"] : []), colunaSku, "Descrição Completa", ...colunasEan, "ID Tributação", "Descrição Tributação", "NCM (codNbmsh)", ...colunasEscopo];
 
                 const linhasFinais = dadosAnaliseExcel.map(d => {
                     const linha = {};
@@ -5058,14 +5138,14 @@
                     linha["ID Tributação"] = d["ID Tributação"];
                     linha["Descrição Tributação"] = d["Descrição Tributação"];
                     linha["NCM (codNbmsh)"] = d["NCM (codNbmsh)"];
-                    linha["Cenário CBS"] = d["Cenário CBS"];
-                    linha["Cenário IBS"] = d["Cenário IBS"];
+                    colunasEscopo.forEach(coluna => { linha[coluna] = d[coluna]; });
                     return linha;
                 });
 
                 const ws = XLSX.utils.json_to_sheet(linhasFinais, { header: header });
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Tributacao_Inspector");
+                if (escopoAnaliseExcel !== 'rtc') adicionarAbasTributacaoUf(wb, 'Tributacao_UF', dadosAnaliseUfExcel);
                 XLSX.writeFile(wb, `C5_Analise_Tributacao_${porFamilia ? 'Familias_' : ''}${new Date().toISOString().slice(0, 10)}.xlsx`);
                 console.log("✅ Arquivo baixado com sucesso!");
                 alert(`✅ Planilha baixada com ${dadosAnaliseExcel.length} registros!`);
