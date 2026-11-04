@@ -5,12 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inspector - Análise Integração C5</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23e5e7eb'/><circle cx='50' cy='35' r='18' fill='%239ca3af'/><path d='M 20 25 L 30 15 L 70 15 L 80 25 Z' fill='%236b7280'/><path d='M 25 28 L 75 28 L 72 32 L 28 32 Z' fill='%234b5563'/><rect x='35' y='38' width='6' height='8' fill='%236b7280'/><rect x='59' y='38' width='6' height='8' fill='%236b7280'/><ellipse cx='38' cy='42' rx='2' ry='3' fill='%231f2937'/><ellipse cx='62' cy='42' rx='2' ry='3' fill='%231f2937'/><path d='M 50 50 L 48 55 L 52 55 Z' fill='%239ca3af'/><path d='M 35 60 L 65 60 L 63 75 L 37 75 Z' fill='%236b7280'/><rect x='32' y='65' width='5' height='12' fill='%234b5563'/><rect x='63' y='65' width='5' height='12' fill='%234b5563'/></svg>" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+    <link rel="stylesheet" media="print" onload="this.media='all'" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <!-- Tailwind compile: npx tailwindcss@3.4.17 --content Front/Q.A.html --minify; styles embedded for offline layout. -->
+    <style id="inspector-utilities">*,:after,:before{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgba(59,130,246,.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/*! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com*/*,:after,:before{box-sizing:border-box;border:0 solid #e5e7eb}:after,:before{--tw-content:""}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;-o-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0}fieldset,legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::-moz-placeholder,textarea::-moz-placeholder{opacity:1;color:#9ca3af}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.container{width:100%}@media (min-width:640px){.container{max-width:640px}}@media (min-width:768px){.container{max-width:768px}}@media (min-width:1024px){.container{max-width:1024px}}@media (min-width:1280px){.container{max-width:1280px}}@media (min-width:1536px){.container{max-width:1536px}}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.relative{position:relative}.sticky{position:sticky}.inset-0{inset:0}.left-0{left:0}.right-0{right:0}.top-0{top:0}.z-20{z-index:20}.z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}.m-0{margin:0}.mx-auto{margin-left:auto;margin-right:auto}.mb-1{margin-bottom:.25rem}.mb-2{margin-bottom:.5rem}.mb-3{margin-bottom:.75rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}.mb-8{margin-bottom:2rem}.ml-1{margin-left:.25rem}.ml-2{margin-left:.5rem}.mr-2{margin-right:.5rem}.mr-3{margin-right:.75rem}.mt-0\.5{margin-top:.125rem}.mt-1{margin-top:.25rem}.mt-2{margin-top:.5rem}.mt-3{margin-top:.75rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}.mt-8{margin-top:2rem}.block{display:block}.inline-block{display:inline-block}.inline{display:inline}.flex{display:flex}.table{display:table}.grid{display:grid}.hidden{display:none}.h-10{height:2.5rem}.h-12{height:3rem}.h-3{height:.75rem}.h-3\.5{height:.875rem}.h-32{height:8rem}.h-4{height:1rem}.h-48{height:12rem}.h-5{height:1.25rem}.h-6{height:1.5rem}.h-7{height:1.75rem}.h-8{height:2rem}.h-full{height:100%}.max-h-\[320px\]{max-height:320px}.max-h-\[400px\]{max-height:400px}.max-h-\[420px\]{max-height:420px}.max-h-\[50vh\]{max-height:50vh}.max-h-\[62vh\]{max-height:62vh}.max-h-\[65vh\]{max-height:65vh}.max-h-\[85vh\]{max-height:85vh}.max-h-\[94vh\]{max-height:94vh}.min-h-0{min-height:0}.min-h-\[220px\]{min-height:220px}.min-h-\[250px\]{min-height:250px}.min-h-\[500px\]{min-height:500px}.min-h-screen{min-height:100vh}.w-1\/4{width:25%}.w-10{width:2.5rem}.w-12{width:3rem}.w-16{width:4rem}.w-24{width:6rem}.w-3{width:.75rem}.w-3\.5{width:.875rem}.w-36{width:9rem}.w-4{width:1rem}.w-6{width:1.5rem}.w-7{width:1.75rem}.w-8{width:2rem}.w-full{width:100%}.w-max{width:-moz-max-content;width:max-content}.min-w-0{min-width:0}.min-w-\[140px\]{min-width:140px}.min-w-\[180px\]{min-width:180px}.min-w-\[80px\]{min-width:80px}.max-w-3xl{max-width:48rem}.max-w-4xl{max-width:56rem}.max-w-7xl{max-width:80rem}.max-w-\[1500px\]{max-width:1500px}.max-w-\[220px\]{max-width:220px}.max-w-\[420px\]{max-width:420px}.max-w-\[98vw\]{max-width:98vw}.max-w-md{max-width:28rem}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.border-collapse{border-collapse:collapse}.transform{transform:translate(var(--tw-translate-x),var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}@keyframes spin{to{transform:rotate(1turn)}}.animate-spin{animation:spin 1s linear infinite}.cursor-pointer{cursor:pointer}.select-all{-webkit-user-select:all;-moz-user-select:all;user-select:all}.resize{resize:both}.list-inside{list-style-position:inside}.list-disc{list-style-type:disc}.grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.grid-cols-\[1\.25rem_3\.5rem_minmax\(0\2c 1fr\)\]{grid-template-columns:1.25rem 3.5rem minmax(0,1fr)}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-end{align-items:flex-end}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-1{gap:.25rem}.gap-1\.5{gap:.375rem}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}.gap-6{gap:1.5rem}.gap-x-6{-moz-column-gap:1.5rem;column-gap:1.5rem}.gap-y-4{row-gap:1rem}.space-y-1>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.25rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.25rem*var(--tw-space-y-reverse))}.space-y-2>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.5rem*var(--tw-space-y-reverse))}.space-y-3>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(.75rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(.75rem*var(--tw-space-y-reverse))}.space-y-4>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem*var(--tw-space-y-reverse))}.space-y-6>:not([hidden])~:not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1.5rem*(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1.5rem*var(--tw-space-y-reverse))}.divide-y>:not([hidden])~:not([hidden]){--tw-divide-y-reverse:0;border-top-width:calc(1px*(1 - var(--tw-divide-y-reverse)));border-bottom-width:calc(1px*var(--tw-divide-y-reverse))}.divide-slate-800>:not([hidden])~:not([hidden]){--tw-divide-opacity:1;border-color:rgb(30 41 59/var(--tw-divide-opacity,1))}.self-end{align-self:flex-end}.overflow-auto{overflow:auto}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.truncate{overflow:hidden;text-overflow:ellipsis}.truncate,.whitespace-nowrap{white-space:nowrap}.whitespace-pre-wrap{white-space:pre-wrap}.break-words{overflow-wrap:break-word}.break-all{word-break:break-all}.rounded{border-radius:.25rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:.5rem}.rounded-xl{border-radius:.75rem}.border{border-width:1px}.border-0{border-width:0}.border-4{border-width:4px}.border-b{border-bottom-width:1px}.border-b-2{border-bottom-width:2px}.border-b-4{border-bottom-width:4px}.border-r{border-right-width:1px}.border-t{border-top-width:1px}.border-none{border-style:none}.border-amber-400{--tw-border-opacity:1;border-color:rgb(251 191 36/var(--tw-border-opacity,1))}.border-amber-500\/30{border-color:rgba(245,158,11,.3)}.border-amber-800\/50{border-color:rgba(146,64,14,.5)}.border-amber-900\/50{border-color:rgba(120,53,15,.5)}.border-blue-900\/50{border-color:rgba(30,58,138,.5)}.border-cyan-900\/50{border-color:rgba(22,78,99,.5)}.border-emerald-400{--tw-border-opacity:1;border-color:rgb(52 211 153/var(--tw-border-opacity,1))}.border-emerald-800{--tw-border-opacity:1;border-color:rgb(6 95 70/var(--tw-border-opacity,1))}.border-emerald-900\/50{border-color:rgba(6,78,59,.5)}.border-indigo-500\/30{border-color:rgba(99,102,241,.3)}.border-indigo-800{--tw-border-opacity:1;border-color:rgb(55 48 163/var(--tw-border-opacity,1))}.border-indigo-900\/50{border-color:rgba(49,46,129,.5)}.border-red-800{--tw-border-opacity:1;border-color:rgb(153 27 27/var(--tw-border-opacity,1))}.border-red-900{--tw-border-opacity:1;border-color:rgb(127 29 29/var(--tw-border-opacity,1))}.border-sky-900{--tw-border-opacity:1;border-color:rgb(12 74 110/var(--tw-border-opacity,1))}.border-slate-600{--tw-border-opacity:1;border-color:rgb(71 85 105/var(--tw-border-opacity,1))}.border-slate-700{--tw-border-opacity:1;border-color:rgb(51 65 85/var(--tw-border-opacity,1))}.border-slate-800{--tw-border-opacity:1;border-color:rgb(30 41 59/var(--tw-border-opacity,1))}.border-slate-900{--tw-border-opacity:1;border-color:rgb(15 23 42/var(--tw-border-opacity,1))}.border-slate-950{--tw-border-opacity:1;border-color:rgb(2 6 23/var(--tw-border-opacity,1))}.border-teal-500\/30{border-color:rgba(20,184,166,.3)}.border-white{--tw-border-opacity:1;border-color:rgb(255 255 255/var(--tw-border-opacity,1))}.border-t-transparent{border-top-color:transparent}.bg-amber-400{--tw-bg-opacity:1;background-color:rgb(251 191 36/var(--tw-bg-opacity,1))}.bg-amber-600{--tw-bg-opacity:1;background-color:rgb(217 119 6/var(--tw-bg-opacity,1))}.bg-amber-950\/30{background-color:rgba(69,26,3,.3)}.bg-amber-950\/40{background-color:rgba(69,26,3,.4)}.bg-black{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1))}.bg-blue-950\/30{background-color:rgba(23,37,84,.3)}.bg-cyan-600{--tw-bg-opacity:1;background-color:rgb(8 145 178/var(--tw-bg-opacity,1))}.bg-cyan-950\/30{background-color:rgba(8,51,68,.3)}.bg-emerald-500{--tw-bg-opacity:1;background-color:rgb(16 185 129/var(--tw-bg-opacity,1))}.bg-emerald-600{--tw-bg-opacity:1;background-color:rgb(5 150 105/var(--tw-bg-opacity,1))}.bg-emerald-950\/30{background-color:rgba(2,44,34,.3)}.bg-emerald-950\/40{background-color:rgba(2,44,34,.4)}.bg-emerald-950\/60{background-color:rgba(2,44,34,.6)}.bg-indigo-600{--tw-bg-opacity:1;background-color:rgb(79 70 229/var(--tw-bg-opacity,1))}.bg-indigo-950\/30{background-color:rgba(30,27,75,.3)}.bg-indigo-950\/60{background-color:rgba(30,27,75,.6)}.bg-red-600{--tw-bg-opacity:1;background-color:rgb(220 38 38/var(--tw-bg-opacity,1))}.bg-red-950\/40{background-color:rgba(69,10,10,.4)}.bg-red-950\/50{background-color:rgba(69,10,10,.5)}.bg-red-950\/60{background-color:rgba(69,10,10,.6)}.bg-sky-950\/40{background-color:rgba(8,47,73,.4)}.bg-slate-700{--tw-bg-opacity:1;background-color:rgb(51 65 85/var(--tw-bg-opacity,1))}.bg-slate-800{--tw-bg-opacity:1;background-color:rgb(30 41 59/var(--tw-bg-opacity,1))}.bg-slate-900{--tw-bg-opacity:1;background-color:rgb(15 23 42/var(--tw-bg-opacity,1))}.bg-slate-900\/60{background-color:rgba(15,23,42,.6)}.bg-slate-950{--tw-bg-opacity:1;background-color:rgb(2 6 23/var(--tw-bg-opacity,1))}.bg-transparent{background-color:transparent}.bg-opacity-80{--tw-bg-opacity:0.8}.bg-opacity-85{--tw-bg-opacity:0.85}.p-0\.5{padding:.125rem}.p-1{padding:.25rem}.p-1\.5{padding:.375rem}.p-2{padding:.5rem}.p-2\.5{padding:.625rem}.p-3{padding:.75rem}.p-3\.5{padding:.875rem}.p-4{padding:1rem}.p-5{padding:1.25rem}.p-6{padding:1.5rem}.p-8{padding:2rem}.px-1\.5{padding-left:.375rem;padding-right:.375rem}.px-2{padding-left:.5rem;padding-right:.5rem}.px-2\.5{padding-left:.625rem;padding-right:.625rem}.px-3{padding-left:.75rem;padding-right:.75rem}.px-3\.5{padding-left:.875rem;padding-right:.875rem}.px-4{padding-left:1rem;padding-right:1rem}.px-5{padding-left:1.25rem;padding-right:1.25rem}.px-8{padding-left:2rem;padding-right:2rem}.py-0\.5{padding-top:.125rem;padding-bottom:.125rem}.py-1{padding-top:.25rem;padding-bottom:.25rem}.py-1\.5{padding-top:.375rem;padding-bottom:.375rem}.py-2{padding-top:.5rem;padding-bottom:.5rem}.py-2\.5{padding-top:.625rem;padding-bottom:.625rem}.py-20{padding-top:5rem;padding-bottom:5rem}.py-3{padding-top:.75rem;padding-bottom:.75rem}.py-3\.5{padding-top:.875rem;padding-bottom:.875rem}.py-8{padding-top:2rem;padding-bottom:2rem}.pb-1{padding-bottom:.25rem}.pb-2{padding-bottom:.5rem}.pb-4{padding-bottom:1rem}.pt-1{padding-top:.25rem}.pt-2{padding-top:.5rem}.pt-3{padding-top:.75rem}.pt-4{padding-top:1rem}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.align-top{vertical-align:top}.font-mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace}.font-sans{font-family:ui-sans-serif,system-ui,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji}.text-2xl{font-size:1.5rem;line-height:2rem}.text-3xl{font-size:1.875rem;line-height:2.25rem}.text-\[10px\]{font-size:10px}.text-\[11px\]{font-size:11px}.text-\[9px\]{font-size:9px}.text-base{font-size:1rem;line-height:1.5rem}.text-lg{font-size:1.125rem;line-height:1.75rem}.text-sm{font-size:.875rem;line-height:1.25rem}.text-xl{font-size:1.25rem;line-height:1.75rem}.text-xs{font-size:.75rem;line-height:1rem}.font-bold{font-weight:700}.font-extrabold{font-weight:800}.font-medium{font-weight:500}.font-normal{font-weight:400}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.normal-case{text-transform:none}.leading-none{line-height:1}.leading-tight{line-height:1.25}.tracking-tight{letter-spacing:-.025em}.tracking-wider{letter-spacing:.05em}.text-amber-300{--tw-text-opacity:1;color:rgb(252 211 77/var(--tw-text-opacity,1))}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36/var(--tw-text-opacity,1))}.text-blue-400{--tw-text-opacity:1;color:rgb(96 165 250/var(--tw-text-opacity,1))}.text-cyan-300{--tw-text-opacity:1;color:rgb(103 232 249/var(--tw-text-opacity,1))}.text-cyan-400{--tw-text-opacity:1;color:rgb(34 211 238/var(--tw-text-opacity,1))}.text-emerald-300{--tw-text-opacity:1;color:rgb(110 231 183/var(--tw-text-opacity,1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153/var(--tw-text-opacity,1))}.text-indigo-300{--tw-text-opacity:1;color:rgb(165 180 252/var(--tw-text-opacity,1))}.text-indigo-400{--tw-text-opacity:1;color:rgb(129 140 248/var(--tw-text-opacity,1))}.text-red-300{--tw-text-opacity:1;color:rgb(252 165 165/var(--tw-text-opacity,1))}.text-red-400{--tw-text-opacity:1;color:rgb(248 113 113/var(--tw-text-opacity,1))}.text-sky-300{--tw-text-opacity:1;color:rgb(125 211 252/var(--tw-text-opacity,1))}.text-sky-400{--tw-text-opacity:1;color:rgb(56 189 248/var(--tw-text-opacity,1))}.text-slate-100{--tw-text-opacity:1;color:rgb(241 245 249/var(--tw-text-opacity,1))}.text-slate-200{--tw-text-opacity:1;color:rgb(226 232 240/var(--tw-text-opacity,1))}.text-slate-300{--tw-text-opacity:1;color:rgb(203 213 225/var(--tw-text-opacity,1))}.text-slate-400{--tw-text-opacity:1;color:rgb(148 163 184/var(--tw-text-opacity,1))}.text-slate-500{--tw-text-opacity:1;color:rgb(100 116 139/var(--tw-text-opacity,1))}.text-slate-600{--tw-text-opacity:1;color:rgb(71 85 105/var(--tw-text-opacity,1))}.text-slate-950{--tw-text-opacity:1;color:rgb(2 6 23/var(--tw-text-opacity,1))}.text-teal-300{--tw-text-opacity:1;color:rgb(94 234 212/var(--tw-text-opacity,1))}.text-teal-400{--tw-text-opacity:1;color:rgb(45 212 191/var(--tw-text-opacity,1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.underline{text-decoration-line:underline}.accent-amber-400{accent-color:#fbbf24}.opacity-40{opacity:.4}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgba(0,0,0,.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color)}.shadow-2xl,.shadow-md{box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.shadow-md{--tw-shadow:0 4px 6px -1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.1);--tw-shadow-colored:0 4px 6px -1px var(--tw-shadow-color),0 2px 4px -2px var(--tw-shadow-color)}.shadow-sm{--tw-shadow:0 1px 2px 0 rgba(0,0,0,.05);--tw-shadow-colored:0 1px 2px 0 var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.outline-none{outline:2px solid transparent;outline-offset:2px}.outline{outline-style:solid}.drop-shadow-md{--tw-drop-shadow:drop-shadow(0 4px 3px rgba(0,0,0,.07)) drop-shadow(0 2px 2px rgba(0,0,0,.06))}.drop-shadow-md,.drop-shadow-sm{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.drop-shadow-sm{--tw-drop-shadow:drop-shadow(0 1px 1px rgba(0,0,0,.05))}.filter{filter:var(--tw-blur) var(--tw-brightness) var(--tw-contrast) var(--tw-grayscale) var(--tw-hue-rotate) var(--tw-invert) var(--tw-saturate) var(--tw-sepia) var(--tw-drop-shadow)}.transition{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,-webkit-backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter;transition-property:color,background-color,border-color,text-decoration-color,fill,stroke,opacity,box-shadow,transform,filter,backdrop-filter,-webkit-backdrop-filter;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.transition-colors{transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.duration-300{transition-duration:.3s}.file\:mr-2::file-selector-button{margin-right:.5rem}.file\:rounded::file-selector-button{border-radius:.25rem}.file\:border-0::file-selector-button{border-width:0}.file\:bg-amber-400::file-selector-button{--tw-bg-opacity:1;background-color:rgb(251 191 36/var(--tw-bg-opacity,1))}.file\:bg-cyan-400::file-selector-button{--tw-bg-opacity:1;background-color:rgb(34 211 238/var(--tw-bg-opacity,1))}.file\:bg-emerald-400::file-selector-button{--tw-bg-opacity:1;background-color:rgb(52 211 153/var(--tw-bg-opacity,1))}.file\:px-3::file-selector-button{padding-left:.75rem;padding-right:.75rem}.file\:py-1::file-selector-button{padding-top:.25rem;padding-bottom:.25rem}.file\:text-xs::file-selector-button{font-size:.75rem;line-height:1rem}.file\:font-bold::file-selector-button{font-weight:700}.file\:text-slate-900::file-selector-button{--tw-text-opacity:1;color:rgb(15 23 42/var(--tw-text-opacity,1))}.focus-within\:bg-slate-800:focus-within{--tw-bg-opacity:1;background-color:rgb(30 41 59/var(--tw-bg-opacity,1))}.hover\:border-amber-400:hover{--tw-border-opacity:1;border-color:rgb(251 191 36/var(--tw-border-opacity,1))}.hover\:bg-amber-500:hover{--tw-bg-opacity:1;background-color:rgb(245 158 11/var(--tw-bg-opacity,1))}.hover\:bg-cyan-500:hover{--tw-bg-opacity:1;background-color:rgb(6 182 212/var(--tw-bg-opacity,1))}.hover\:bg-emerald-500:hover{--tw-bg-opacity:1;background-color:rgb(16 185 129/var(--tw-bg-opacity,1))}.hover\:bg-emerald-900:hover{--tw-bg-opacity:1;background-color:rgb(6 78 59/var(--tw-bg-opacity,1))}.hover\:bg-indigo-500:hover{--tw-bg-opacity:1;background-color:rgb(99 102 241/var(--tw-bg-opacity,1))}.hover\:bg-indigo-900:hover{--tw-bg-opacity:1;background-color:rgb(49 46 129/var(--tw-bg-opacity,1))}.hover\:bg-red-500:hover{--tw-bg-opacity:1;background-color:rgb(239 68 68/var(--tw-bg-opacity,1))}.hover\:bg-red-900:hover{--tw-bg-opacity:1;background-color:rgb(127 29 29/var(--tw-bg-opacity,1))}.hover\:bg-slate-600:hover{--tw-bg-opacity:1;background-color:rgb(71 85 105/var(--tw-bg-opacity,1))}.hover\:bg-slate-700:hover{--tw-bg-opacity:1;background-color:rgb(51 65 85/var(--tw-bg-opacity,1))}.hover\:bg-slate-800:hover{--tw-bg-opacity:1;background-color:rgb(30 41 59/var(--tw-bg-opacity,1))}.hover\:bg-slate-900:hover{--tw-bg-opacity:1;background-color:rgb(15 23 42/var(--tw-bg-opacity,1))}.hover\:text-amber-300:hover{--tw-text-opacity:1;color:rgb(252 211 77/var(--tw-text-opacity,1))}.hover\:text-amber-400:hover{--tw-text-opacity:1;color:rgb(251 191 36/var(--tw-text-opacity,1))}.hover\:text-red-300:hover{--tw-text-opacity:1;color:rgb(252 165 165/var(--tw-text-opacity,1))}.hover\:text-red-400:hover{--tw-text-opacity:1;color:rgb(248 113 113/var(--tw-text-opacity,1))}.hover\:text-white:hover{--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}.hover\:file\:bg-amber-500::file-selector-button:hover{--tw-bg-opacity:1;background-color:rgb(245 158 11/var(--tw-bg-opacity,1))}.hover\:file\:bg-cyan-500::file-selector-button:hover{--tw-bg-opacity:1;background-color:rgb(6 182 212/var(--tw-bg-opacity,1))}.hover\:file\:bg-emerald-500::file-selector-button:hover{--tw-bg-opacity:1;background-color:rgb(16 185 129/var(--tw-bg-opacity,1))}.focus\:border-amber-400:focus{--tw-border-opacity:1;border-color:rgb(251 191 36/var(--tw-border-opacity,1))}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus\:ring-2:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow),var(--tw-ring-shadow),var(--tw-shadow,0 0 #0000)}.focus\:ring-amber-400:focus{--tw-ring-opacity:1;--tw-ring-color:rgb(251 191 36/var(--tw-ring-opacity,1))}.disabled\:cursor-not-allowed:disabled{cursor:not-allowed}.disabled\:opacity-40:disabled{opacity:.4}.disabled\:opacity-60:disabled{opacity:.6}@media (min-width:640px){.sm\:mt-0{margin-top:0}.sm\:w-auto{width:auto}.sm\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.sm\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.sm\:flex-row{flex-direction:row}.sm\:items-center{align-items:center}.sm\:justify-between{justify-content:space-between}.sm\:p-6{padding:1.5rem}}@media (min-width:768px){.md\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}.md\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.md\:grid-cols-4{grid-template-columns:repeat(4,minmax(0,1fr))}.md\:grid-cols-6{grid-template-columns:repeat(6,minmax(0,1fr))}.md\:p-8{padding:2rem}.md\:text-3xl{font-size:1.875rem;line-height:2.25rem}}@media (min-width:1024px){.lg\:w-10{width:2.5rem}.lg\:w-64{width:16rem}.lg\:grid-cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}.lg\:grid-cols-8{grid-template-columns:repeat(8,minmax(0,1fr))}.lg\:flex-row{flex-direction:row}}@media (min-width:1280px){.xl\:grid-cols-\[minmax\(0\2c 1fr\)_12rem_minmax\(0\2c 1fr\)_auto\]{grid-template-columns:minmax(0,1fr) 12rem minmax(0,1fr) auto}}</style>
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script async src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" onload="pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'"></script>
+    <script async src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
     <style>
+        .hidden { display: none !important; }
+        #avisoBibliotecas { position: fixed; bottom: 12px; left: 12px; right: 12px; z-index: 9999; padding: 12px; border: 1px solid #fbbf24; border-radius: 8px; background: #1b1f2e; color: #fde68a; font-size: 13px; }
         body { 
             background-color: #13161f; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
@@ -195,6 +198,7 @@
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
+    <p id="avisoBibliotecas" class="hidden" role="status" aria-live="polite"></p>
 
     <!-- TELA DE LOGIN -->
     <div id="telaLogin" class="w-full max-w-md imendes-card p-8">
@@ -253,6 +257,7 @@
                 <button onclick="abrirFerramentaViaSidebar('regimes')" class="sidebar-sublink">Validador de Regimes/Divisões</button>
 
                 <div class="sidebar-group-label mt-2">Utilitários</div>
+                <button onclick="abrirFerramentaViaSidebar('consultaApi')" class="sidebar-sublink">Saneamento de produtos / JSONL → XLSX</button>
                 <button onclick="abrirFerramentaViaSidebar('tributacaoUf')" class="sidebar-sublink">Análise de Tributação por UF</button>
                 <button onclick="abrirFerramentaViaSidebar('agendamentos')" class="sidebar-sublink">Consulta de Agendamentos</button>
                 <button onclick="abrirConversorPdf()" class="sidebar-sublink">Conversor pdf -> xlsx - Inconsistências</button>
@@ -768,6 +773,90 @@
                     Central de Ferramentas em Lote
                 </h3>
                 <button onclick="fecharModalFerramentas()" class="text-slate-400 hover:text-amber-400 text-xs font-bold px-3 py-1.5 rounded-lg border border-slate-700 hover:border-amber-400 cursor-pointer transition-colors">← Voltar ao Início</button>
+            </div>
+
+            <div id="ferramentaConsultaApi" class="p-6 flex flex-col gap-4 hidden">
+                <h4 class="text-white font-bold">Saneamento de produtos — EANs e SKUs</h4>
+                <details class="border border-slate-700 rounded p-3 text-xs text-slate-300">
+                    <summary class="cursor-pointer">Configuração, publicação e limites</summary>
+                    <p class="mt-2">Administrador: execute <strong>prepararConfigConsultaApi</strong> no editor do Apps Script. Na aba <strong>Config_Consulta_API</strong> (Chave/Valor), preencha LOGIN (CNPJ de acesso, como texto) e SENHA. TAXA_GOOGLE_POR_MINUTO inicia em 200 e aceita 1 a 1000. Restrinja o acesso direto à planilha aos administradores autorizados: a aba contém a senha e não é um cofre criptografado. Não compartilhe cópias da planilha.</p>
+                    <p class="mt-2">Publique uma nova versão do backend. Para o launcher, publique também este HTML como index.html, ConsultaApiLocal.py e Inspector_Launcher.bat no mesmo repositório já usado pelo launcher. Requer Python 3.9+ e Chrome. Mantenha a janela do launcher aberta; encerre-a com Ctrl+C. O perfil especial do Chrome usado pelo launcher é exclusivo para o Inspector, não para navegar em outros sites.</p>
+                    <p class="mt-2">Local: até 1000 envios/minuto, no máximo 20 simultâneos, sem passar pelo Google em cada consulta. Google: produtos individuais com envios espaçados pela taxa da planilha, no máximo 4 chamadas em andamento e sem lotes em rajada. O servidor também contabiliza os produtos no limite global de 60 segundos, compartilhado entre usuários. Teste real de 04/11/2026: 120 consultas sem erro em etapas de 30, 60, 120 e 200 envios/min; na etapa de 200, o ritmo observado foi 87 conclusões/min. Recomendação inicial: TAXA_GOOGLE_POR_MINUTO=200. Esse teste curto não garante ausência futura de 429. A taxa é um teto, não uma velocidade garantida; quotas, autenticação, auditoria na planilha e latência podem reduzir o ritmo. O painel mostra a configuração carregada do cache. Não há repetição automática após timeout/erro da API. HTTP 401/403/429 interrompe novos envios. Parar impede novos envios, mas aguarda os já enviados.</p>
+                    <p class="mt-2">As credenciais ficam em cache por até 5 minutos no Google e mais 5 minutos no processo local. Alterações na planilha podem levar até 10 minutos para chegar ao modo local. Sair limpa o cache local; fechar o launcher descarta sua memória. O modo local ainda precisa de internet para autenticar e buscar credenciais. O emitente da consulta é informado abaixo, separado do CNPJ de acesso.</p>
+                    <p class="mt-2">O XLSX mantém os campos do relatório Python: usa a primeira regra, primeira UF e primeira característica tributária de cada grupo. Revise as regras quando consultar múltiplas UFs/características. Códigos e campos fiscais são exportados como texto. Para converter arquivos antigos, importe JSONL e clique em Baixar XLSX, sem realizar consultas.</p>
+                </details>
+                <form id="formConsultaApi" onsubmit="event.preventDefault(); executarConsultaApi()">
+                    <fieldset id="controlesConsultaApi" class="flex flex-col gap-4">
+                        <label class="text-xs">Execução
+                            <select id="consultaApiModo" class="imendes-input border rounded p-2 w-full">
+                                <option value="auto">Automático: launcher local ou Google</option>
+                                <option value="google">Google Apps Script</option>
+                                <option value="local">Local pelo launcher</option>
+                            </select>
+                        </label>
+                        <h5 class="font-bold text-amber-300">Emitente</h5>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                            <label>CNPJ do emitente<input id="consultaEmitCnpj" required pattern="[0-9]{14}" maxlength="14" placeholder="14 dígitos, sem pontuação" class="imendes-input border rounded p-2 w-full"></label>
+                            <label>Ambiente<select id="consultaEmitAmb" class="imendes-input border rounded p-2 w-full"><option value="2">2 — Homologação</option><option value="1">1 — Produção</option></select></label>
+                            <label>CRT<select id="consultaEmitCrt" required class="imendes-input border rounded p-2 w-full"><option value="">Selecione</option><option>1</option><option>2</option><option>3</option><option>4</option></select></label>
+                            <label>Regime tributário<input id="consultaEmitRegime" required maxlength="128" placeholder="Ex.: LR" class="imendes-input border rounded p-2 w-full"></label>
+                            <label>Regime especial (opcional)<input id="consultaEmitEspecial" maxlength="128" class="imendes-input border rounded p-2 w-full"></label>
+                            <label>UF do emitente<input id="consultaEmitUf" required pattern="[A-Za-z]{2}" maxlength="2" placeholder="Ex.: SP" class="imendes-input border rounded p-2 w-full"></label>
+                            <label>CNAE<input id="consultaEmitCnae" required maxlength="128" placeholder="Código/valor aceito pela API" class="imendes-input border rounded p-2 w-full"></label>
+                            <label>Substituto ICMS<select id="consultaEmitSubst" class="imendes-input border rounded p-2 w-full"><option>N</option><option>S</option></select></label>
+                        </div>
+                        <h5 class="font-bold text-amber-300">Perfil tributário</h5>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                            <label>UFs de destino<input id="consultaPerfilUfs" required placeholder="Ex.: SP,RJ" class="imendes-input border rounded p-2 w-full"></label>
+                            <label>CFOP<input id="consultaPerfilCfop" required pattern="[0-9]{4}" maxlength="4" class="imendes-input border rounded p-2 w-full"></label>
+                            <label>Características tributárias<input id="consultaPerfilCarac" required pattern="[0-9]+([,; ]+[0-9]+)*" placeholder="Ex.: 8 ou 8,9" class="imendes-input border rounded p-2 w-full"></label>
+                            <label>Finalidade<input id="consultaPerfilFinalidade" type="number" required min="0" step="1" class="imendes-input border rounded p-2 w-full"></label>
+                            <label>Simples Nacional<select id="consultaPerfilSimples" class="imendes-input border rounded p-2 w-full"><option>N</option><option>S</option></select></label>
+                            <label>Origem<select id="consultaPerfilOrigem" class="imendes-input border rounded p-2 w-full"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></label>
+                            <label>Substituto ICMS<select id="consultaPerfilSubst" class="imendes-input border rounded p-2 w-full"><option>N</option><option>S</option></select></label>
+                            <label>Produto ZFM<select id="consultaPerfilZfm" class="imendes-input border rounded p-2 w-full"><option>N</option><option>S</option></select></label>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                            <label>EANs (um código por linha)
+                                <textarea id="consultaEans" rows="5" class="imendes-input border rounded p-2 w-full"></textarea>
+                                <input id="consultaArquivoEans" type="file" accept=".txt,.csv" aria-label="Arquivo de EANs">
+                            </label>
+                            <label>SKUs (um código por linha)
+                                <textarea id="consultaSkus" rows="5" class="imendes-input border rounded p-2 w-full"></textarea>
+                                <input id="consultaArquivoSkus" type="file" accept=".txt,.csv" aria-label="Arquivo de SKUs">
+                            </label>
+                        </div>
+                        <button type="submit" class="imendes-btn rounded p-3 font-bold">Iniciar nova consulta</button>
+                    </fieldset>
+                </form>
+                <div class="flex gap-3 flex-wrap text-sm">
+                    <button id="consultaCancelar" onclick="cancelarConsultaApi()" disabled class="border rounded p-2">Parar novos envios</button>
+                    <button id="consultaRetomar" onclick="executarConsultaApi(true)" disabled class="border rounded p-2">Retomar pendentes/erros (mesmo perfil)</button>
+                    <button id="consultaXlsx" onclick="exportarConsultaApiXlsx()" disabled class="border rounded p-2">Baixar XLSX</button>
+                    <button id="consultaJsonl" onclick="exportarConsultaApiJsonl()" disabled class="border rounded p-2">Baixar JSONL</button>
+                    <label class="border rounded p-2">Importar JSONL EAN/SKU
+                        <input id="consultaImportar" type="file" accept=".jsonl" multiple onchange="importarConsultaApiJsonl()" class="block text-xs">
+                    </label>
+                </div>
+                <section class="bg-slate-950 border border-slate-700 rounded-xl p-4 flex flex-col gap-4" aria-label="Acompanhamento dos produtos">
+                    <div class="flex flex-wrap justify-between gap-2">
+                        <p id="consultaStatus" role="status" aria-live="polite" class="text-sm font-bold text-slate-200">Aguardando códigos e parâmetros.</p>
+                        <span id="consultaModoResumo" class="text-xs text-amber-300">Nenhuma execução</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-300">
+                        <span id="consultaFracao">0 de 0 produtos concluídos</span>
+                        <span id="consultaPercentual">0%</span>
+                    </div>
+                    <progress id="consultaBarra" value="0" max="100" aria-label="Produtos concluídos" class="w-full h-3 accent-amber-400"></progress>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div class="bg-emerald-950/40 border border-emerald-800 rounded-lg p-3"><p class="text-xs text-emerald-300">Sucesso</p><p id="consultaSucessos" class="text-2xl font-bold text-emerald-400">0</p></div>
+                        <div class="bg-red-950/40 border border-red-900 rounded-lg p-3"><p class="text-xs text-red-300">Com erro</p><p id="consultaErros" class="text-2xl font-bold text-red-400">0</p></div>
+                        <div class="bg-sky-950/40 border border-sky-900 rounded-lg p-3"><p class="text-xs text-sky-300">Em consulta / aguardando taxa</p><p id="consultaAtivos" class="text-2xl font-bold text-sky-400">0</p></div>
+                        <div class="bg-slate-900 border border-slate-700 rounded-lg p-3"><p class="text-xs text-slate-300">Na fila</p><p id="consultaFila" class="text-2xl font-bold text-white">0</p></div>
+                    </div>
+                    <p id="consultaRitmo" class="text-xs text-slate-400">O ritmo efetivo será exibido durante a execução.</p>
+                    <p class="text-xs text-slate-400">Painel quantitativo: os detalhes de cada produto e dos erros ficam nos arquivos XLSX e JSONL, sem listar produtos na tela. Falhas individuais são contabilizadas sem parar a fila. HTTP 401/403/429, resposta incompatível do lote ou falha de transporte suspendem novos envios e mostram o motivo acima; não há repetição automática.</p>
+                </section>
             </div>
 
             <!-- ABA 1: ATUALIZAÇÃO DE IPI -->
@@ -1624,13 +1713,398 @@
     </div> <!-- fecha appLayout -->
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzyf7Q5NRx5zzprPk7Mb8GYAKs0W4cCJmwAYtpl4nO9LbpYkAo1TVvZvGwIHn-mHlHIyQ/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby993N3HNJlIEi2utIW1mq8gaQ0_lhO6fZWypQhoEVEd0b7DAet6lFGapQv61TYXQxaIA/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.46.0"; 
+        const VERSAO_FRONT = "v5.52.0";
         // Launcher local (.bat) hospedado no GitHub - baixa o HTML mais recente diretamente do repositorio
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
-        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+        let consultaApiEstado = { executando: false, cancelar: false, itens: [], payload: null, modo: null };
+
+        function consultaApiLocalInfo() {
+            if (window.location.protocol !== 'file:') return null;
+            const match = /^#consultaLocal=(\d{1,5}):([A-Za-z0-9_-]{32,64})$/.exec(window.location.hash);
+            if (!match || Number(match[1]) < 1 || Number(match[1]) > 65535) return null;
+            return { url: 'http://127.0.0.1:' + match[1], token: match[2] };
+        }
+
+        function consultaApiPayloadFormulario() {
+            const valor = id => document.getElementById(id).value.trim();
+            const lista = texto => texto.split(/[,;\s]+/).filter(Boolean);
+            const ufValida = uf => 'AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' ').includes(uf);
+            const uf = valor('consultaEmitUf').toUpperCase();
+            const ufs = [...new Set(lista(valor('consultaPerfilUfs').toUpperCase()))];
+            if (!ufValida(uf) || !ufs.length || ufs.some(item => !ufValida(item))) throw new Error('Informe UFs brasileiras válidas.');
+            const carac = lista(valor('consultaPerfilCarac'));
+            if (!carac.length || carac.some(item => !/^\d+$/.test(item))) throw new Error('Características tributárias devem ser números inteiros separados por vírgula.');
+            return {
+                emit: {
+                    amb: Number(valor('consultaEmitAmb')), cnpj: valor('consultaEmitCnpj'),
+                    crt: Number(valor('consultaEmitCrt')), regimeTrib: valor('consultaEmitRegime'),
+                    regimeEspecial: valor('consultaEmitEspecial'), uf, cnae: valor('consultaEmitCnae'),
+                    substICMS: valor('consultaEmitSubst'), interdependente: 'N'
+                },
+                perfil: {
+                    uf: ufs, cfop: valor('consultaPerfilCfop'), caracTrib: [...new Set(carac.map(Number))],
+                    finalidade: Number(valor('consultaPerfilFinalidade')), simplesN: valor('consultaPerfilSimples'),
+                    origem: valor('consultaPerfilOrigem'), substICMS: valor('consultaPerfilSubst'), prodZFM: valor('consultaPerfilZfm')
+                }
+            };
+        }
+
+        function consultaApiLerCodigos(texto, tipo) {
+            const codigos = texto.replace(/^\uFEFF/, '').split(/[\r\n;,]+/).map(item => item.trim()).filter(Boolean)
+                .filter(item => !['EAN', 'SKU', 'CODIGO', 'CÓDIGO'].includes(item.toUpperCase()));
+            if (codigos.some(codigo => codigo.length > 128 || /[\t"]/.test(codigo))) throw new Error('Use TXT ou CSV com uma única coluna de códigos, sem aspas.');
+            return [...new Set(codigos)].map(codigo => ({ tipo, codigo, status: 'Pendente' }));
+        }
+
+        async function consultaApiRequisicao(action, dados = {}, modo = 'google') {
+            const local = modo === 'local' ? consultaApiLocalInfo() : null;
+            if (modo === 'local' && !local) throw new Error('Abra o Inspector pelo launcher atualizado para usar o modo local.');
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 45000);
+            try {
+                const resposta = await fetch(local ? local.url + '/' + action : WEB_APP_URL, {
+                    method: 'POST', signal: controller.signal,
+                    headers: local ? { 'Content-Type': 'application/json', 'X-Inspector-Local': local.token } : { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ ...dados, action, authToken: localStorage.getItem('imendes_token') || '' })
+                });
+                if (!resposta.ok) {
+                    const erroLocal = local ? await resposta.json() : null;
+                    throw new Error(erroLocal && erroLocal.erro ? erroLocal.erro : `Falha HTTP ${resposta.status}. Consulta não confirmada.`);
+                }
+                const retorno = await resposta.json();
+                if (tratarSessaoExpirada(retorno)) throw new Error('Sessão expirada.');
+                return retorno;
+            } catch (erro) {
+                if (erro.name === 'AbortError') throw new Error('Timeout. A consulta pode ter sido recebida; confira os resultados antes de retomar.');
+                throw erro;
+            } finally {
+                clearTimeout(timer);
+            }
+        }
+
+        function consultaApiAtualizarBotoes() {
+            const estado = consultaApiEstado;
+            const temItens = estado.itens.length > 0;
+            document.getElementById('controlesConsultaApi').disabled = estado.executando;
+            document.getElementById('consultaCancelar').disabled = !estado.executando || estado.cancelar;
+            document.getElementById('consultaRetomar').disabled = estado.executando || !estado.payload || !estado.itens.some(item => item.status !== 'Sucesso');
+            document.getElementById('consultaXlsx').disabled = estado.executando || !temItens;
+            document.getElementById('consultaJsonl').disabled = estado.executando || !temItens;
+            document.getElementById('consultaImportar').disabled = estado.executando;
+        }
+
+        function consultaApiProgresso(prefixo) {
+            const estado = consultaApiEstado;
+            const itens = estado.itens;
+            let sucessos = 0, erros = 0, ativos = 0, fila = 0, finalizadosNestaEtapa = 0;
+            for (const item of itens) {
+                if (item.status === 'Sucesso') sucessos++;
+                if (item.status === 'Erro') erros++;
+                if (item.emConsulta) ativos++;
+                else if (item.status !== 'Sucesso' && item.status !== 'Erro') fila++;
+                if (estado.inicio && item.finalizadoEm >= estado.inicio) finalizadosNestaEtapa++;
+            }
+            const concluidos = sucessos + erros;
+            const percentual = itens.length ? Math.round(concluidos * 100 / itens.length) : 0;
+            const texto = (id, valor) => { document.getElementById(id).innerText = String(valor); };
+            texto('consultaStatus', prefixo);
+            texto('consultaModoResumo', estado.modo === 'local' ? 'Launcher local · até 20 simultâneas' : estado.modo === 'google'
+                ? `Google · ${estado.taxaGoogle || '—'}/min configurados · envios individuais espaçados · até 4 em andamento`
+                : 'Resultados importados / sem execução');
+            texto('consultaFracao', `${concluidos} de ${itens.length} produtos concluídos`);
+            texto('consultaPercentual', concluidos > 0 && percentual === 0 ? '<1%' : percentual + '%');
+            document.getElementById('consultaBarra').value = percentual;
+            texto('consultaSucessos', sucessos);
+            texto('consultaErros', erros);
+            texto('consultaAtivos', ativos);
+            texto('consultaFila', fila);
+            const segundos = estado.inicio ? Math.max(0, ((estado.fim || Date.now()) - estado.inicio) / 1000) : 0;
+            const ritmo = segundos > 0 ? Math.round(finalizadosNestaEtapa * 60 / segundos) : 0;
+            texto('consultaRitmo', estado.inicio
+                ? `Tempo: ${Math.floor(segundos / 60)}min ${Math.floor(segundos % 60)}s · Ritmo efetivo: ${ritmo} produtos/min (inclui erros). A taxa configurada é um teto, não uma velocidade garantida.`
+                : 'Sem medição de velocidade para resultados importados.');
+        }
+
+        function cancelarConsultaApi() {
+            consultaApiEstado.cancelar = true;
+            consultaApiEstado.motivoParada = 'Parada solicitada pelo usuário.';
+            consultaApiAtualizarBotoes();
+            consultaApiProgresso('Parando novos envios; aguardando as chamadas em andamento.');
+        }
+
+        async function executarConsultaApi(retomar = false) {
+            if (consultaApiEstado.executando) return;
+            if (perfilEhSomenteLeitura()) return alert('A consulta exige perfil usuário ou administrador.');
+            try {
+                if (!retomar) {
+                    if (!document.getElementById('formConsultaApi').reportValidity()) return;
+                    consultaApiEstado.executando = true;
+                    consultaApiAtualizarBotoes();
+                    const itens = [];
+                    for (const [tipo, area, arquivo] of [['EAN', 'consultaEans', 'consultaArquivoEans'], ['SKU', 'consultaSkus', 'consultaArquivoSkus']]) {
+                        const file = document.getElementById(arquivo).files[0];
+                        if (file && file.size > 20 * 1024 * 1024) throw new Error('Cada arquivo deve ter no máximo 20 MB.');
+                        const texto = document.getElementById(area).value + '\n' + (file ? await file.text() : '');
+                        itens.push(...consultaApiLerCodigos(texto, tipo));
+                    }
+                    if (!itens.length) throw new Error('Informe ao menos um EAN ou SKU.');
+                    const selecionado = document.getElementById('consultaApiModo').value;
+                    const modo = selecionado === 'auto' ? (consultaApiLocalInfo() ? 'local' : 'google') : selecionado;
+                    if (modo === 'local' && !consultaApiLocalInfo()) throw new Error('O modo local exige o launcher atualizado.');
+                    const payload = consultaApiPayloadFormulario();
+                    if (consultaApiEstado.itens.length && !confirm('Iniciar nova consulta descarta os resultados em memória. Baixe o relatório antes de continuar. Continuar?')) return;
+                    consultaApiEstado = { executando: false, cancelar: false, itens, payload, modo };
+                }
+                const estado = consultaApiEstado;
+                if (!estado.payload) throw new Error('Não há execução para retomar.');
+                estado.executando = true;
+                estado.cancelar = false;
+                estado.motivoParada = '';
+                estado.inicio = Date.now();
+                estado.fim = null;
+                const tokenInicial = localStorage.getItem('imendes_token');
+                const pendentes = estado.itens.filter(item => item.status !== 'Sucesso');
+                pendentes.forEach(item => { item.status = 'Pendente'; delete item.erro; delete item.finalizadoEm; });
+                consultaApiAtualizarBotoes();
+                if (estado.modo === 'local') {
+                    const status = await consultaApiRequisicao('status', {}, 'local');
+                    if (!status.sucesso || status.servico !== 'Inspector Consulta API') throw new Error('Serviço local incompatível.');
+                    estado.tamanhoLote = 1;
+                } else {
+                    const plano = await consultaApiRequisicao('consulta_api_planejar');
+                    if (!plano.sucesso || !Number.isInteger(plano.tamanhoLote) || plano.tamanhoLote < 1 || plano.tamanhoLote > 10
+                        || !Number.isInteger(plano.taxaGoogle) || plano.taxaGoogle < 1 || plano.taxaGoogle > 1000) {
+                        throw new Error([plano.erro || 'Backend incompatível: publique a versão atual para consultas em lotes.', plano.detalhes].filter(Boolean).join(' '));
+                    }
+                    // Nao usar a capacidade de lotes do backend: rajadas retornaram 429 no teste real.
+                    estado.tamanhoLote = 1;
+                    estado.taxaGoogle = plano.taxaGoogle;
+                }
+                consultaApiProgresso(`Consultando via ${estado.modo === 'local' ? 'launcher (até 1000/min)' : 'Google (taxa global configurada)'}.`);
+                let indice = 0;
+                let filaEnvios = Promise.resolve();
+                let proximoEnvio = 0;
+                const aguardarRitmo = () => {
+                    if (estado.modo === 'local') return Promise.resolve(!estado.cancelar);
+                    const vez = filaEnvios.then(async () => {
+                        const espera = Math.max(0, proximoEnvio - Date.now());
+                        for (let restante = espera; restante > 0 && !estado.cancelar; restante -= 250) {
+                            await new Promise(resolve => setTimeout(resolve, Math.min(250, restante)));
+                        }
+                        if (estado.cancelar || localStorage.getItem('imendes_token') !== tokenInicial) return false;
+                        proximoEnvio = Date.now() + Math.ceil(60000 / estado.taxaGoogle);
+                        return true;
+                    });
+                    filaEnvios = vez.then(() => undefined);
+                    return vez;
+                };
+                const trabalhador = async () => {
+                    while (!estado.cancelar && indice < pendentes.length) {
+                        if (!tokenInicial || localStorage.getItem('imendes_token') !== tokenInicial) {
+                            estado.cancelar = true;
+                            estado.motivoParada = 'Sessão alterada; faça login novamente.';
+                            throw new Error('Sessão alterada; processamento interrompido.');
+                        }
+                        const grupo = pendentes.slice(indice, indice + estado.tamanhoLote);
+                        indice += grupo.length;
+                        grupo.forEach(item => { item.emConsulta = true; });
+                        consultaApiProgresso('Consultando produtos…');
+                        try {
+                            let retorno;
+                            do {
+                                if (!await aguardarRitmo()) break;
+                                retorno = await consultaApiRequisicao(estado.modo === 'local' ? 'consultar' : 'consulta_api_consultar', {
+                                    payload: estado.payload, itens: grupo.map(item => ({ tipo: item.tipo, codigo: item.codigo }))
+                                }, estado.modo);
+                                if (retorno.aguardandoTaxa) {
+                                    grupo.forEach(item => { item.aguardandoTaxa = true; });
+                                    consultaApiProgresso('Consultas em andamento; respeitando a fila global do Google.');
+                                    const espera = retorno.repetirAposMs;
+                                    if (!Number.isFinite(espera) || espera < 1 || espera > 61000) throw new Error('Espera de taxa inválida.');
+                                    // Pequenas esperas permitem parar a fila sem aguardar todo o cooldown.
+                                    for (let restante = espera; restante > 0 && !estado.cancelar; restante -= 250) {
+                                        await new Promise(resolve => setTimeout(resolve, Math.min(250, restante)));
+                                    }
+                                }
+                                grupo.forEach(item => { item.aguardandoTaxa = false; });
+                            } while (retorno.aguardandoTaxa && !estado.cancelar);
+                            if (!retorno || retorno.aguardandoTaxa) break;
+                            if (!retorno.sucesso) {
+                                // O modo local retorna erros HTTP no envelope, sem resultados.
+                                if (grupo.length === 1 && Number.isInteger(retorno.statusCode) && ![401, 403, 429].includes(retorno.statusCode)) {
+                                    retorno = { sucesso: true, resultados: [{ tipo: grupo[0].tipo, codigo: grupo[0].codigo, erro: retorno.erro || 'Falha da API.', statusCode: retorno.statusCode }] };
+                                } else {
+                                    throw new Error([retorno.erro || 'Consulta não confirmada.', retorno.detalhes].filter(Boolean).join(' '));
+                                }
+                            }
+                            if (!Array.isArray(retorno.resultados) || retorno.resultados.length !== grupo.length
+                                || retorno.resultados.some((resultado, i) => !resultado || resultado.codigo !== grupo[i].codigo || resultado.tipo !== grupo[i].tipo)) {
+                                throw new Error('Resposta incompatível com o lote consultado.');
+                            }
+                            retorno.resultados.forEach((resultado, i) => {
+                                const item = grupo[i];
+                                if (resultado.erro || !resultado.dados_api || !Array.isArray(resultado.dados_api.Grupos)) {
+                                    item.status = 'Erro';
+                                    item.erro = resultado.erro || 'Resposta inválida da API.';
+                                    if ([401, 403, 429].includes(resultado.statusCode)) {
+                                        estado.cancelar = true;
+                                        estado.motivoParada = `API interrompeu os envios: HTTP ${resultado.statusCode}. Verifique acesso/limite antes de retomar.`;
+                                    }
+                                } else {
+                                    item.dados_api = resultado.dados_api;
+                                    item.status = 'Sucesso';
+                                    delete item.erro;
+                                }
+                                item.finalizadoEm = Date.now();
+                            });
+                        } catch (erro) {
+                            grupo.forEach(item => {
+                                item.status = 'Erro';
+                                item.finalizadoEm = Date.now();
+                                item.erro = erro.message;
+                            });
+                            // Falhas de transporte nao sao repetidas automaticamente: o envio pode ter ocorrido.
+                            estado.cancelar = true;
+                            estado.motivoParada = erro.message;
+                        } finally {
+                            grupo.forEach(item => { item.emConsulta = false; item.aguardandoTaxa = false; });
+                        }
+                        consultaApiProgresso(estado.cancelar ? 'Interrompendo; confira os erros no relatório.' : 'Consultando.');
+                    }
+                };
+                const quantidade = Math.min(estado.modo === 'local' ? 20 : 4, Math.ceil(pendentes.length / estado.tamanhoLote));
+                const terminados = await Promise.allSettled(Array.from({ length: quantidade }, trabalhador));
+                const falha = terminados.find(resultado => resultado.status === 'rejected');
+                if (falha) throw falha.reason;
+                estado.fim = Date.now();
+                consultaApiProgresso(estado.cancelar
+                    ? `Execução interrompida. ${estado.motivoParada || 'Envios suspensos.'} Resultados parciais disponíveis; use Retomar pendentes/erros após verificar a causa.`
+                    : 'Execução finalizada. Baixe os resultados; os erros individuais estão no relatório.');
+            } catch (erro) {
+                document.getElementById('consultaStatus').innerText = 'Erro: ' + erro.message;
+                alert('Saneamento de produtos: ' + erro.message);
+            } finally {
+                consultaApiEstado.executando = false;
+                consultaApiAtualizarBotoes();
+            }
+        }
+
+        function consultaApiLinhasRelatorio(item) {
+            if (item.status !== 'Sucesso') return [];
+            const normalizar = codigo => String(codigo).replace(/^0+/, '') || '0';
+            const linhas = [];
+            const grupos = item.dados_api.Grupos;
+            for (const grupo of grupos) {
+                const codigos = grupo[item.tipo === 'EAN' ? 'prodEan' : 'prodCodInterno'] || [];
+                if (!Array.isArray(codigos)) throw new Error('Lista de códigos inválida em Grupos.');
+                if (codigos.length && !codigos.some(codigo => normalizar(codigo) === normalizar(item.codigo))) continue;
+                const cfop = grupo.Regras?.[0]?.uFs?.[0]?.CFOP || {};
+                const regra = cfop.CaracTrib?.[0] || {};
+                const texto = valor => valor === undefined || valor === null ? '' : String(valor);
+                linhas.push({
+                    [item.tipo]: item.codigo,
+                    'Codigo do Grupo': texto(grupo.codigo), 'Descricao do Grupo': texto(grupo.descricao),
+                    NCM: texto(grupo.nCM), CEST: texto(grupo.cEST), 'PIS/COFINS CST Saida': texto(grupo.pisCofins?.cstSai),
+                    codRegra: texto(regra.codRegra), 'DESCRICAO DE REGRA': texto(regra.descricao),
+                    codExcecao: texto(regra.codExcecao), codBenef: texto(regra.codBenef),
+                    CFOP: texto(cfop.cFOP), 'CFOP (Regra)': texto(regra.cFOP),
+                    'ICMS CST': texto(regra.cST), 'ICMS Aliquota': texto(regra.aliqIcmsInterna),
+                    'Reducao BC ICMS': texto(regra.reducaoBcIcms), IVA: texto(regra.iVA), 'Credito Presumido': texto(regra.creditoPresumido)
+                });
+            }
+            if (!linhas.length) linhas.push({
+                [item.tipo]: item.codigo, 'Codigo do Grupo': 'Nao Encontrado', 'Descricao do Grupo': 'Sem Retorno da API',
+                NCM: '', CEST: '', 'PIS/COFINS CST Saida': '', codRegra: '', 'DESCRICAO DE REGRA': '',
+                codExcecao: '', codBenef: '', CFOP: '', 'CFOP (Regra)': '', 'ICMS CST': '',
+                'ICMS Aliquota': '', 'Reducao BC ICMS': '', IVA: '', 'Credito Presumido': ''
+            });
+            return linhas;
+        }
+
+        function exportarConsultaApiXlsx() {
+            try {
+                if (consultaApiEstado.executando || !consultaApiEstado.itens.length) throw new Error('Aguarde a execução ou importe resultados.');
+                const wb = XLSX.utils.book_new();
+                for (const tipo of ['EAN', 'SKU']) {
+                    const linhas = consultaApiEstado.itens.filter(item => item.tipo === tipo).flatMap(consultaApiLinhasRelatorio);
+                    if (linhas.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(linhas), tipo === 'EAN' ? 'EANs' : 'SKUs');
+                }
+                const consultas = consultaApiEstado.itens.map(item => ({ Tipo: item.tipo, Codigo: item.codigo, Status: item.status, Erro: item.erro || '' }));
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(consultas), 'Consultas');
+                if (consultaApiEstado.payload) {
+                    const perfil = Object.entries(consultaApiEstado.payload).flatMap(([grupo, campos]) =>
+                        Object.entries(campos).map(([campo, valor]) => ({ Grupo: grupo, Campo: campo, Valor: Array.isArray(valor) ? valor.join(',') : String(valor) })));
+                    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(perfil), 'Parametros');
+                }
+                const parcial = consultaApiEstado.itens.some(item => item.status !== 'Sucesso') ? '_PARCIAL' : '';
+                XLSX.writeFile(wb, `Relatorio_Tributario_Saneamento_Unificado${parcial}.xlsx`);
+            } catch (erro) {
+                alert('Erro ao gerar XLSX: ' + erro.message);
+            }
+        }
+
+        function exportarConsultaApiJsonl() {
+            if (consultaApiEstado.executando || !consultaApiEstado.itens.length) return alert('Aguarde a execução ou importe resultados.');
+            const conteudo = consultaApiEstado.itens.map(item => JSON.stringify({
+                [item.tipo === 'EAN' ? 'ean_consultado' : 'sku_consultado']: item.codigo,
+                ...(item.dados_api ? { dados_api: item.dados_api } : {}),
+                status: item.status, ...(item.erro ? { erro: item.erro } : {})
+            })).join('\n') + '\n';
+            const url = URL.createObjectURL(new Blob([conteudo], { type: 'application/x-ndjson;charset=utf-8' }));
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'resultados_saneamento.jsonl';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        async function importarConsultaApiJsonl() {
+            if (consultaApiEstado.executando) return alert('Pare a execução antes de importar JSONL.');
+            const entrada = document.getElementById('consultaImportar');
+            try {
+                const mapa = new Map(consultaApiEstado.itens.map(item => [item.tipo + ':' + item.codigo, item]));
+                for (const file of entrada.files) {
+                    if (file.size > 20 * 1024 * 1024) throw new Error('Cada JSONL deve ter no máximo 20 MB.');
+                    const linhas = (await file.text()).replace(/^\uFEFF/, '').split(/\r?\n/);
+                    for (let i = 0; i < linhas.length; i++) {
+                        if (!linhas[i].trim()) continue;
+                        let registro;
+                        try {
+                            registro = JSON.parse(linhas[i]);
+                            if (!registro || typeof registro !== 'object') throw new Error('Registro inválido.');
+                            const tipo = registro.ean_consultado !== undefined || registro.eans_consultados !== undefined ? 'EAN' : 'SKU';
+                            const codigosRaw = registro[tipo === 'EAN' ? 'eans_consultados' : 'skus_consultados'] ?? registro[tipo === 'EAN' ? 'ean_consultado' : 'sku_consultado'];
+                            const codigos = Array.isArray(codigosRaw) ? codigosRaw : [codigosRaw];
+                            if (!codigos.length || codigos.some(codigo => typeof codigo !== 'string' || !codigo.trim() || codigo.length > 128)) throw new Error('Códigos devem ser texto para preservar zeros iniciais.');
+                            const sucesso = registro.dados_api && Array.isArray(registro.dados_api.Grupos);
+                            if (!sucesso && !['Erro', 'Pendente'].includes(registro.status)) throw new Error('Registro sem dados_api.Grupos.');
+                            for (const codigo of codigos) {
+                                const item = { tipo, codigo, status: sucesso ? 'Sucesso' : registro.status };
+                                if (sucesso) item.dados_api = registro.dados_api;
+                                if (registro.erro) item.erro = String(registro.erro);
+                                const chave = tipo + ':' + codigo;
+                                if (!mapa.has(chave) || mapa.get(chave).status !== 'Sucesso') mapa.set(chave, item);
+                            }
+                        } catch (erro) {
+                            throw new Error(`${file.name}, linha ${i + 1}: ${erro.message}`);
+                        }
+                    }
+                }
+                consultaApiEstado = { executando: false, cancelar: false, itens: [...mapa.values()], payload: null, modo: null };
+                consultaApiAtualizarBotoes();
+                consultaApiProgresso('JSONL importado sem realizar consultas.');
+            } catch (erro) {
+                alert('Erro ao importar JSONL: ' + erro.message);
+            } finally {
+                entrada.value = '';
+            }
+        }
 
         let idTributacaoAtual = null;
         let clienteAtualId = null;
@@ -1670,7 +2144,19 @@
             { sigla: 'SN', nome: 'SN - Saída Não Contribuinte' }
         ];
 
-        window.onload = function() {
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function verificarBibliotecas() {
+                const faltantes = [];
+                if (typeof XLSX === 'undefined') faltantes.push('Excel');
+                if (typeof pdfjsLib === 'undefined') faltantes.push('PDF');
+                if (typeof Tesseract === 'undefined') faltantes.push('OCR');
+                const aviso = document.getElementById('avisoBibliotecas');
+                aviso.classList.toggle('hidden', faltantes.length === 0);
+                aviso.innerText = faltantes.length
+                    ? 'Downloads externos indisponíveis ou lentos: ' + faltantes.join(', ') + '. O login não depende desses downloads. Verifique a rede/VPN; as funções correspondentes precisam dessas bibliotecas.'
+                    : '';
+                if (faltantes.length) setTimeout(verificarBibliotecas, 5000);
+            }, 10000);
             carregarVersoes();
             const usuarioSalvo = localStorage.getItem('imendes_usuario');
             const perfilSalvo = localStorage.getItem('imendes_perfil');
@@ -1688,7 +2174,7 @@
                 mostrarView('home');
                 carregarClientes();
             }
-        };
+        });
 
         // Controla qual "página" fica visível: home (painel principal), ferramentas, admin ou minhaconta.
         // Sempre chamada em vez de esconder/mostrar os elementos direto, pra manter a sidebar sincronizada.
@@ -2473,6 +2959,17 @@
         }
 
         function fazerLogout() {
+            consultaApiEstado.cancelar = true;
+            consultaApiEstado.itens = [];
+            consultaApiEstado.payload = null;
+            if (consultaApiLocalInfo()) {
+                consultaApiRequisicao('limpar', {}, 'local').then(retorno => {
+                    if (!retorno.sucesso) throw new Error('Serviço recusou a limpeza de cache.');
+                }).catch(erro => {
+                    console.error('Falha ao limpar cache local:', erro.message);
+                    alert('Não foi possível limpar o cache local. Encerre a janela do launcher para descartar as credenciais.');
+                });
+            }
             limparBuscaTributacaoTitulo();
             const authTokenAtual = localStorage.getItem('imendes_token');
             if (authTokenAtual) {
@@ -3112,11 +3609,13 @@
         }
 
         function alternarAbaFerramenta(aba) {
-            ['ferramentaIpi', 'ferramentaAnalise', 'ferramentaRtc', 'ferramentaClientes', 'ferramentaValidador', 'ferramentaAgendamentos', 'ferramentaTributacaoUf'].forEach(f => {
+            ['ferramentaConsultaApi', 'ferramentaIpi', 'ferramentaAnalise', 'ferramentaRtc', 'ferramentaClientes', 'ferramentaValidador', 'ferramentaAgendamentos', 'ferramentaTributacaoUf'].forEach(f => {
                 document.getElementById(f).classList.add('hidden');
             });
 
-            if (aba === 'ipi') {
+            if (aba === 'consultaApi') {
+                document.getElementById('ferramentaConsultaApi').classList.remove('hidden');
+            } else if (aba === 'ipi') {
                 document.getElementById('ferramentaIpi').classList.remove('hidden');
             } else if (aba === 'analise') {
                 document.getElementById('ferramentaAnalise').classList.remove('hidden');
