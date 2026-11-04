@@ -92,7 +92,7 @@ class ConsultaLocal:
         self.rate_lock = threading.Lock()
         self.next_send = 0
         self.blocked_until = 0
-        self.workers = threading.BoundedSemaphore(20)
+        self.workers = threading.BoundedSemaphore(100)
 
     def credenciais(self, auth_token):
         if not isinstance(auth_token, str) or not auth_token or len(auth_token) > 256:

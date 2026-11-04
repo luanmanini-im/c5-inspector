@@ -781,7 +781,7 @@
                     <summary class="cursor-pointer">Configuração, publicação e limites</summary>
                     <p class="mt-2">Administrador: execute <strong>prepararConfigConsultaApi</strong> no editor do Apps Script. Na aba <strong>Config_Consulta_API</strong> (Chave/Valor), preencha LOGIN (CNPJ de acesso, como texto) e SENHA. TAXA_GOOGLE_POR_MINUTO inicia em 200 e aceita 1 a 1000. Restrinja o acesso direto à planilha aos administradores autorizados: a aba contém a senha e não é um cofre criptografado. Não compartilhe cópias da planilha.</p>
                     <p class="mt-2">Publique uma nova versão do backend. Para o launcher, publique também este HTML como index.html, ConsultaApiLocal.py e Inspector_Launcher.bat no mesmo repositório já usado pelo launcher. Requer Python 3.9+ e Chrome. Mantenha a janela do launcher aberta; encerre-a com Ctrl+C. O perfil especial do Chrome usado pelo launcher é exclusivo para o Inspector, não para navegar em outros sites.</p>
-                    <p class="mt-2">Local: até 1000 envios/minuto, no máximo 20 simultâneos, sem passar pelo Google em cada consulta. Google: produtos individuais com envios espaçados pela taxa da planilha, no máximo 4 chamadas em andamento e sem lotes em rajada. O servidor também contabiliza os produtos no limite global de 60 segundos, compartilhado entre usuários. Teste real de 04/11/2026: 120 consultas sem erro em etapas de 30, 60, 120 e 200 envios/min; na etapa de 200, o ritmo observado foi 87 conclusões/min. Recomendação inicial: TAXA_GOOGLE_POR_MINUTO=200. Esse teste curto não garante ausência futura de 429. A taxa é um teto, não uma velocidade garantida; quotas, autenticação, auditoria na planilha e latência podem reduzir o ritmo. O painel mostra a configuração carregada do cache. Não há repetição automática após timeout/erro da API. HTTP 401/403/429 interrompe novos envios. Parar impede novos envios, mas aguarda os já enviados.</p>
+                    <p class="mt-2">Local: até 1000 envios/minuto, no máximo 100 simultâneos, sem passar pelo Google em cada consulta. Google: produtos individuais com envios espaçados pela taxa da planilha, no máximo 4 chamadas em andamento e sem lotes em rajada. O servidor também contabiliza os produtos no limite global de 60 segundos, compartilhado entre usuários. Teste real de 04/11/2026: 120 consultas sem erro em etapas de 30, 60, 120 e 200 envios/min; na etapa de 200, o ritmo observado foi 87 conclusões/min. Recomendação inicial: TAXA_GOOGLE_POR_MINUTO=200. Esse teste curto não garante ausência futura de 429. A taxa é um teto, não uma velocidade garantida; quotas, autenticação, auditoria na planilha e latência podem reduzir o ritmo. O painel mostra a configuração carregada do cache. Não há repetição automática após timeout/erro da API. HTTP 401/403/429 interrompe novos envios. Parar impede novos envios, mas aguarda os já enviados.</p>
                     <p class="mt-2">As credenciais ficam em cache por até 5 minutos no Google e mais 5 minutos no processo local. Alterações na planilha podem levar até 10 minutos para chegar ao modo local. Sair limpa o cache local; fechar o launcher descarta sua memória. O modo local ainda precisa de internet para autenticar e buscar credenciais. O emitente da consulta é informado abaixo, separado do CNPJ de acesso.</p>
                     <p class="mt-2">O XLSX mantém os campos do relatório Python: usa a primeira regra, primeira UF e primeira característica tributária de cada grupo. Revise as regras quando consultar múltiplas UFs/características. Códigos e campos fiscais são exportados como texto. Para converter arquivos antigos, importe JSONL e clique em Baixar XLSX, sem realizar consultas.</p>
                 </details>
@@ -1716,7 +1716,7 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby993N3HNJlIEi2utIW1mq8gaQ0_lhO6fZWypQhoEVEd0b7DAet6lFGapQv61TYXQxaIA/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.52.0";
+        const VERSAO_FRONT = "v5.52.1";
         // Launcher local (.bat) hospedado no GitHub - baixa o HTML mais recente diretamente do repositorio
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
 
@@ -1762,7 +1762,7 @@
 
         async function consultaApiRequisicao(action, dados = {}, modo = 'google') {
             const local = modo === 'local' ? consultaApiLocalInfo() : null;
-            if (modo === 'local' && !local) throw new Error('Abra o Inspector pelo launcher atualizado para usar o modo local.');
+            if (modo === 'local' && !local) throw new Error('Esta aba não foi conectada ao serviço local. Execute Inspector_Launcher.bat com ConsultaApiLocal.py publicado no repositório, mantenha a janela do launcher aberta e use a aba aberta por ele. Atualizar apenas o HTML não ativa o modo local.');
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 45000);
             try {
@@ -1854,7 +1854,7 @@
                     if (!itens.length) throw new Error('Informe ao menos um EAN ou SKU.');
                     const selecionado = document.getElementById('consultaApiModo').value;
                     const modo = selecionado === 'auto' ? (consultaApiLocalInfo() ? 'local' : 'google') : selecionado;
-                    if (modo === 'local' && !consultaApiLocalInfo()) throw new Error('O modo local exige o launcher atualizado.');
+                    if (modo === 'local' && !consultaApiLocalInfo()) throw new Error('Esta aba não foi conectada ao serviço local. Execute Inspector_Launcher.bat com ConsultaApiLocal.py publicado no repositório, mantenha a janela do launcher aberta e use a aba aberta por ele. Atualizar apenas o HTML não ativa o modo local.');
                     const payload = consultaApiPayloadFormulario();
                     if (consultaApiEstado.itens.length && !confirm('Iniciar nova consulta descarta os resultados em memória. Baixe o relatório antes de continuar. Continuar?')) return;
                     consultaApiEstado = { executando: false, cancelar: false, itens, payload, modo };
@@ -1976,7 +1976,7 @@
                         consultaApiProgresso(estado.cancelar ? 'Interrompendo; confira os erros no relatório.' : 'Consultando.');
                     }
                 };
-                const quantidade = Math.min(estado.modo === 'local' ? 20 : 4, Math.ceil(pendentes.length / estado.tamanhoLote));
+                const quantidade = Math.min(estado.modo === 'local' ? 100 : 4, Math.ceil(pendentes.length / estado.tamanhoLote));
                 const terminados = await Promise.allSettled(Array.from({ length: quantidade }, trabalhador));
                 const falha = terminados.find(resultado => resultado.status === 'rejected');
                 if (falha) throw falha.reason;
