@@ -9,6 +9,7 @@ import re
 import secrets
 import shutil
 import subprocess
+import sys
 import threading
 import time
 import urllib.error
@@ -200,6 +201,31 @@ def criar_servidor(consulta, token):
     return servidor
 
 
+def encontrar_chrome():
+    nomes = ("google-chrome", "google-chrome-stable", "chromium", "chromium-browser") if sys.platform.startswith("linux") else ("chrome.exe",)
+    for nome in nomes:
+        chrome = shutil.which(nome)
+        if chrome:
+            return chrome
+    if sys.platform == "win32":
+        for root in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
+            if not os.environ.get(root):
+                continue
+            candidato = Path(os.environ[root]) / "Google" / "Chrome" / "Application" / "chrome.exe"
+            if candidato.is_file():
+                return str(candidato)
+    raise FileNotFoundError("Google Chrome nao encontrado. No Linux, instale Google Chrome ou Chromium disponivel no PATH.")
+
+
+def pasta_perfil_chrome():
+    if sys.platform.startswith("linux"):
+        configuracao = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+        if not configuracao.is_absolute():
+            raise ValueError("XDG_CONFIG_HOME deve ser um caminho absoluto.")
+        return configuracao / "Inspector" / "ChromeLocal"
+    return Path(os.environ["LOCALAPPDATA"]) / "Inspector" / "ChromeLocal"
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--html", required=True)
@@ -209,24 +235,16 @@ def main():
     match = re.search(r'const WEB_APP_URL = "(https://script\.google\.com/macros/s/[A-Za-z0-9_-]+/exec)"', texto)
     if not match:
         raise ValueError("WEB_APP_URL nao encontrada no HTML do Inspector.")
-    chrome = shutil.which("chrome.exe")
-    if not chrome:
-        for root in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
-            candidato = Path(os.environ.get(root, "")) / "Google" / "Chrome" / "Application" / "chrome.exe"
-            if candidato.is_file():
-                chrome = str(candidato)
-                break
-    if not chrome:
-        raise FileNotFoundError("Google Chrome nao encontrado.")
+    chrome = encontrar_chrome()
+    perfil = str(pasta_perfil_chrome())
     token = secrets.token_urlsafe(32)
     consulta = ConsultaLocal(match.group(1))
     servidor = criar_servidor(consulta, token)
     porta = servidor.server_address[1]
-    perfil = str(Path(os.environ["LOCALAPPDATA"]) / "Inspector" / "ChromeLocal")
     url = html.as_uri() + "#consultaLocal=" + str(porta) + ":" + token
-    subprocess.Popen([chrome, "--disable-web-security", "--user-data-dir=" + perfil, url])
-    print("Inspector local iniciado. Mantenha esta janela aberta. Ctrl+C encerra o servico e descarta as credenciais.")
     try:
+        subprocess.Popen([chrome, "--disable-web-security", "--user-data-dir=" + perfil, url])
+        print("Inspector local iniciado. Mantenha esta janela aberta. Ctrl+C encerra o servico e descarta as credenciais.")
         servidor.serve_forever()
     except KeyboardInterrupt:
         print("\nEncerrando Inspector local.")
