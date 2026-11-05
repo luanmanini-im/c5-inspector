@@ -191,6 +191,12 @@
         }
         #ferramentaRtc #rtcHistoricoModal:not([open]) { display: none; }
         #ferramentaRtc #rtcHistoricoModal::backdrop { background: rgba(0, 0, 0, .65); }
+        #modalDownloadLauncher {
+            width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px);
+            margin: auto; overflow: auto;
+        }
+        #modalDownloadLauncher::backdrop { background: rgba(0, 0, 0, .65); }
+        #modalDownloadLauncher > .flex { flex-wrap: wrap; }
         @media (max-width: 640px) {
             #ferramentaRtc { padding: 16px; }
             #ferramentaRtc .rtc-card { padding: 16px; }
@@ -261,7 +267,7 @@
                 <button onclick="abrirFerramentaViaSidebar('tributacaoUf')" class="sidebar-sublink">Análise de Tributação por UF</button>
                 <button onclick="abrirFerramentaViaSidebar('agendamentos')" class="sidebar-sublink">Consulta de Agendamentos</button>
                 <button onclick="abrirConversorPdf()" class="sidebar-sublink">Conversor pdf -> xlsx - Inconsistências</button>
-                <button id="btnBaixarLauncher" onclick="baixarLauncherLocal()" class="sidebar-sublink">Baixar Launcher Local (.bat)</button>
+                <button id="btnBaixarLauncher" onclick="abrirDownloadLauncher()" class="sidebar-sublink">Baixar Launcher Local (Windows/Linux)</button>
 
                 <button id="navMinhaConta" onclick="abrirModalMeuPerfil()" class="sidebar-link mt-2">
                     Minha Conta
@@ -780,7 +786,7 @@
                 <details class="border border-slate-700 rounded p-3 text-xs text-slate-300">
                     <summary class="cursor-pointer">Configuração, publicação e limites</summary>
                     <p class="mt-2">Administrador: execute <strong>prepararConfigConsultaApi</strong> no editor do Apps Script. Na aba <strong>Config_Consulta_API</strong> (Chave/Valor), preencha LOGIN (CNPJ de acesso, como texto) e SENHA. TAXA_GOOGLE_POR_MINUTO inicia em 200 e aceita 1 a 1000. Restrinja o acesso direto à planilha aos administradores autorizados: a aba contém a senha e não é um cofre criptografado. Não compartilhe cópias da planilha.</p>
-                    <p class="mt-2">Publique uma nova versão do backend. Para o launcher, publique também este HTML como index.html, ConsultaApiLocal.py e Inspector_Launcher.bat no mesmo repositório já usado pelo launcher. Requer Python 3.9+ e Chrome. Mantenha a janela do launcher aberta; encerre-a com Ctrl+C. O perfil especial do Chrome usado pelo launcher é exclusivo para o Inspector, não para navegar em outros sites.</p>
+                    <p class="mt-2">Publique uma nova versão do backend. Para o launcher, publique também este HTML como index.html, ConsultaApiLocal.py, Inspector_Launcher.bat (Windows) e Inspector_Launcher.sh (Linux) no mesmo repositório já usado pelo launcher. Requer Python 3.9+ e Chrome (ou Chromium no Linux). Ao baixar, escolha Windows ou Linux. Os launchers pedem confirmação para centralizar os arquivos em Área de Trabalho/Inspector e atualizam essa mesma pasta em cada execução. No Linux, abra o terminal na pasta do download e execute <code>sh Inspector_Launcher.sh</code>; depois use o mesmo comando dentro da pasta Inspector. A pasta de trabalho segue a configuração XDG; sem xdg-user-dir, usa ~/Desktop/Inspector. Mantenha a janela do launcher aberta; encerre-a com Ctrl+C. O perfil especial do navegador fica em %LOCALAPPDATA%\Inspector\ChromeLocal no Windows ou $XDG_CONFIG_HOME/Inspector/ChromeLocal no Linux (padrão ~/.config/Inspector/ChromeLocal) e é exclusivo para o Inspector, não para navegar em outros sites.</p>
                     <p class="mt-2">Local: até 1000 envios/minuto, no máximo 100 simultâneos, sem passar pelo Google em cada consulta. Google: produtos individuais com envios espaçados pela taxa da planilha, no máximo 4 chamadas em andamento e sem lotes em rajada. O servidor também contabiliza os produtos no limite global de 60 segundos, compartilhado entre usuários. Teste real de 04/11/2026: 120 consultas sem erro em etapas de 30, 60, 120 e 200 envios/min; na etapa de 200, o ritmo observado foi 87 conclusões/min. Recomendação inicial: TAXA_GOOGLE_POR_MINUTO=200. Esse teste curto não garante ausência futura de 429. A taxa é um teto, não uma velocidade garantida; quotas, autenticação, auditoria na planilha e latência podem reduzir o ritmo. O painel mostra a configuração carregada do cache. Não há repetição automática após timeout/erro da API. HTTP 401/403/429 interrompe novos envios. Parar impede novos envios, mas aguarda os já enviados.</p>
                     <p class="mt-2">As credenciais ficam em cache por até 5 minutos no Google e mais 5 minutos no processo local. Alterações na planilha podem levar até 10 minutos para chegar ao modo local. Sair limpa o cache local; fechar o launcher descarta sua memória. O modo local ainda precisa de internet para autenticar e buscar credenciais. O emitente da consulta é informado abaixo, separado do CNPJ de acesso.</p>
                     <p class="mt-2">O XLSX mantém os campos do relatório Python: usa a primeira regra, primeira UF e primeira característica tributária de cada grupo. Revise as regras quando consultar múltiplas UFs/características. Códigos e campos fiscais são exportados como texto. Para converter arquivos antigos, importe JSONL e clique em Baixar XLSX, sem realizar consultas.</p>
@@ -1712,13 +1718,24 @@
         </div> <!-- fecha viewContainer -->
     </div> <!-- fecha appLayout -->
 
+    <dialog id="modalDownloadLauncher" aria-labelledby="tituloDownloadLauncher" onkeydown="if (event.key === 'Escape') { event.preventDefault(); this.close(); }" class="imendes-card text-slate-200 p-6">
+        <h3 id="tituloDownloadLauncher" class="text-lg font-bold mb-2">Qual é o seu sistema operacional?</h3>
+        <p class="text-sm text-slate-400 mb-4">O launcher instala e atualiza o Inspector em uma única pasta na Área de Trabalho.</p>
+        <div class="flex gap-4">
+            <button onclick="baixarLauncherLocal('windows')" class="imendes-btn px-4 py-2 rounded-lg text-sm transition-colors" autofocus>Windows (.bat)</button>
+            <button onclick="baixarLauncherLocal('linux')" class="imendes-btn px-4 py-2 rounded-lg text-sm transition-colors">Linux (.sh)</button>
+            <form method="dialog"><button class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-lg font-bold text-sm transition-colors">Cancelar</button></form>
+        </div>
+    </dialog>
+
     <script>
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbygHNbncClXyhJ_Amnhhpnc2UDieoVLQ-6ICm9v3VqkYh3NIiOL_6OQDeQ3fKEWXfzO8Q/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.52.3";
-        // Launcher local (.bat) hospedado no GitHub - baixa o HTML mais recente diretamente do repositorio
+        const VERSAO_FRONT = "v5.52.4";
+        // Launchers hospedados no GitHub - atualizam o HTML e o servico local.
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
+        const URL_LAUNCHER_SH = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.sh";
 
         let consultaApiEstado = { executando: false, cancelar: false, itens: [], payload: null, modo: null };
 
@@ -1762,7 +1779,7 @@
 
         async function consultaApiRequisicao(action, dados = {}, modo = 'google') {
             const local = modo === 'local' ? consultaApiLocalInfo() : null;
-            if (modo === 'local' && !local) throw new Error('Esta aba não foi conectada ao serviço local. Execute Inspector_Launcher.bat com ConsultaApiLocal.py publicado no repositório, mantenha a janela do launcher aberta e use a aba aberta por ele. Atualizar apenas o HTML não ativa o modo local.');
+            if (modo === 'local' && !local) throw new Error('Esta aba não foi conectada ao serviço local. Execute Inspector_Launcher.bat (Windows) ou sh Inspector_Launcher.sh (Linux), com ConsultaApiLocal.py publicado no repositório, mantenha a janela do launcher aberta e use a aba aberta por ele. Atualizar apenas o HTML não ativa o modo local.');
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 45000);
             try {
@@ -1854,7 +1871,7 @@
                     if (!itens.length) throw new Error('Informe ao menos um EAN ou SKU.');
                     const selecionado = document.getElementById('consultaApiModo').value;
                     const modo = selecionado === 'auto' ? (consultaApiLocalInfo() ? 'local' : 'google') : selecionado;
-                    if (modo === 'local' && !consultaApiLocalInfo()) throw new Error('Esta aba não foi conectada ao serviço local. Execute Inspector_Launcher.bat com ConsultaApiLocal.py publicado no repositório, mantenha a janela do launcher aberta e use a aba aberta por ele. Atualizar apenas o HTML não ativa o modo local.');
+                    if (modo === 'local' && !consultaApiLocalInfo()) throw new Error('Esta aba não foi conectada ao serviço local. Execute Inspector_Launcher.bat (Windows) ou sh Inspector_Launcher.sh (Linux), com ConsultaApiLocal.py publicado no repositório, mantenha a janela do launcher aberta e use a aba aberta por ele. Atualizar apenas o HTML não ativa o modo local.');
                     const payload = consultaApiPayloadFormulario();
                     if (consultaApiEstado.itens.length && !confirm('Iniciar nova consulta descarta os resultados em memória. Baixe o relatório antes de continuar. Continuar?')) return;
                     consultaApiEstado = { executando: false, cancelar: false, itens, payload, modo };
@@ -4774,30 +4791,45 @@
         }
 
         // ==========================================
-        // BAIXAR LAUNCHER LOCAL (.bat) - hospedado no GitHub
+        // BAIXAR LAUNCHER LOCAL (Windows/Linux) - hospedado no GitHub
         // ==========================================
+        function abrirDownloadLauncher() {
+            document.getElementById('modalDownloadLauncher').showModal();
+        }
+
         // fetch()+blob (em vez de <a href> direto) pra forçar o download mesmo sendo cross-origin -
         // o atributo "download" do <a> é ignorado pelos navegadores em links cross-origin sem isso.
-        async function baixarLauncherLocal() {
+        async function baixarLauncherLocal(sistema) {
+            if (sistema !== 'windows' && sistema !== 'linux') {
+                alert('Selecione Windows ou Linux para baixar o launcher.');
+                return;
+            }
             const botao = document.getElementById('btnBaixarLauncher');
+            if (botao.disabled) return;
+            document.getElementById('modalDownloadLauncher').close();
+            const urlLauncher = sistema === 'linux' ? URL_LAUNCHER_SH : URL_LAUNCHER_BAT;
+            const nomeArquivo = sistema === 'linux' ? 'Inspector_Launcher.sh' : 'Inspector_Launcher.bat';
             const textoOriginal = botao.innerText;
             botao.disabled = true;
             botao.innerText = 'Baixando...';
             try {
-                const resp = await fetch(URL_LAUNCHER_BAT);
+                const resp = await fetch(urlLauncher, { cache: 'no-store' });
                 if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
                 const blob = await resp.blob();
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'Inspector_Launcher.bat';
+                link.download = nomeArquivo;
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
                 URL.revokeObjectURL(url);
-                alert('Download iniciado!\n\nColoque o arquivo numa pasta (ex.: Área de Trabalho) e dê duplo-clique nele sempre que for abrir o Inspector localmente - ele baixa o HTML mais recente diretamente do GitHub e já abre o Chrome configurado.');
+                const instrucoes = sistema === 'linux'
+                    ? 'Abra o terminal na pasta onde salvou o arquivo e execute:\nsh Inspector_Launcher.sh\n\nRequer Python 3.9+ e Google Chrome ou Chromium.'
+                    : 'Dê duplo-clique em Inspector_Launcher.bat.\n\nRequer Python 3.9+ e Google Chrome.';
+                alert('Download iniciado!\n\n' + instrucoes + '\n\nConfirme a instalação em Área de Trabalho/Inspector. Nas próximas vezes, execute o launcher dentro dessa pasta: ele atualiza os arquivos sem espalhá-los em Downloads. Mantenha o terminal aberto enquanto usa o Inspector.');
             } catch (erro) {
-                alert('Erro ao baixar o launcher: ' + erro.message + '\n\nVocê também pode baixar manualmente pelo link:\n' + URL_LAUNCHER_BAT);
+                alert('Erro ao baixar o launcher: ' + erro.message + '\n\nVocê também pode baixar manualmente pelo link:\n' + urlLauncher);
             } finally {
                 botao.disabled = false;
                 botao.innerText = textoOriginal;
