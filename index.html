@@ -14,6 +14,7 @@
     <style>
         .hidden { display: none !important; }
         #avisoBibliotecas { position: fixed; bottom: 12px; left: 12px; right: 12px; z-index: 9999; padding: 12px; border: 1px solid #fbbf24; border-radius: 8px; background: #1b1f2e; color: #fde68a; font-size: 13px; }
+        #avisoAuditoria { position: fixed; top: 12px; left: 12px; right: 12px; z-index: 10000; padding: 12px; border: 1px solid #fbbf24; border-radius: 8px; background: #1b1f2e; color: #fde68a; font-size: 13px; }
         body { 
             background-color: #13161f; 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; 
@@ -204,6 +205,7 @@
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen flex items-center justify-center">
+    <p id="avisoAuditoria" class="hidden" role="alert"></p>
     <p id="avisoBibliotecas" class="hidden" role="status" aria-live="polite"></p>
 
     <!-- TELA DE LOGIN -->
@@ -1583,6 +1585,7 @@
 
             <!-- ABA HISTÓRICO DE LOGS -->
             <div id="adminLogs" class="p-6 flex flex-col gap-4 hidden">
+                <p class="text-xs text-slate-400">Auditoria de consultas, alterações, implantações e atividades locais. Operações de escrita registram início e conclusão; um início sem conclusão exige conferência, não repetição automática. VPN, launcher e atividades do navegador são identificados como relatos do cliente. Registros locais pendentes são reenviados por este navegador com o mesmo usuário conectado: não limpe seus dados antes da confirmação. Retenção: 30 dias; leitura/exportação limitada aos últimos 25.000 registros, com aviso quando atingida.</p>
                 <div class="flex items-center justify-between">
                     <h4 class="text-sm font-bold text-white">Histórico de ações (últimas 24 horas)</h4>
                     <div class="flex gap-2">
@@ -1612,6 +1615,8 @@
                                     <select id="filtroLogResultado" onchange="aplicarFiltrosLogs()" class="w-full p-1.5 border rounded text-xs imendes-input cursor-pointer">
                                         <option value="">Todos</option>
                                         <option value="sucesso">Sucesso</option>
+                                        <option value="iniciado">Iniciado (aguardando conclusão)</option>
+                                        <option value="parcial">Parcial</option>
                                         <option value="erro">Erro</option>
                                     </select>
                                 </th>
@@ -1729,13 +1734,136 @@
     </dialog>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbygHNbncClXyhJ_Amnhhpnc2UDieoVLQ-6ICm9v3VqkYh3NIiOL_6OQDeQ3fKEWXfzO8Q/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyDnpw47IEtfuVQd890anTM5JdKI96n9HmZGvLe64upPQhPPPsyKMRwr-iCcTYKjMZ-/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.52.5";
+        const VERSAO_FRONT = "v5.52.6";
         // Launchers hospedados no GitHub - atualizam o HTML e o servico local.
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
         const URL_LAUNCHER_SH = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.sh";
+
+        let auditoriaEnviando = false;
+        let auditoriaTimer = null;
+        let auditoriaAvisoServidor = '';
+
+        function avisarAuditoria(mensagem) {
+            console.error('[AUDITORIA]', mensagem);
+            const aviso = document.getElementById('avisoAuditoria');
+            aviso.textContent = mensagem;
+            aviso.classList.remove('hidden');
+        }
+
+        function auditoriaChave(email = localStorage.getItem('imendes_usuario')) {
+            return email ? 'inspector_auditoria_' + email.toLowerCase() : null;
+        }
+
+        function auditoriaResumo(resultado) {
+            const r = resultado || {};
+            const resumo = {};
+            for (const campo of ['sucesso', 'statusCode', 'total', 'erro', 'erros', 'falhas', 'qtdErros', 'qtdSucesso', 'parcial', 'aguardandoTaxa']) {
+                if (typeof r[campo] === 'number' || typeof r[campo] === 'boolean') resumo[campo] = r[campo];
+            }
+            if (typeof r.erro === 'string' || typeof r.error === 'string') resumo.falha = true;
+            if (r.falha) resumo.falha = true;
+            if (Array.isArray(r.erros)) resumo.erros = r.erros.length;
+            if (Array.isArray(r.resultados)) resumo.falhas = r.resultados.filter(item => item && (item.sucesso === false || typeof item.erro === 'string')).length;
+            return resumo;
+        }
+
+        function auditoriaParametros(parametros) {
+            const detalhes = {};
+            // Nao persistir tokens, credenciais, respostas de API ou payloads completos no navegador.
+            for (const campo of ['sku', 'ean', 'idFamilia', 'idDivisao', 'idTributacao', 'novoIdTributacao',
+                'idCenario', 'idCenarioAntigo', 'novoIdCenario', 'tipoImposto', 'valorIpi', 'skus',
+                'familias', 'page', 'titulo', 'status', 'dataInicio', 'arquivo', 'linhas', 'quantidade', 'sistema', 'aba', 'view', 'tipo', 'etapa']) {
+                if (parametros[campo] !== undefined) detalhes[campo] = String(parametros[campo]).slice(0, 2000);
+            }
+            return detalhes;
+        }
+
+        function auditoriaLerFila(chave) {
+            const eventos = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const item = localStorage.key(i);
+                if (!item || !item.startsWith(chave + ':')) continue;
+                const texto = localStorage.getItem(item);
+                if (texto === null) continue;
+                const evento = JSON.parse(texto);
+                if (!evento || typeof evento.id !== 'string' || item !== chave + ':' + evento.id) throw new Error('Evento de auditoria inválido.');
+                eventos.push(evento);
+            }
+            return eventos.sort((a, b) => a.ocorridoEm.localeCompare(b.ocorridoEm));
+        }
+
+        function agendarAuditoria(atraso = 1000) {
+            if (auditoriaTimer !== null) return;
+            auditoriaTimer = setTimeout(() => {
+                auditoriaTimer = null;
+                enviarAuditoriaPendente();
+            }, atraso);
+        }
+
+        function registrarAtividadeLocal(acao, cliente = '', detalhes = {}, resultado = { sucesso: true }, origem = 'navegador', etapa = 'conclusao', duracaoMs = 0, usuario) {
+            try {
+                const chave = auditoriaChave(usuario);
+                if (!chave) throw new Error('Faça login para identificar o usuário.');
+                const evento = { id: crypto.randomUUID(), acao, cliente: String(cliente || ''), origem, etapa,
+                    ocorridoEm: new Date().toISOString(), detalhes: auditoriaParametros(detalhes),
+                    resultado: auditoriaResumo(resultado), duracaoMs };
+                // Uma chave por evento evita sobrescritas entre abas e operacoes concorrentes.
+                localStorage.setItem(chave + ':' + evento.id, JSON.stringify(evento));
+                agendarAuditoria();
+                return true;
+            } catch (erro) {
+                avisarAuditoria('Não foi possível salvar a fila de auditoria: ' + erro.message + '. Avise o administrador; não repita uma implantação por este aviso.');
+                return false;
+            }
+        }
+
+        async function enviarAuditoriaPendente() {
+            if (auditoriaEnviando) return;
+            let chave, authToken;
+            try {
+                chave = auditoriaChave();
+                authToken = localStorage.getItem('imendes_token');
+            } catch (erro) {
+                avisarAuditoria('Não foi possível acessar a fila de auditoria: ' + erro.message);
+                return;
+            }
+            if (!chave || !authToken) return;
+            auditoriaEnviando = true;
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), 60000);
+            let falhou = false;
+            try {
+                const fila = auditoriaLerFila(chave);
+                if (!fila.length) return;
+                const response = await fetch(WEB_APP_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    signal: controller.signal,
+                    body: JSON.stringify({ action: 'auditoria_eventos', authToken, eventos: fila.slice(0, 50) })
+                });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const data = await response.json();
+                const enviados = new Set(fila.slice(0, 50).map(evento => evento.id));
+                const confirmados = new Set((data.confirmados || []).filter(id => enviados.has(id)));
+                for (const id of confirmados) localStorage.removeItem(chave + ':' + id);
+                if (data.sucesso !== true || confirmados.size !== enviados.size) throw new Error(data.erro || 'O servidor não confirmou todos os registros.');
+                const aviso = document.getElementById('avisoAuditoria');
+                if (!auditoriaAvisoServidor && auditoriaChave() === chave) aviso.classList.add('hidden');
+            } catch (erro) {
+                falhou = true;
+                avisarAuditoria('Há registros de auditoria pendentes neste navegador. Serão reenviados ao restabelecer a conexão ou no próximo login deste usuário. Não limpe os dados do navegador. Motivo: ' + erro.message);
+            } finally {
+                clearTimeout(timer);
+                auditoriaEnviando = false;
+                try {
+                    if (auditoriaChave() === chave && auditoriaLerFila(chave).length) agendarAuditoria(falhou ? 15000 : 1000);
+                } catch (erro) {
+                    avisarAuditoria('Não foi possível ler a fila de auditoria: ' + erro.message);
+                }
+            }
+        }
 
         let consultaApiEstado = { executando: false, cancelar: false, itens: [], payload: null, modo: null };
 
@@ -1782,6 +1910,9 @@
             if (modo === 'local' && !local) throw new Error('Esta aba não foi conectada ao serviço local. Execute Inspector_Launcher.bat (Windows) ou sh Inspector_Launcher.sh (Linux), com ConsultaApiLocal.py publicado no repositório, mantenha a janela do launcher aberta e use a aba aberta por ele. Atualizar apenas o HTML não ativa o modo local.');
             const controller = new AbortController();
             const timer = setTimeout(() => controller.abort(), 45000);
+            const inicioAuditoria = Date.now();
+            const usuarioAuditoria = localStorage.getItem('imendes_usuario');
+            let resultadoAuditoria = { sucesso: false };
             try {
                 const resposta = await fetch(local ? local.url + '/' + action : WEB_APP_URL, {
                     method: 'POST', signal: controller.signal,
@@ -1793,13 +1924,15 @@
                     throw new Error(erroLocal && erroLocal.erro ? erroLocal.erro : `Falha HTTP ${resposta.status}. Consulta não confirmada.`);
                 }
                 const retorno = await resposta.json();
-                if (tratarSessaoExpirada(retorno)) throw new Error('Sessão expirada.');
+                resultadoAuditoria = retorno;
+                if (tratarSessaoExpirada(retorno, action)) throw new Error('Sessão expirada.');
                 return retorno;
             } catch (erro) {
                 if (erro.name === 'AbortError') throw new Error('Timeout. A consulta pode ter sido recebida; confira os resultados antes de retomar.');
                 throw erro;
             } finally {
                 clearTimeout(timer);
+                if (local) registrarAtividadeLocal('consulta_api_' + action, '', { quantidade: dados.itens ? dados.itens.length : 0 }, resultadoAuditoria, 'launcher', 'conclusao', Date.now() - inicioAuditoria, usuarioAuditoria);
             }
         }
 
@@ -1847,6 +1980,7 @@
         }
 
         function cancelarConsultaApi() {
+            registrarAtividadeLocal('cancelar_consulta_api');
             consultaApiEstado.cancelar = true;
             consultaApiEstado.motivoParada = 'Parada solicitada pelo usuário.';
             consultaApiAtualizarBotoes();
@@ -2059,7 +2193,9 @@
                 }
                 const parcial = consultaApiEstado.itens.some(item => item.status !== 'Sucesso') ? '_PARCIAL' : '';
                 XLSX.writeFile(wb, `Relatorio_Tributario_Saneamento_Unificado${parcial}.xlsx`);
+                registrarAtividadeLocal('exportar_consulta_xlsx', '', { quantidade: consultaApiEstado.itens.length }, { sucesso: true, parcial: !!parcial });
             } catch (erro) {
+                registrarAtividadeLocal('exportar_consulta_xlsx', '', {}, { sucesso: false });
                 alert('Erro ao gerar XLSX: ' + erro.message);
             }
         }
@@ -2077,6 +2213,7 @@
             link.download = 'resultados_saneamento.jsonl';
             document.body.appendChild(link);
             link.click();
+            registrarAtividadeLocal('exportar_consulta_jsonl', '', { quantidade: consultaApiEstado.itens.length });
             link.remove();
             setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
@@ -2116,7 +2253,9 @@
                 consultaApiEstado = { executando: false, cancelar: false, itens: [...mapa.values()], payload: null, modo: null };
                 consultaApiAtualizarBotoes();
                 consultaApiProgresso('JSONL importado sem realizar consultas.');
+                registrarAtividadeLocal('importar_consulta_jsonl', '', { quantidade: consultaApiEstado.itens.length });
             } catch (erro) {
+                registrarAtividadeLocal('importar_consulta_jsonl', '', {}, { sucesso: false });
                 alert('Erro ao importar JSONL: ' + erro.message);
             } finally {
                 entrada.value = '';
@@ -2162,6 +2301,8 @@
         ];
 
         document.addEventListener('DOMContentLoaded', function() {
+            agendarAuditoria();
+            window.addEventListener('online', () => agendarAuditoria());
             setTimeout(function verificarBibliotecas() {
                 const faltantes = [];
                 if (typeof XLSX === 'undefined') faltantes.push('Excel');
@@ -2196,6 +2337,7 @@
         // Controla qual "página" fica visível: home (painel principal), ferramentas, admin ou minhaconta.
         // Sempre chamada em vez de esconder/mostrar os elementos direto, pra manter a sidebar sincronizada.
         function mostrarView(nome) {
+            registrarAtividadeLocal('abrir_view', '', { view: nome });
             document.getElementById('painelPrincipal').classList.add('hidden');
             document.getElementById('modalFerramentas').classList.add('hidden');
             document.getElementById('modalAdmin').classList.add('hidden');
@@ -2554,7 +2696,12 @@
         }
 
         // Backend sinaliza authToken expirado/inválido via "sessaoExpirada" -> desconecta o usuário na hora, forçando novo login (novo authToken)
-        function tratarSessaoExpirada(data) {
+        function tratarSessaoExpirada(data, action = '', cliente = '', detalhes = {}) {
+            if (data && data.avisoAuditoria) {
+                auditoriaAvisoServidor = data.avisoAuditoria;
+                avisarAuditoria(data.avisoAuditoria);
+                if (action) registrarAtividadeLocal(action, cliente, detalhes, data);
+            }
             if (!data || !data.sessaoExpirada) return false;
             fazerLogout();
             alert("Sua sessão expirou. Faça login novamente.");
@@ -2563,6 +2710,7 @@
 
         async function fetchHibrido(action, clienteId, parametrosAdicionais = {}, method = 'GET') {
             if (ACOES_SOMENTE_ESCRITA.has(action) && perfilEhSomenteLeitura()) {
+                registrarAtividadeLocal(action, clienteId, parametrosAdicionais, { sucesso: false, statusCode: 403 });
                 return { erro: "Acesso negado: seu perfil (suporte) tem permissão apenas de visualização.", statusCode: 403 };
             }
             // Backend valida novamente o perfil antes de qualquer escrita na nuvem (nunca confiar só no front-end)
@@ -2573,135 +2721,146 @@
 
             // ==== FLUXO LOCAL (DIRETO PARA TOTVS) ====
             if (cliente.modoVpn && !ACOES_SEMPRE_NUVEM.has(action)) {
-                try {
-                    const token = await autenticarLocal(cliente);
-                    let urlLocal = "";
-                    let fetchOptions = {
-                        method: method,
-                        headers: { "Authorization": `Bearer ${token}` }
-                    };
-
-                    if (action === 'produto') {
-                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${encodeURIComponent(parametrosAdicionais.sku)}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
-                    } else if (action === 'produto_leve') {
-                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${parametrosAdicionais.sku}&Expand=familia.familiaDivisao.tributacao`;
-                    } else if (action === 'produto_ean') {
-                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?CodigoAcesso=${encodeURIComponent(parametrosAdicionais.ean)}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
-                    } else if (action === 'produto_familia') {
-                        urlLocal = `${cliente.urlBase}/SMProdutosAPI/api/v4/produtos/dados-cadastrais?IdFamilia=${encodeURIComponent(parametrosAdicionais.idFamilia)}`;
-                    } else if (action === 'produtos_lote_leve') {
-                        // Busca em série no próprio navegador, reaproveitando o token já obtido
-                        return await buscarProdutosLoteLocal(cliente, token, parametrosAdicionais.skus);
-                    } else if (action === 'produtos_familias_lote') {
-                        return await buscarProdutosPorFamiliasLoteLocal(cliente, token, parametrosAdicionais.familias);
-                    } else if (action === 'familias_lote') {
-                        return await buscarFamiliasLoteLocal(cliente, token, parametrosAdicionais.familias);
-                    } else if (action === 'tributacao_titulo' || action === 'tributacao_numero') {
-                        const porTitulo = action === 'tributacao_titulo';
-                        const valor = String((porTitulo ? parametrosAdicionais.titulo : parametrosAdicionais.idTributacao) ?? '').trim();
-                        if (!valor) return { erro: `Informe o ${porTitulo ? 'título' : 'número'} da tributação.` };
-                        const filtro = porTitulo ? 'TituloTributacao' : 'NumeroTributacao';
-                        urlLocal = `${cliente.urlBase.replace(/\/+$/, '')}/SMProdutosAPI/api/v4/produtos/tributacao?${filtro}=${encodeURIComponent(valor)}`;
-                    } else if (action === 'tributacao') {
-                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisApi/api/v1/Tributacao/uf?IdTributacao=${encodeURIComponent(parametrosAdicionais.idTributacao)}&pageSize=10000`;
-                    } else if (action === 'reforma') {
-                        urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?Familia=${parametrosAdicionais.idFamilia}&status=A&orderby=id`;
-                    } else if (action === 'reforma_lote') {
-                        return await buscarReformaLoteLocal(cliente, token, parametrosAdicionais.familias);
-                    } else if (action === 'listar_cenarios') {
-                        urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?pagesize=1000`;
-                    } else if (action === 'get_regimes_erp') {
-                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/RegimeTributacao?PageSize=100000`;
-                    } else if (action === 'get_divisoes_erp') {
-                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Divisao`;
-                    } else if (action === 'consulta_agendamentos') {
-                        if (parametrosAdicionais.status && !['1', '2', '3', '4'].includes(String(parametrosAdicionais.status))) {
-                            return { erro: 'Status inválido. Use 1, 2, 3 ou 4.', statusCode: 400 };
-                        }
-                        const baseUrl = cliente.urlBase.replace(/\/+$/, '');
-                        const query = new URLSearchParams({ PageSize: '100000' });
-                        if (parametrosAdicionais.dataInicio) query.set('DtaIniVigencia', parametrosAdicionais.dataInicio);
-                        if (parametrosAdicionais.status) query.set('Status', parametrosAdicionais.status);
-                        urlLocal = `${baseUrl}/TributacaoAPI/api/v1/Agendamento/atualiza/dados-fiscais-familia-divisao?${query.toString()}`;
-                    } else if (action === 'atualizar_ipi') {
-                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Familia?idFamilia=${parametrosAdicionais.idFamilia}`;
-                        fetchOptions.method = 'PATCH';
-                        fetchOptions.headers["Content-Type"] = "application/json";
-                        fetchOptions.body = JSON.stringify([{ "path": "aliquotaIpi", "op": "replace", "value": parametrosAdicionais.valorIpi.replace(',', '.') }]);
-                    } else if (action === 'atualizar_tributacao') {
-                        const { idFamilia, idDivisao, novoIdTributacao } = parametrosAdicionais;
-                        urlLocal = `${cliente.urlBase}/CadastrosEstruturaisApi/api/v1/Familia/divisao?idFamilia=${idFamilia}&idDivisao=${idDivisao}`;
-                        fetchOptions.method = 'PATCH';
-                        fetchOptions.headers["Content-Type"] = "application/json";
-                        fetchOptions.body = JSON.stringify([{ "path": "idTributacao", "op": "replace", "value": String(novoIdTributacao) }]);
-                    } else if (action === 'vincular_cenarios_lote') {
-                        urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios/${parametrosAdicionais.idCenario}/condicoes`;
-                        const famArray = parametrosAdicionais.familias.split(',');
-                        const reqPayload = famArray.map(f => ({ "idCondicao": 2, "identificador": "FAMILIA", "valor": f, "indTipoEntidade": "N" }));
-                        fetchOptions.method = 'POST';
-                        fetchOptions.headers["Content-Type"] = "application/json";
-                        fetchOptions.body = JSON.stringify(reqPayload);
-                    } else if (action === 'excluir_condicao_cenario') {
-                        const { idCenario, idFamilia } = parametrosAdicionais;
-                        urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios/${idCenario}/condicoes`;
-                        const payload = [{
-                            idCondicao: 2,
-                            identificador: "FAMILIA",
-                            valor: String(idFamilia),
-                            indTipoEntidade: "N"
-                        }];
-                        fetchOptions.method = 'DELETE';
-                        fetchOptions.headers["Content-Type"] = "application/json";
-                        fetchOptions.body = JSON.stringify(payload);
-                    } else if (action === 'incluir_condicao_cenario') {
-                        // ✅ Mantém a mesma validação prévia (status ativo + tipo de imposto) do fluxo Nuvem
-                        const { idCenario, idFamilia, tipoImposto } = parametrosAdicionais;
-                        return await incluirCondicaoCenarioLocal(cliente, token, idCenario, idFamilia, tipoImposto);
-                    } else if (action === 'alterar_condicao_cenario') {
-                        const { idCenarioAntigo, novoIdCenario, idFamilia, tipoImposto } = parametrosAdicionais;
-                        return await alterarCondicaoCenarioLocal(cliente, token, idCenarioAntigo, novoIdCenario, idFamilia, tipoImposto);
-                    }
-                    
-                    console.log(`[LOCAL] Rota: ${urlLocal}`);
-                    if (['produto', 'produto_ean', 'produto_familia', 'tributacao_titulo', 'tributacao_numero', 'tributacao'].includes(action) && parametrosAdicionais.page !== undefined) {
-                        urlLocal += `&page=${encodeURIComponent(parametrosAdicionais.page)}`;
-                    }
-                    const response = await fetch(urlLocal, fetchOptions);
-                    
-                    // ✅ VERIFICAR ERROS HTTP
-                    if (!response.ok) {
-                        const errorBody = await response.text();
-                        console.error(`[LOCAL ERROR] HTTP ${response.status}: ${errorBody}`);
-                        return {
-                            erro: `Erro HTTP ${response.status} da API`,
-                            statusCode: response.status,
-                            message: response.statusText,
-                            detalhes: errorBody.substring(0, 200)
-                        };
-                    }
-
-                    if (action === 'atualizar_ipi' && (response.status === 200 || response.status === 204)) return { sucesso: true, mensagem: "IPI Atualizado (Local)" };
-                    if (action === 'atualizar_tributacao' && (response.status === 200 || response.status === 204)) return { sucesso: true, mensagem: "ID de Tributação atualizado com sucesso.", statusCode: response.status };
-                    if (action === 'vincular_cenarios_lote' && response.ok) return { sucesso: true, mensagem: "Vinculado (Local)" };
-                    if (action === 'excluir_condicao_cenario' && (response.status === 200 || response.status === 204)) return { sucesso: true, statusCode: response.status };
-
-                    let data = await response.json();
-
-                    if (action === 'tributacao_titulo' || action === 'tributacao_numero') {
-                        const items = Array.isArray(data) ? data : data && data.items;
-                        if (!Array.isArray(items)) return { erro: `Resposta inválida ao consultar o ${action === 'tributacao_titulo' ? 'título' : 'número'} da tributação.` };
-                        data = Array.isArray(data) ? { items } : { ...data, items };
-                    } else if (action === 'tributacao' && Array.isArray(data)) data = { items: data };
-                    else if (action === 'produto_familia' && Array.isArray(data)) data = { items: data };
-                    else if (action === 'listar_cenarios') data = { sucesso: true, dados: data };
-
-                    data.endpointOriginal = urlLocal + " (VIA REDE LOCAL DIRETA)";
-                    return data;
-
-                } catch (error) {
-                    console.error("Erro na Rota Local", error);
-                    return { erro: "Falha Híbrida Local", statusCode: 500, detalhes: error.message };
+                const inicioAuditoria = Date.now();
+                const usuarioAuditoria = localStorage.getItem('imendes_usuario');
+                const inicioGravado = registrarAtividadeLocal(action, clienteId, parametrosAdicionais, { sucesso: true }, 'vpn', 'inicio');
+                if (inicioGravado === false && ACOES_SOMENTE_ESCRITA.has(action)) {
+                    return { erro: 'Operação não iniciada: não foi possível salvar a auditoria local.', statusCode: 503 };
                 }
+                const executarLocal = async () => {
+                    try {
+                        const token = await autenticarLocal(cliente);
+                        let urlLocal = "";
+                        let fetchOptions = {
+                            method: method,
+                            headers: { "Authorization": `Bearer ${token}` }
+                        };
+
+                        if (action === 'produto') {
+                            urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${encodeURIComponent(parametrosAdicionais.sku)}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
+                        } else if (action === 'produto_leve') {
+                            urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?IdProduto=${parametrosAdicionais.sku}&Expand=familia.familiaDivisao.tributacao`;
+                        } else if (action === 'produto_ean') {
+                            urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Produto?CodigoAcesso=${encodeURIComponent(parametrosAdicionais.ean)}&Expand=produtoCodigo,familia.familiaDivisao.tributacao`;
+                        } else if (action === 'produto_familia') {
+                            urlLocal = `${cliente.urlBase}/SMProdutosAPI/api/v4/produtos/dados-cadastrais?IdFamilia=${encodeURIComponent(parametrosAdicionais.idFamilia)}`;
+                        } else if (action === 'produtos_lote_leve') {
+                            // Busca em série no próprio navegador, reaproveitando o token já obtido
+                            return await buscarProdutosLoteLocal(cliente, token, parametrosAdicionais.skus);
+                        } else if (action === 'produtos_familias_lote') {
+                            return await buscarProdutosPorFamiliasLoteLocal(cliente, token, parametrosAdicionais.familias);
+                        } else if (action === 'familias_lote') {
+                            return await buscarFamiliasLoteLocal(cliente, token, parametrosAdicionais.familias);
+                        } else if (action === 'tributacao_titulo' || action === 'tributacao_numero') {
+                            const porTitulo = action === 'tributacao_titulo';
+                            const valor = String((porTitulo ? parametrosAdicionais.titulo : parametrosAdicionais.idTributacao) ?? '').trim();
+                            if (!valor) return { erro: `Informe o ${porTitulo ? 'título' : 'número'} da tributação.` };
+                            const filtro = porTitulo ? 'TituloTributacao' : 'NumeroTributacao';
+                            urlLocal = `${cliente.urlBase.replace(/\/+$/, '')}/SMProdutosAPI/api/v4/produtos/tributacao?${filtro}=${encodeURIComponent(valor)}`;
+                        } else if (action === 'tributacao') {
+                            urlLocal = `${cliente.urlBase}/CadastrosEstruturaisApi/api/v1/Tributacao/uf?IdTributacao=${encodeURIComponent(parametrosAdicionais.idTributacao)}&pageSize=10000`;
+                        } else if (action === 'reforma') {
+                            urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?Familia=${parametrosAdicionais.idFamilia}&status=A&orderby=id`;
+                        } else if (action === 'reforma_lote') {
+                            return await buscarReformaLoteLocal(cliente, token, parametrosAdicionais.familias);
+                        } else if (action === 'listar_cenarios') {
+                            urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios?pagesize=1000`;
+                        } else if (action === 'get_regimes_erp') {
+                            urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/RegimeTributacao?PageSize=100000`;
+                        } else if (action === 'get_divisoes_erp') {
+                            urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Divisao`;
+                        } else if (action === 'consulta_agendamentos') {
+                            if (parametrosAdicionais.status && !['1', '2', '3', '4'].includes(String(parametrosAdicionais.status))) {
+                                return { erro: 'Status inválido. Use 1, 2, 3 ou 4.', statusCode: 400 };
+                            }
+                            const baseUrl = cliente.urlBase.replace(/\/+$/, '');
+                            const query = new URLSearchParams({ PageSize: '100000' });
+                            if (parametrosAdicionais.dataInicio) query.set('DtaIniVigencia', parametrosAdicionais.dataInicio);
+                            if (parametrosAdicionais.status) query.set('Status', parametrosAdicionais.status);
+                            urlLocal = `${baseUrl}/TributacaoAPI/api/v1/Agendamento/atualiza/dados-fiscais-familia-divisao?${query.toString()}`;
+                        } else if (action === 'atualizar_ipi') {
+                            urlLocal = `${cliente.urlBase}/CadastrosEstruturaisAPI/api/v1/Familia?idFamilia=${parametrosAdicionais.idFamilia}`;
+                            fetchOptions.method = 'PATCH';
+                            fetchOptions.headers["Content-Type"] = "application/json";
+                            fetchOptions.body = JSON.stringify([{ "path": "aliquotaIpi", "op": "replace", "value": parametrosAdicionais.valorIpi.replace(',', '.') }]);
+                        } else if (action === 'atualizar_tributacao') {
+                            const { idFamilia, idDivisao, novoIdTributacao } = parametrosAdicionais;
+                            urlLocal = `${cliente.urlBase}/CadastrosEstruturaisApi/api/v1/Familia/divisao?idFamilia=${idFamilia}&idDivisao=${idDivisao}`;
+                            fetchOptions.method = 'PATCH';
+                            fetchOptions.headers["Content-Type"] = "application/json";
+                            fetchOptions.body = JSON.stringify([{ "path": "idTributacao", "op": "replace", "value": String(novoIdTributacao) }]);
+                        } else if (action === 'vincular_cenarios_lote') {
+                            urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios/${parametrosAdicionais.idCenario}/condicoes`;
+                            const famArray = parametrosAdicionais.familias.split(',');
+                            const reqPayload = famArray.map(f => ({ "idCondicao": 2, "identificador": "FAMILIA", "valor": f, "indTipoEntidade": "N" }));
+                            fetchOptions.method = 'POST';
+                            fetchOptions.headers["Content-Type"] = "application/json";
+                            fetchOptions.body = JSON.stringify(reqPayload);
+                        } else if (action === 'excluir_condicao_cenario') {
+                            const { idCenario, idFamilia } = parametrosAdicionais;
+                            urlLocal = `${cliente.urlBase}/ConfiguradorCenariosTributariosAPI/api/v1/Cenarios/${idCenario}/condicoes`;
+                            const payload = [{
+                                idCondicao: 2,
+                                identificador: "FAMILIA",
+                                valor: String(idFamilia),
+                                indTipoEntidade: "N"
+                            }];
+                            fetchOptions.method = 'DELETE';
+                            fetchOptions.headers["Content-Type"] = "application/json";
+                            fetchOptions.body = JSON.stringify(payload);
+                        } else if (action === 'incluir_condicao_cenario') {
+                            // ✅ Mantém a mesma validação prévia (status ativo + tipo de imposto) do fluxo Nuvem
+                            const { idCenario, idFamilia, tipoImposto } = parametrosAdicionais;
+                            return await incluirCondicaoCenarioLocal(cliente, token, idCenario, idFamilia, tipoImposto);
+                        } else if (action === 'alterar_condicao_cenario') {
+                            const { idCenarioAntigo, novoIdCenario, idFamilia, tipoImposto } = parametrosAdicionais;
+                            return await alterarCondicaoCenarioLocal(cliente, token, idCenarioAntigo, novoIdCenario, idFamilia, tipoImposto);
+                        }
+                        
+                        console.log(`[LOCAL] Rota: ${urlLocal}`);
+                        if (['produto', 'produto_ean', 'produto_familia', 'tributacao_titulo', 'tributacao_numero', 'tributacao'].includes(action) && parametrosAdicionais.page !== undefined) {
+                            urlLocal += `&page=${encodeURIComponent(parametrosAdicionais.page)}`;
+                        }
+                        const response = await fetch(urlLocal, fetchOptions);
+                        
+                        // ✅ VERIFICAR ERROS HTTP
+                        if (!response.ok) {
+                            const errorBody = await response.text();
+                            console.error(`[LOCAL ERROR] HTTP ${response.status}: ${errorBody}`);
+                            return {
+                                erro: `Erro HTTP ${response.status} da API`,
+                                statusCode: response.status,
+                                message: response.statusText,
+                                detalhes: errorBody.substring(0, 200)
+                            };
+                        }
+
+                        if (action === 'atualizar_ipi' && (response.status === 200 || response.status === 204)) return { sucesso: true, mensagem: "IPI Atualizado (Local)" };
+                        if (action === 'atualizar_tributacao' && (response.status === 200 || response.status === 204)) return { sucesso: true, mensagem: "ID de Tributação atualizado com sucesso.", statusCode: response.status };
+                        if (action === 'vincular_cenarios_lote' && response.ok) return { sucesso: true, mensagem: "Vinculado (Local)" };
+                        if (action === 'excluir_condicao_cenario' && (response.status === 200 || response.status === 204)) return { sucesso: true, statusCode: response.status };
+
+                        let data = await response.json();
+
+                        if (action === 'tributacao_titulo' || action === 'tributacao_numero') {
+                            const items = Array.isArray(data) ? data : data && data.items;
+                            if (!Array.isArray(items)) return { erro: `Resposta inválida ao consultar o ${action === 'tributacao_titulo' ? 'título' : 'número'} da tributação.` };
+                            data = Array.isArray(data) ? { items } : { ...data, items };
+                        } else if (action === 'tributacao' && Array.isArray(data)) data = { items: data };
+                        else if (action === 'produto_familia' && Array.isArray(data)) data = { items: data };
+                        else if (action === 'listar_cenarios') data = { sucesso: true, dados: data };
+
+                        data.endpointOriginal = urlLocal + " (VIA REDE LOCAL DIRETA)";
+                        return data;
+
+                    } catch (error) {
+                        console.error("Erro na Rota Local", error);
+                        return { erro: "Falha Híbrida Local", statusCode: 500, detalhes: error.message };
+                    }
+                };
+                const resultadoLocal = await executarLocal();
+                registrarAtividadeLocal(action, clienteId, parametrosAdicionais, resultadoLocal, 'vpn', 'conclusao', Date.now() - inicioAuditoria, usuarioAuditoria);
+                return resultadoLocal;
             } 
             // ==== FLUXO NUVEM (VIA APPS SCRIPT) ====
             else {
@@ -2727,7 +2886,7 @@
                     
                     const data = await response.json();
 
-                    if (tratarSessaoExpirada(data)) return { erro: data.erro, statusCode: 401 };
+                    if (tratarSessaoExpirada(data, action, clienteId, parametrosAdicionais)) return { erro: data.erro, statusCode: 401 };
 
                     // ✅ VERIFICAR STATUSCODE PRIMEIRO (prioritário sobre campo "erro")
                     if (data.statusCode && data.statusCode >= 400) {
@@ -2881,7 +3040,7 @@
                 const authToken = localStorage.getItem('imendes_token') || '';
                 const response = await fetch(`${WEB_APP_URL}?action=listar_clientes&authToken=${encodeURIComponent(authToken)}`);
                 const data = await response.json();
-                if (tratarSessaoExpirada(data)) return;
+                if (tratarSessaoExpirada(data, 'listar_clientes')) return;
                 
                 const selectMain = document.getElementById('selectCliente');
                 const selectIpi = document.getElementById('selectClienteIpi');
@@ -2948,6 +3107,10 @@
                 const response = await fetch(`${WEB_APP_URL}?action=login&email=${encodeURIComponent(email)}&senha=${encodeURIComponent(senha)}`);
                 const data = await response.json();
 
+                if (data.avisoAuditoria) {
+                    auditoriaAvisoServidor = data.avisoAuditoria;
+                    avisarAuditoria(data.avisoAuditoria);
+                }
                 if (data.erro) {
                     divErro.innerText = data.erro;
                     divErro.classList.remove('hidden');
@@ -2958,6 +3121,8 @@
                     localStorage.setItem('imendes_usuario', data.email);
                     localStorage.setItem('imendes_perfil', data.perfil || 'user');
                     localStorage.setItem('imendes_token', data.authToken || '');
+                    if (data.avisoAuditoria) registrarAtividadeLocal('login', '', {}, data);
+                    agendarAuditoria();
                     document.getElementById('telaLogin').classList.add('hidden');
                     document.getElementById('appLayout').classList.remove('hidden');
                     document.getElementById('labelUsuarioLogado').innerText = data.email;
@@ -2989,9 +3154,18 @@
             }
             limparBuscaTributacaoTitulo();
             const authTokenAtual = localStorage.getItem('imendes_token');
+            const usuarioAuditoria = localStorage.getItem('imendes_usuario');
             if (authTokenAtual) {
-                // Best-effort: avisa o backend pra remover a sessão da lista de "logados agora"
-                fetch(`${WEB_APP_URL}?action=logout&authToken=${encodeURIComponent(authTokenAtual)}`).catch(() => {});
+                registrarAtividadeLocal('logout', '', {}, { sucesso: true }, 'navegador', 'inicio');
+                fetch(`${WEB_APP_URL}?action=logout&authToken=${encodeURIComponent(authTokenAtual)}`)
+                    .then(async resposta => {
+                        if (!resposta.ok) throw new Error('HTTP ' + resposta.status);
+                        const retorno = await resposta.json();
+                        if (retorno.avisoAuditoria || retorno.erro) throw new Error(retorno.avisoAuditoria || retorno.erro);
+                    }).catch(erro => {
+                        registrarAtividadeLocal('logout', '', {}, { sucesso: false }, 'navegador', 'conclusao', 0, usuarioAuditoria);
+                        avisarAuditoria('Saída local concluída, mas a confirmação no servidor falhou: ' + erro.message);
+                    });
             }
             localStorage.removeItem('imendes_usuario');
             localStorage.removeItem('imendes_perfil');
@@ -3462,12 +3636,13 @@
             txtBtn.innerText = "Enviando...";
             spinner.classList.remove('hidden');
 
-            const url = `${WEB_APP_URL}?action=saneamento_tributario&authToken=${encodeURIComponent(authToken)}&sku=${encodeURIComponent(skuProdutoAtual)}&adequarCgo=${adequarCgo}`;
+            const url = `${WEB_APP_URL}?action=saneamento_tributario&authToken=${encodeURIComponent(authToken)}&cliente=${encodeURIComponent(clienteAtualId || '')}&sku=${encodeURIComponent(skuProdutoAtual)}&adequarCgo=${adequarCgo}`;
 
             try {
                 const response = await fetch(url);
                 const data = await response.json();
 
+                if (tratarSessaoExpirada(data, 'saneamento_tributario', clienteAtualId || '', { sku: skuProdutoAtual })) return;
                 if (data.sucesso) alert("Saneamento Tributário enviado com sucesso!");
                 else alert("Falha no envio do Saneamento Tributário: " + (data.erro || JSON.stringify(data)));
             } catch (e) {
@@ -3823,9 +3998,11 @@
                 adicionarAbasTributacaoUf(workbook, 'Pendencias', pendencias);
                 const parcial = pendencias.length > 0;
                 XLSX.writeFile(workbook, `C5_Analise_Tributacao_UF_${parcial ? 'PARCIAL_' : ''}${new Date().toISOString().slice(0, 10)}.xlsx`);
+                registrarAtividadeLocal('exportar_tributacao_uf', clienteId, { linhas: linhas.length }, { sucesso: true, falhas: pendencias.length, parcial });
                 status.innerText = `${parcial ? 'ATENÇÃO: resultado PARCIAL' : 'Exportação concluída'}: ${linhas.length} regra(s), ${ids.size} ID(s) de tributação, ${pendencias.length} pendência(s).${parcial ? '\nConsulte a aba Pendencias do XLSX e repita a consulta após corrigir as falhas.' : ''}`;
             } catch (erro) {
                 console.error('Erro ao exportar análise de tributação por UF:', erro);
+                registrarAtividadeLocal('exportar_tributacao_uf', clienteId, {}, { sucesso: false });
                 status.innerText = 'Falha na exportação: ' + erro.message;
                 alert(status.innerText);
             } finally {
@@ -4045,6 +4222,7 @@
                     XLSX.utils.book_append_sheet(workbook, worksheet, `Agendamentos_${numeroAba}`);
                 }
                 XLSX.writeFile(workbook, `C5_Agendamentos_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                registrarAtividadeLocal('exportar_agendamentos', document.getElementById('selectClienteAgendamentos').value);
             } catch (erro) {
                 console.error('Erro ao exportar agendamentos:', erro);
                 alert('Falha ao exportar agendamentos para Excel: ' + erro.message);
@@ -4339,6 +4517,7 @@
         let clientesAdminCache = [];
 
         async function chamarBackendAdmin(action, params = {}) {
+            if (action === 'listar_logs') await enviarAuditoriaPendente();
             const authToken = localStorage.getItem('imendes_token') || "";
             let url = `${WEB_APP_URL}?action=${action}&authToken=${encodeURIComponent(authToken)}`;
             for (const chave in params) {
@@ -4348,7 +4527,7 @@
             const textoResposta = await response.text();
             try {
                 const data = JSON.parse(textoResposta);
-                if (tratarSessaoExpirada(data)) return data;
+                if (tratarSessaoExpirada(data, action, params.cliente || '', params)) return data;
                 return data;
             } catch (erroParse) {
                 // Apps Script às vezes devolve uma página HTML (erro/redirecionamento) em vez de JSON
@@ -4627,6 +4806,7 @@
                     return;
                 }
                 logsAdminCache = data.logs || [];
+                if (data.leituraLimitada) avisarAuditoria('A consulta do histórico atingiu o limite de 25.000 registros. Consulte também a aba Logs da planilha para o histórico completo do período.');
                 aplicarFiltrosLogs();
             } catch (e) {
                 tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-400">Erro ao carregar logs: ${escapeHtml(e.message)}</td></tr>`;
@@ -4692,7 +4872,7 @@
                     <td class="p-3 border-r border-slate-800">${escapeHtml(l.acao)}</td>
                     <td class="p-3 border-r border-slate-800">${escapeHtml(l.cliente)}</td>
                     <td class="p-3 border-r border-slate-800 font-mono text-xs max-w-[420px] truncate" title="${escapeHtml(l.detalhes)}">${escapeHtml(l.detalhes)}</td>
-                    <td class="p-3 text-center ${l.resultado === 'erro' ? 'text-red-400' : 'text-emerald-400'}">${escapeHtml(l.resultado)}</td>
+                    <td class="p-3 text-center ${l.resultado === 'erro' ? 'text-red-400' : l.resultado === 'parcial' || l.resultado === 'iniciado' ? 'text-amber-400' : 'text-emerald-400'}">${escapeHtml(l.resultado)}</td>
                 </tr>
             `).join('');
         }
@@ -4729,6 +4909,7 @@
             try {
                 const data = await chamarBackendAdmin('listar_logs', { dias: 30 });
                 if (data.erro) { alert('Erro ao buscar logs: ' + data.erro); return; }
+                if (data.leituraLimitada) alert('A exportação contém somente os últimos 25.000 registros. Consulte a aba Logs da planilha para obter todos os registros do período.');
                 const logs = data.logs || [];
                 if (logs.length === 0) { alert('Nenhum log encontrado nos últimos 30 dias.'); return; }
                 baixarLogsComoTxt(logs, 'inspector-logs-30dias');
@@ -4755,6 +4936,7 @@
             a.download = `${prefixoArquivo}-${timestamp}.txt`;
             document.body.appendChild(a);
             a.click();
+            registrarAtividadeLocal('exportar_logs', '', { arquivo: a.download, linhas: logs.length });
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
@@ -4822,6 +5004,7 @@
                 link.download = nomeArquivo;
                 document.body.appendChild(link);
                 link.click();
+                registrarAtividadeLocal('baixar_launcher', '', { sistema });
                 link.remove();
                 URL.revokeObjectURL(url);
                 const instrucoes = sistema === 'linux'
@@ -4830,6 +5013,7 @@
                 alert('Download iniciado!\n\n' + instrucoes + '\n\nConfirme a instalação em Área de Trabalho/Inspector. Nas próximas vezes, execute o launcher dentro dessa pasta: ele atualiza os arquivos sem espalhá-los em Downloads. Mantenha o terminal aberto enquanto usa o Inspector.');
             } catch (erro) {
                 alert('Erro ao baixar o launcher: ' + erro.message + '\n\nVocê também pode baixar manualmente pelo link:\n' + urlLauncher);
+                registrarAtividadeLocal('baixar_launcher', '', { sistema }, { sucesso: false });
             } finally {
                 botao.disabled = false;
                 botao.innerText = textoOriginal;
@@ -5026,11 +5210,11 @@
 
                 log.innerText += `\n🎉 Sucesso! ${dados.length} linhas de produto convertidas. Arquivo "${nomeArquivo}" baixado.`;
 
-                // Auditoria best-effort (não bloqueia o download em caso de falha de rede)
-                chamarBackendAdmin('log_conversao_pdf', { arquivo: file.name, linhas: dados.length }).catch(() => {});
+                registrarAtividadeLocal('log_conversao_pdf', '', { arquivo: file.name, linhas: dados.length });
             } catch (ex) {
                 console.error(ex);
                 log.innerText += `\n❌ Erro ao processar o PDF: ${ex.message}`;
+                registrarAtividadeLocal('log_conversao_pdf', '', { arquivo: file.name }, { sucesso: false });
                 alert("Erro ao processar o PDF: " + ex.message);
             } finally {
                 btn.disabled = false;
@@ -5164,10 +5348,11 @@
 
                 log.innerText += `\n🎉 Concluído via OCR! ${dados.length} linhas de produto convertidas. Arquivo "${nomeArquivo}" baixado.\n⚠️ Revise manualmente os códigos e valores — OCR pode confundir dígitos (0/O, 1/l, 5/S etc.).`;
 
-                chamarBackendAdmin('log_conversao_pdf', { arquivo: file.name + ' (OCR)', linhas: dados.length }).catch(() => {});
+                registrarAtividadeLocal('log_conversao_pdf_ocr', '', { arquivo: file.name, linhas: dados.length });
             } catch (ex) {
                 console.error(ex);
                 log.innerText += `\n❌ Erro ao processar o PDF via OCR: ${ex.message}`;
+                registrarAtividadeLocal('log_conversao_pdf_ocr', '', { arquivo: file.name }, { sucesso: false });
                 alert("Erro ao processar o PDF via OCR: " + ex.message);
             } finally {
                 btnNormal.disabled = false;
@@ -5199,6 +5384,7 @@
                 const url = `${WEB_APP_URL}?action=atualizar_meu_perfil&email=${encodeURIComponent(email)}&senhaAtual=${encodeURIComponent(senhaAtual)}&novaSenha=${encodeURIComponent(novaSenha)}&tokenSessao=${encodeURIComponent(tokenSessao)}`;
                 const response = await fetch(url);
                 const data = await response.json();
+                if (tratarSessaoExpirada(data, 'atualizar_meu_perfil')) return;
                 if (data.erro) {
                     divErro.innerText = data.erro;
                     divErro.classList.remove('hidden');
@@ -5314,7 +5500,9 @@
                     }
 
                     logArea.innerHTML += `\n<span class="text-amber-400 font-bold">LOTE FINALIZADO! S: ${suc} | E: ${err} | Lotes: ${totalLotes}</span>\n`;
+                    registrarAtividadeLocal('processar_lote_ipi', clienteId, { arquivo: file.name, quantidade: total }, { sucesso: true, falhas: err });
                 } catch (ex) {
+                    registrarAtividadeLocal('processar_lote_ipi', clienteId, { arquivo: file.name }, { sucesso: false });
                     logArea.innerHTML = `<span class="text-red-400">Erro: ${ex.message}</span>`;
                 } finally {
                     btnProcessar.disabled = false;
@@ -5620,7 +5808,9 @@
                 pText.innerText = isAnaliseRunning
                     ? `${errReforma || errUf ? '⚠️' : '✅'} Consulta Finalizada! ${suc} produtos encontrados | ${err} erros de produto${incluirRtc ? ` | ${errReforma} linhas com falha da reforma` : ''}${incluirUf ? ` | ${errUf} linhas com falha por UF` : ''} em ${lotes.length} lotes`
                     : `Processamento Interrompido: ${processados}/${codigos.length} ${unidade}${incluirRtc ? ` | ${errReforma} linhas com falha da reforma` : ''}${incluirUf ? ` | ${errUf} linhas com falha por UF` : ''}. Baixe os resultados parciais.`;
+                registrarAtividadeLocal('analisar_tributacao_produto', clienteId, { quantidade: processados }, { sucesso: true, falhas: err + errReforma + errUf, parcial: !isAnaliseRunning });
             } catch (ex) {
+                registrarAtividadeLocal('analisar_tributacao_produto', clienteId, {}, { sucesso: false });
                 pText.innerText = ex.message;
                 alert(ex.message);
             } finally {
@@ -5633,6 +5823,7 @@
         }
 
         function pararAnaliseTributacao() {
+            registrarAtividadeLocal('cancelar_analise_tributacao');
             isAnaliseRunning = false;
             document.getElementById('btnStopAnalise').disabled = true;
             document.getElementById('progressAnaliseText').innerText = "Interrompendo: aguardando a leitura ou o lote em andamento. Nenhum novo lote será iniciado.";
@@ -5678,6 +5869,7 @@
                 XLSX.utils.book_append_sheet(wb, ws, "Tributacao_Inspector");
                 if (escopoAnaliseExcel !== 'rtc') adicionarAbasTributacaoUf(wb, 'Tributacao_UF', dadosAnaliseUfExcel);
                 XLSX.writeFile(wb, `C5_Analise_Tributacao_${porFamilia ? 'Familias_' : ''}${new Date().toISOString().slice(0, 10)}.xlsx`);
+                registrarAtividadeLocal('exportar_analise_tributacao', '', { linhas: dadosAnaliseExcel.length });
                 console.log("✅ Arquivo baixado com sucesso!");
                 alert(`✅ Planilha baixada com ${dadosAnaliseExcel.length} registros!`);
             } catch (ex) {
@@ -5721,6 +5913,7 @@
             try {
                 await tarefa();
             } catch (erro) {
+                registrarAtividadeLocal('rtc_operacao', document.getElementById('selectClienteRtc').value, {}, { sucesso: false });
                 rtcLog('ERRO: ' + erro.message);
                 alert('RTC: ' + erro.message);
             } finally {
@@ -5739,7 +5932,7 @@
             });
             if (!response.ok) throw new Error(`Google Apps Script: HTTP ${response.status}. Consulte as pendências antes de repetir.`);
             const resultado = await response.json();
-            if (tratarSessaoExpirada(resultado)) throw new Error('Sessão expirada.');
+            if (tratarSessaoExpirada(resultado, action, dados.cliente || '', dados)) throw new Error('Sessão expirada.');
             if (!resultado.sucesso) throw new Error([resultado.erro || 'Resposta RTC inválida.', resultado.detalhes].filter(Boolean).join(': '));
             return resultado;
         }
@@ -5946,6 +6139,7 @@
             const workbook = XLSX.read(await arquivo.arrayBuffer(), { type: 'array', raw: true });
             const linhas = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: '', raw: true });
             const dados = rtcLerLinhas(linhas, exigirClassificacao);
+            registrarAtividadeLocal('importar_planilha_rtc', document.getElementById('selectClienteRtc').value, { arquivo: arquivo.name, quantidade: dados.itens.length });
             rtcLog(`${arquivo.name}: ${dados.itens.length} famílias; ${dados.repetidas} linhas idênticas agrupadas. Somente a primeira aba foi lida.`);
             return { ...dados, arquivo: arquivo.name };
         }
@@ -5963,6 +6157,7 @@
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, rtcPlanilha([]), 'RTC');
             XLSX.writeFile(workbook, 'Modelo_RTC.xlsx');
+            registrarAtividadeLocal('baixar_modelo_rtc');
         }
 
         async function rtcConsultarItens(itens, cliente = '') {
@@ -6106,6 +6301,7 @@
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, rtcPlanilha(itens), 'RTC');
                 XLSX.writeFile(workbook, 'RTC.xlsx');
+                registrarAtividadeLocal('exportar_rtc', rtcClienteConsulta, { linhas: itens.length });
                 rtcLog(`Exportadas ${itens.length} linhas: ${aprovados} aprovadas com CClassTrib e ${itens.length - aprovados} pendentes com CClassTrib vazio para preenchimento manual.`);
             });
         }
@@ -7058,7 +7254,11 @@
         function copiarJsonLinha() {
             if (!regraSelecionadaJson) return;
             navigator.clipboard.writeText(JSON.stringify(regraSelecionadaJson, null, 2)).then(() => {
+                registrarAtividadeLocal('copiar_json', clienteAtualId || '');
                 alert("Objeto JSON copiado para a área de transferência com sucesso!");
+            }).catch(erro => {
+                registrarAtividadeLocal('copiar_json', clienteAtualId || '', {}, { sucesso: false });
+                alert('Não foi possível copiar o JSON: ' + erro.message);
             });
         }
 
