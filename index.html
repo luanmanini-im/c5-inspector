@@ -992,7 +992,7 @@
                         <summary class="rtc-link">Como funciona e cuidados com os dados</summary>
                     <ul class="rtc-help list-disc list-inside mt-3">
                         <li>Modelo obrigatório: <strong>COD_FAMILIA / DESCRICAO / NCM / CCLASTRIB</strong>. CClassTrib pode ficar vazio somente na consulta.</li>
-                        <li>A base é compartilhada entre todos os clientes. A comparação usa NCM e descrição exatos, normalizando espaços e maiúsculas.</li>
+                        <li>A base é compartilhada entre todos os clientes. A busca prioriza a NCM exata. A descrição igual, normalizando espaços e maiúsculas, refina a escolha dentro da mesma NCM; se divergir, a busca usa as demais referências dessa NCM. Um único CClassTrib gera sugestão; códigos diferentes exigem revisão. O histórico global mostra as descrições vinculadas à NCM.</li>
                         <li>Implantações confirmadas alimentam a base automaticamente, exceto classificações particulares originadas de regras do cliente. Histórico não é validação tributária legal.</li>
                         <li>No reaproveitamento, selecione o cliente e configure a aba “Regras do cliente”. A menor prioridade numérica vence. Empates com códigos diferentes exigem preenchimento manual e revisão. A comparação ignora maiúsculas/minúsculas e normaliza espaços, mas preserva acentos.</li>
                         <li>“Contém palavra inteira” reconhece MP em “MP - FARINHA”, mas não em “TAMPA”. “Não contém” e “Diferente” podem atingir quase todo o arquivo: confira os percentuais na simulação.</li>
@@ -1713,10 +1713,10 @@
     </div> <!-- fecha appLayout -->
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycby993N3HNJlIEi2utIW1mq8gaQ0_lhO6fZWypQhoEVEd0b7DAet6lFGapQv61TYXQxaIA/exec";
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbygHNbncClXyhJ_Amnhhpnc2UDieoVLQ-6ICm9v3VqkYh3NIiOL_6OQDeQ3fKEWXfzO8Q/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.52.1";
+        const VERSAO_FRONT = "v5.52.2";
         // Launcher local (.bat) hospedado no GitHub - baixa o HTML mais recente diretamente do repositorio
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
 
@@ -6088,9 +6088,9 @@
                 document.getElementById('rtcHistoricoFamilia').textContent = `Família ${item.familia} · NCM ${item.ncm}\n${item.descricao}`;
                 document.getElementById('rtcOrigem').textContent = dados.eventos.length
                     ? `${dados.total} evento(s) registrado(s) · Exibindo os últimos 50\n\n` +
-                        dados.eventos.map(evento => `${evento.data} · ${evento.tipo}\nCClassTrib: ${evento.cclastrib}\nCliente: ${evento.cliente || '-'} · Família: ${evento.familia}\nResponsável: ${evento.usuario}\nOrigem: ${evento.origem}` +
+                        dados.eventos.map(evento => `${evento.data} · ${evento.tipo}\nDescrição: ${evento.descricao}\nCClassTrib: ${evento.cclastrib}\nCliente: ${evento.cliente || '-'} · Família: ${evento.familia}\nResponsável: ${evento.usuario}\nOrigem: ${evento.origem}` +
                             (evento.regraCliente ? '\nParticular — não alimenta a base global\n' + evento.regraCliente.regras.map(rtcTextoRegra).join('\n') : '')).join('\n\n')
-                    : 'Nenhum histórico encontrado para este NCM e descrição.';
+                    : 'Nenhum histórico encontrado para esta NCM.';
                 abrir = true;
             });
             if (abrir) {
@@ -6109,13 +6109,12 @@
                 if (!codigos.includes(escolhido)) throw new Error('Escolha no campo CClassTrib uma das referências em conflito.');
                 if (!confirm(`Definir ${escolhido} como referência GLOBAL para este NCM e descrição? A decisão afeta todos os clientes e ficará no histórico.`)) return;
                 await rtcApi('rtc_resolver', { item: { ...item, cclastrib: escolhido }, codigos });
-                const normalizar = texto => texto.normalize('NFC').trim().replace(/\s+/g, ' ').toUpperCase();
-                const relacionados = rtcConsulta.filter(linha => linha.ncm === item.ncm && normalizar(linha.descricao) === normalizar(item.descricao));
+                const relacionados = rtcConsulta.filter(linha => linha.ncm === item.ncm);
                 const atualizados = new Map((await rtcConsultarItens(relacionados, rtcClienteConsulta)).map(linha => [linha.familia, linha]));
                 rtcConsulta = rtcConsulta.map(linha => atualizados.get(linha.familia) || linha);
                 if (rtcClienteConsulta) rtcResumoRegras();
                 renderizarBaseRtc();
-                rtcLog('Conflito resolvido com histórico. Revise novamente as propostas deste NCM e descrição; demais revisões foram preservadas.');
+                rtcLog('Conflito resolvido com histórico. Revise novamente as propostas desta NCM; revisões de outras NCMs foram preservadas.');
             });
         }
 
