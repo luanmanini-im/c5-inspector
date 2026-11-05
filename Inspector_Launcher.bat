@@ -1,13 +1,79 @@
 @echo off
-REM Inspector C5 - baixa e abre sempre o HTML mais recente do GitHub.
-setlocal
+REM Inspector C5 - instala tudo em uma pasta padrao unica e abre sempre a versao mais recente.
+setlocal EnableExtensions
 
+REM ============================================================
+REM 1) Resolve a pasta padrao de instalacao: Area de Trabalho\Inspector
+REM    (usa o PowerShell para suportar Area de Trabalho no OneDrive)
+REM ============================================================
+set "DESKTOP="
+for /f "usebackq delims=" %%D in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('Desktop')"`) do set "DESKTOP=%%D"
+if not defined DESKTOP set "DESKTOP=%USERPROFILE%\Desktop"
+
+set "PASTA_INSTALACAO=%DESKTOP%\Inspector"
+set "LAUNCHER_DESTINO=%PASTA_INSTALACAO%\Inspector_Launcher.bat"
+
+REM Se ja estiver rodando da pasta padrao, pula direto para a execucao.
+if /i "%~dp0"=="%PASTA_INSTALACAO%\" goto :executar
+
+REM ============================================================
+REM 2) Primeira execucao (ou launcher baixado em outra pasta):
+REM    pede confirmacao e instala tudo na pasta padrao.
+REM ============================================================
+echo ============================================================
+echo  Inspector C5 - Instalacao
+echo ============================================================
+echo.
+echo O Inspector sera instalado na pasta padrao:
+echo.
+echo   %PASTA_INSTALACAO%
+echo.
+echo Todos os arquivos (launcher, tela e servico local) ficarao
+echo concentrados nessa pasta. Nas proximas vezes, abra o
+echo Inspector pelo atalho dentro dela.
+echo.
+choice /c SN /m "Deseja continuar? [S]im / [N]ao"
+if errorlevel 2 goto :cancelado
+
+mkdir "%PASTA_INSTALACAO%" 2>nul
+if not exist "%PASTA_INSTALACAO%\" (
+    echo.
+    echo Nao foi possivel criar a pasta: "%PASTA_INSTALACAO%"
+    pause
+    exit /b 1
+)
+
+copy /y "%~f0" "%LAUNCHER_DESTINO%" >nul
+if errorlevel 1 (
+    echo.
+    echo Nao foi possivel copiar o launcher para: "%LAUNCHER_DESTINO%"
+    pause
+    exit /b 1
+)
+
+echo.
+echo Instalado com sucesso em: %PASTA_INSTALACAO%
+echo Voce ja pode apagar este arquivo baixado: "%~f0"
+echo Iniciando o Inspector a partir da pasta padrao...
+start "Inspector C5" /d "%PASTA_INSTALACAO%" cmd /c ""%LAUNCHER_DESTINO%""
+exit /b 0
+
+:cancelado
+echo.
+echo Instalacao cancelada pelo usuario.
+pause
+exit /b 0
+
+REM ============================================================
+REM 3) Execucao a partir da pasta padrao: baixa/atualiza e abre.
+REM ============================================================
+:executar
 set "URL_HTML=https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/index.html"
-set "PASTA_DESTINO=%~dp0Front"
+set "PASTA_DESTINO=%PASTA_INSTALACAO%\Front"
 set "ARQUIVO_HTML=%PASTA_DESTINO%\Q.A.html"
 set "ARQUIVO_TEMP=%TEMP%\Inspector_QA_%RANDOM%.html"
 set "URL_SERVICO=https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/ConsultaApiLocal.py"
-set "ARQUIVO_SERVICO=%~dp0ConsultaApiLocal.py"
+set "ARQUIVO_SERVICO=%PASTA_INSTALACAO%\ConsultaApiLocal.py"
 set "SERVICO_TEMP=%TEMP%\Inspector_Consulta_%RANDOM%.py"
 set "PYTHON=py -3"
 py -3 --version >nul 2>&1
@@ -21,8 +87,8 @@ if errorlevel 1 (
     )
 )
 
-if not exist "%PASTA_DESTINO%\" mkdir "%PASTA_DESTINO%"
-if errorlevel 1 (
+mkdir "%PASTA_DESTINO%" 2>nul
+if not exist "%PASTA_DESTINO%\" (
     echo.
     echo Nao foi possivel criar a pasta de destino: "%PASTA_DESTINO%"
     pause
