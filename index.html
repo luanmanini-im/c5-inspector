@@ -1716,7 +1716,7 @@
         const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbygHNbncClXyhJ_Amnhhpnc2UDieoVLQ-6ICm9v3VqkYh3NIiOL_6OQDeQ3fKEWXfzO8Q/exec";
         
         // VERSÃO FRONT ATUALIZADA - MODO HÍBRIDO
-        const VERSAO_FRONT = "v5.52.2";
+        const VERSAO_FRONT = "v5.52.3";
         // Launcher local (.bat) hospedado no GitHub - baixa o HTML mais recente diretamente do repositorio
         const URL_LAUNCHER_BAT = "https://raw.githubusercontent.com/luanmanini-im/c5-inspector/main/Inspector_Launcher.bat";
 
@@ -5996,7 +5996,7 @@
                     <td><span class="text-slate-400 font-mono">${escapeHtml(item.familia)}</span><br>${escapeHtml(item.descricao)}</td>
                     <td class="font-mono">${escapeHtml(item.ncm)}</td>
                     <td><span class="rtc-status ${['DIVERGENCIA', 'CONFLITO', 'CONFLITO_REGRAS'].includes(item.status) ? 'rtc-status-review' : ''}">${escapeHtml(rotulos.get(item.status) || item.status)}</span>
-                        ${item.referencias.length ? `<p class="rtc-help font-mono">${escapeHtml(item.referencias.map(ref => ref.cclastrib).join(', '))}</p>` : ''}
+                        ${item.referencias.length ? `<p class="rtc-help font-mono">${escapeHtml([...new Set(item.referencias.map(ref => ref.cclastrib))].join(', '))}</p>` : ''}
                         ${item.regraCliente ? `<p class="rtc-help">Particular do cliente ${escapeHtml(item.regraCliente.cliente)} · Original: ${escapeHtml(item.cclastrib || '(vazio)')}<br>
                         ${escapeHtml((item.regrasCorrespondentes || item.regraCliente.regras).map(rtcTextoRegra).join('; '))}</p>` : ''}</td>
                     <td><input aria-label="CClassTrib da família ${escapeHtml(item.familia)}" value="${escapeHtml(item.valor)}" maxlength="6" class="rtc-code" oninput="rtcConsulta[${i}].valor=this.value.trim(); rtcConsulta[${i}].aprovado=false; document.getElementById('rtcAprovar${i}').checked=false; atualizarResumoRtc();"></td>
